@@ -1,0 +1,35 @@
+/*****************************************************
+ *
+ *  BioSignalML Management in Python
+ *
+ *  Copyright (c) 2010  David Brooks
+ *
+ *  $Id$
+ *
+ ****************************************************/
+
+
+/* Define layout of page header */
+div#header {
+  width: 100%;
+  text-align: center;
+/*  background: #ef2e24 ; */
+  background: #6b8323 url("/static/img/header-logo.png") no-repeat ;
+  border-bottom: 2px solid #063;
+  }
+
+div#header h1 {
+  color: #063;
+  font-size: 2em ;
+  font-weight: bold;
+  margin: 0 ;
+/*  padding-top: 5px ; */
+  padding-left: 30% ;
+  padding-right: 30% ;
+  }
+
+/* div#menubar {
+  margin: 0 ;
+  padding: 0 ;
+  padding-top: 0px ;
+  } */

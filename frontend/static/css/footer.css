@@ -1,0 +1,38 @@
+/*****************************************************
+ *
+ *  BioSignalML Management in Python
+ *
+ *  Copyright (c) 2010  David Brooks
+ *
+ *  $Id$
+ *
+ ****************************************************/
+
+
+/* Define layout of page footer */
+div#footer {
+  width: 100%;
+  margin-left: 0px ;
+  text-align: left;
+/*  border: 1px solid green ; */
+  }
+span#bottomlogo {
+  float: left;
+  margin-left: 10px ;
+  padding: 0;
+  border: 0;
+  width: 171px;
+  height: 36px;
+  margin-bottom: 10px;
+  }
+div#footer h1 {
+  margin: 0 ;
+  color: #912;
+  font-size: 1.1em ;
+  font-weight: bold;
+  padding-top: 10px ;
+  padding-left: 10px ;
+  float: left ;
+/*  border: 1px solid red ; */
+  }
+
