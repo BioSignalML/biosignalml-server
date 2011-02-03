@@ -4,13 +4,13 @@
 #
 #  Copyright (c) 2010  David Brooks
 #
-#  $Id$
+#  $Id: xsl.py,v a82ffb1e85be 2011/02/03 04:16:28 dave $
 #
 ######################################################
 
 
 PAGEXSL = """<?xml version='1.0'?>
-         <!DOCTYPE page [
+         <!DOCTYPE xsl:stylesheet [
            <!ENTITY nbsp "<xsl:text
              xmlns:xsl='http://www.w3.org/1999/XSL/Transform'
              disable-output-escaping='yes'>&#160;</xsl:text>">
@@ -33,11 +33,17 @@ PAGEXSL = """<?xml version='1.0'?>
            encoding="iso-8859-1"
            indent="no"/>
 
-
           <xsl:template match="script">
           <!--=====================-->
            <script type="text/javascript">
-            <xsl:value-of select="text()"/>
+            <xsl:choose>
+             <xsl:when test="@src">
+              <xsl:attribute name="src"><xsl:value-of select="@src"/></xsl:attribute>
+             </xsl:when>
+             <xsl:otherwise>
+              <xsl:value-of select="text()"/>
+             </xsl:otherwise>
+            </xsl:choose>
            </script>
           </xsl:template>
 
@@ -375,6 +381,28 @@ PAGEXSL = """<?xml version='1.0'?>
            </div>
           </xsl:template>
 
+          <xsl:template match="searchform">
+          <!--==========================-->
+           <div class="formbox">
+            <div class="form">
+             <form method="post" action="{@action}" id="form" autocomplete="off">
+              <div class="search">
+               <div class="line">
+                <div class="col1">
+                 <span class="title"><xsl:value-of select="text()"/></span>
+                </div>
+                <div class="col2"></div>
+                <div class="col3">
+                 <button class='del'>-</button>
+                 <button class='add'>+</button>
+                </div>
+                <div class="clear">&nbsp;</div>
+               </div>
+              </div>
+             </form>
+            </div>
+           </div>
+          </xsl:template>
 
           <xsl:template match="link">
           <!--====================-->
@@ -514,6 +542,21 @@ PAGEXSL = """<?xml version='1.0'?>
           </xsl:template>
 
 
+          <xsl:template match="stylesheet">
+          <!--==========================-->
+           <xsl:choose>
+            <xsl:when test="@src">
+             <link type="text/css" href="{@src}" rel="stylesheet"/>
+            </xsl:when>
+            <xsl:otherwise>
+             <style>
+              <xsl:value-of select="text()"/>
+             </style>
+            </xsl:otherwise>
+           </xsl:choose>
+          </xsl:template>
+
+
           <xsl:template match="page">
           <!--====================-->
            <html xmlns="http://www.w3.org/1999/xhtml">
@@ -522,8 +565,9 @@ PAGEXSL = """<?xml version='1.0'?>
              <xsl:if test="@refresh"><meta http-equiv='Refresh' content='{@refresh}'/></xsl:if>
              <link rel="shortcut icon" href="/static/favicon.ico"/>
              <script type="text/javascript" src="/static/script/validation.js"/>
-             <script type="text/javascript" src="/static/script/jquery-1.4.4.js"/>
-             <script type="text/javascript" src="/static/script/jquery-ui-1.8.2.min.js"/>
+             <script type="text/javascript" src="/static/script/jquery-1.5.js"/>
+<!--             <script type="text/javascript" src="/static/script/jquery-1.5.min.js"/>  -->
+             <script type="text/javascript" src="/static/script/jquery-ui-1.8.9.min.js"/>
              <script type="text/javascript" src="/static/script/jquery-ui-datetimepicker.js"/>
             	<script type="text/javascript" src="/static/script/jquery.jstree.js"/>
             	<script type="text/javascript" src="/static/script/jquery.jdMenu.js"/>
@@ -534,6 +578,7 @@ PAGEXSL = """<?xml version='1.0'?>
              <script type="text/javascript" src="/static/script/comet.js"/>
              <script type="text/javascript" src="/static/script/repository.js"/>
              <link type="text/css" href="/static/css/stylesheet.css" rel="stylesheet"/>
+             <xsl:apply-templates select="stylesheet"/>
             </head>
             <body>
              <xsl:if test="@alert != ''">
@@ -559,6 +604,7 @@ PAGEXSL = """<?xml version='1.0'?>
                                                 or name()='tabs'
                                                 or name()='title'
                                                 or name()='message'
+                                                or name()='stylesheet'
                                              )]"/>
               </div>
              </div>

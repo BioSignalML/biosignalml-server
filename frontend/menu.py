@@ -4,7 +4,7 @@
 #
 #  Copyright (c) 2010  David Brooks
 #
-#  $Id$
+#  $Id: menu.py,v a82ffb1e85be 2011/02/03 04:16:28 dave $
 #
 ######################################################
 
@@ -26,7 +26,7 @@ UPDATEMENU = """<menu></menu>"""
 def VIEWERMENU(level):
 #=====================
   return """<menu prompt="View Recordings"   action="recordings"></menu>
-            <menu prompt="Search Recordings" action="search"></menu>
+            <menu prompt="Search Recordings" action="searchform"></menu>
             <menu prompt="SPARQL Query"      action="sparql"></menu>"""
 
 LOGINMENU  = """<menu prompt="Login"  action="login"/>"""

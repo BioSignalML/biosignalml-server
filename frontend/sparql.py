@@ -1,8 +1,29 @@
 import web
 import logging
 
+from metadata import NAMESPACES
 from metadata import model as triplestore
 from utils import xmlescape
+from repository import options
+from bsml import BSML
+
+
+namespaces = {
+  'bsml': str(BSML.uri),
+  'repo': options.repository['import_base'],
+  }
+
+namespaces.update(NAMESPACES)
+
+
+def ns_prefix(s):
+#===============
+  if s:
+    for ns, prefix in namespaces.iteritems():
+      if s.startswith(prefix): return xmlescape('%s:%s' % (ns, s[len(prefix):]))
+    return s
+  return ''
+
 
 
 def search(sparql):
@@ -13,6 +34,11 @@ def search(sparql):
     if w[0] == '?' and w[1:] not in cols: cols.append(w[1:])
 
   results = triplestore.query(sparql)
+  ### Return XML or whatever.
+  ### Can we request format??
+  ### What about CONSTRUCT, ASK, DESCRIBE ??
+  ### XML will have column headings, so give them even if no data rows.
+
 ##  logging.debug('--> %s', results)
   hdr = False
   body = ['<table class="search">']
@@ -27,7 +53,7 @@ def search(sparql):
         hdr = True
       body.append('<tr class="odd">' if odd else '<tr>')
       for c in cols:
-        if c in r: body.append('<td>%s</td>' % xmlescape(str(r[c])))
+        if c in r: body.append('<td>%s</td>' % xmlescape(ns_prefix(str(r[c]))))
       body.append('</tr>\n')
       odd = not odd
   body.append('</table>\n')

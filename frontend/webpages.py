@@ -4,7 +4,7 @@
 #
 #  Copyright (c) 2010  David Brooks
 #
-#  $Id$
+#  $Id: webpages.py,v a82ffb1e85be 2011/02/03 04:16:28 dave $
 #
 ######################################################
 
@@ -48,14 +48,14 @@ def setpassword(data):
   data['password2'] = data.get('password')
 
 
-def checkpassword(db, page, post):
+def checkpassword(db, page, data):
 #=================================
-  if post['password'] != post['password2']: return 'Passwords do not match'
+  if data['password'] != data['password2']: return 'Passwords do not match'
   else:                                     return ''
 
 
-def users(get, post, session, params):
-#====================================
+def users(data, session, params):
+#===============================
   return DataPage('users', 'username', None, 'Users',
                   fields = [Field('username',  'User Name',         layout=Layout(20, 1, (1, 14))),
                             Field('password',                       layout=Layout(20, 3, (1, 14)),
@@ -68,35 +68,35 @@ def users(get, post, session, params):
                   preedit = setpassword,
                   validation = checkpassword,
                   numerickey = False,
-                 ).show(get, post, session)
+                 ).show(data, session)
 
 
-def login(get, post, session, params):
-#====================================
-  btn = post.get('action', '')
+def login(data, session, params):
+#===============================
+  btn = data.get('action', '')
   if btn:
-    if btn == 'Login': user.login(post)
+    if btn == 'Login': user.login(data)
     if user.level(): raise web.seeother('/recordings')
   return FormPage('Please log in:',
                   [Field('username', 'Username', layout=Layout(20, 1, (1, 11))),
                    Field('password', 'Password', layout=Layout(20, 2, (1, 11)), password=True),
                   ],
                   editbtns = ['Login', 'Cancel'],
-                  message = ('Session expired, please login' if 'expired'      in get
-                        else 'Unauthorised, please login'    if 'unauthorised' in get
+                  message = ('Session expired, please login' if 'expired'      in data
+                        else 'Unauthorised, please login'    if 'unauthorised' in data
                         else ''),
-                 ).show(get, post, session)
+                 ).show(data, session)
 
 
-def logout(get, post, session, params):
-#=====================================
+def logout(data, session, params):
+#================================
   user.logout()
   raise web.seeother('/login')
 
 
-def index(get, post, session, params):
-#====================================
+def index(data, session, params):
+#===============================
   if user.loggedin():
-    return biosignalml.recordings(get, post, session, params)
+    return biosignalml.recordings(data, session, params)
   else:
-    return login(get, post, session, params)
+    return login(data, session, params)

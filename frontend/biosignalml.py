@@ -4,7 +4,7 @@
 #
 #  Copyright (c) 2010  David Brooks
 #
-#  $Id$
+#  $Id: biosignalml.py,v a82ffb1e85be 2011/02/03 04:16:28 dave $
 #
 ######################################################
 
@@ -15,9 +15,9 @@ from utils import xmlescape, maketime, trimdecimal, chop
 from page import BlankPage
 
 import repository
-from repository import options
 import mktree
 from sparql import search as sparql_search
+from sparql import namespaces, ns_prefix
 
 #########
 import metadata as meta
@@ -94,22 +94,6 @@ def property_details(obj, properties, table, **args):
 ############## Above should be in separate module ###############
 
 
-namespaces = {
-  'bsml': str(BSML.uri),
-  'repo': options.repository['import_base'],
-  }
-
-namespaces.update(meta.NAMESPACES)
-
-
-def ns_prefix(s):
-#===============
-  if s:
-    for ns, prefix in namespaces.iteritems():
-      if s.startswith(prefix): return xmlescape('%s:%s' % (ns, s[len(prefix):]))
-    return s
-  return ''
-
 
 
 # Generate list of signals in a recording (as a <table>)
@@ -170,17 +154,17 @@ def build_metadata(uri):
 
 # Tooltip pop-up:
 
-def metadata(get, post, params):
-#==============================
-  return { 'html': build_metadata(post.get('uri', '')) }
+def metadata(data, params):
+#==========================
+  return { 'html': build_metadata(data.get('uri', '')) }
 
 
 # Generate tree of recordings along with details of signals when recording clicked on.
 
 REPO_LINK = '/recordings/'       #  Prefix to repository objects 
 
-def recordings(get, post, session, record=''):
-#============================================
+def recordings(data, session, record=''):
+#=======================================
   prefix = namespaces['repo'][:-1]
   if record:
     recuri = '%s/%s' % (prefix, record)
@@ -194,103 +178,8 @@ def recordings(get, post, session, record=''):
                       xmltree(repository.model.recordings(), prefix, REPO_LINK, record)
                     + build_metadata(recuri)
                     + signal_details(recuri, sig)
-                     ).show(get, post, session)
+                     ).show(data, session)
   else:
     return BlankPage('Recordings in "repo:" (%s)' % prefix,
                       xmltree(repository.model.recordings(), prefix, REPO_LINK)
-                     ).show(get, post, session)
-
-
-############
-
-from repository.fulltext import BOLD_ON, BOLD_OFF
-
-
-def highlight(s):
-#===============
-  x = xmlescape(s)
-  return x.replace(BOLD_ON, '<b>').replace(BOLD_OFF, '</b>')
-
-
-def make_link(s):
-#===============
-  if s:
-    for ns, prefix in namespaces.iteritems():
-      if s.startswith(prefix):
-        local = s[len(prefix):]
-        link = xmlescape('%s:%s' % (ns, local))
-        if ns != 'repo': return link
-        else:
-           href = REPO_LINK + local
-           return '<a href="%s" id="%s" class="cluetip">%s</a>' % (href, s, link)
-  return ''
-
-
-def search(get, post, session, param=''):
-#========================================
-  logging.debug('POST: %s', post)
-
-  searchtext = post.get('text', '')
-  if searchtext:
-    xml = [ '<table class="search">' ]
-    odd = True
-    for r in repository.fulltext.search(post['text']):
-      logging.debug("ROW: %s", r)
-      xml.append('<tr class="odd">' if odd else '<tr>')
-      xml.append('<td>%s</td><td>%s</td><td>%s</td><td>%s</td>' % (ns_prefix(r[0]),
-                                                                   make_link(r[1]),
-                                                                   ns_prefix(r[2]),
-                                                                   highlight(r[3])))
-      xml.append('</tr>')
-      odd = not odd
-    xml.append('</table>')
-  else:
-    xml = [ ]
-
-
-   ## Lookup up text
-  # Advanced will have other post fields...
-  ## Also check action = Search v's Advanced..
-  # else:
-  return BlankPage('Text search...',
-    ## Add search box here.... (as a form, action=/search?, and advanced button/link??)
-                   """<form action="/search" height="1">
-                       <button name="action" prompt="Search" row="1" col="42"/>
-                       <field name="text" prompt="Find Text" row="1" pcol="1"
-                         fcol="10" size="20" value="%s"/>
-                      </form>
-                    %s
-                    """ % (xmlescape(searchtext), ''.join(xml))
-                     ).show(get, post, session)
-
-
-
-def sparql(get, post, session, param=''):
-#========================================
-  logging.debug('POST: %s', post)
-
-  query = post.get('query', '')
-  if query:
-    results = sparql_search(query) ## , namespaces)
-    table = results[1] if results[0] else ''
-  else:
-    table = ''
-    p = [ ]
-    for ns, prefix in namespaces.iteritems():
-      p.append('PREFIX %s: <%s>' % (ns, prefix))
-    p.append('')
-    p.append('')
-    query = '\n'.join(p) # Default namespace prefixes
-
-  return BlankPage('SPARQL search...',
-    ## Add search box here.... (as a form, action=/search?, and advanced button/link??)
-                   """<form action="/sparql" height="15">
-                       <button name="action" prompt="Search" row="1" col="80"/>
-                       <field name="query" prompt="SPARQL"
-                         type="text"
-                         rows="20" cols="75">%s</field>
-                      </form>
-                      %s
-                    """ % (xmlescape(query), table)
-                     ).show(get, post, session)
-
+                     ).show(data, session)

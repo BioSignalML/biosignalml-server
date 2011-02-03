@@ -4,7 +4,7 @@
 #
 #  Copyright (c) 2010  David Brooks
 #
-#  $Id$
+#  $Id: page.py,v a82ffb1e85be 2011/02/03 04:16:28 dave $
 #
 ######################################################
 
@@ -99,7 +99,7 @@ class DataPage(object):
     readonly  bool
     editonly  bool    If True, then no Add nor Delete
     addonly   bool    If True, then Add but no Delete
-    updatefields function(post_data) returning dict {name: value} for SQL update and insert
+    updatefields function(data) returning dict {name: value} for SQL update and insert
     filter    string  Filter all rows with this condition
     refresh   funct   Call to get seconds between refreshs of list
     preedit    funt   Call after getting database data before building form
@@ -323,9 +323,9 @@ class DataPage(object):
     return ''.join(table)
 
 
-  def _add(self, post, error=None):
+  def _add(self, data, error=None):
   #--------------------------------
-#    logging.debug('%s', log('ADD', 'POST', post))
+#    logging.debug('%s', log('ADD', 'DATA', data))
     form = []
     if error: form.append('<page alert="%s">' % xmlescape(error))
     else:     form.append('<page>')
@@ -343,7 +343,7 @@ class DataPage(object):
     form.append('<button name="action" prompt="Add"    row="1" col="%d"/>' % FORMBTNCOL)
     form.append('<button name="action" prompt="Clear"  row="2" col="%d" type="reset"/>' % FORMBTNCOL)
     form.append('<button name="action" prompt="Cancel" row="3" col="%d"/>' % FORMBTNCOL)
-    form.append(Field.fieldhtml(self._fields, post, adding=True))
+    form.append(Field.fieldhtml(self._fields, data, adding=True))
     form.append('</form></page>')
     return ''.join(form)
 
@@ -380,25 +380,25 @@ class DataPage(object):
     return ''.join(form)
 
   @staticmethod
-  def _getdata(post, field):
+  def _getdata(data, field):
   #-------------------------
-    v = cp1252(post.get(field._colname))
+    v = cp1252(data.get(field._colname))
     if field._mapping and len(field._mapping) > 1 and field._mapping[1]:
       v = field._mapping[1](v)
     return v
 
-  def _tableinsert(self, db, post):
+  def _tableinsert(self, db, data):
   #--------------------------------
     sql = 'insert into %s (' % self._table
     updatable = [f for f in self._fields if f and f._datacol and f._layout]
-    updateflds = self._updatefldfn(post) if self._updatefldfn else { }
+    updateflds = self._updatefldfn(data) if self._updatefldfn else { }
     for f in updatable:
       if not f._colname in updateflds: sql += f._colname + ','
     for n in updateflds.iterkeys(): sql += n + ','
     sql = sql[:-1] + ') values ('
     for f in updatable:
       if not f._colname in updateflds:
-        v = self._getdata(post, f)
+        v = self._getdata(data, f)
         if f._colname == self._key and (not v or v == '0'): return ''
         sql += "'%s'," % database.escape(v)
     for v in updateflds.itervalues(): sql += v + ','
@@ -406,90 +406,90 @@ class DataPage(object):
     try:
       db.execute(sql)                          #########
     except IntegrityError:                     #########
-      return self._add(post, 'Code already exists')
+      return self._add(data, 'Code already exists')
     except DatabaseError, msg:                 ##########
-      return self._add(post, str(msg))
+      return self._add(data, str(msg))
     return ''
 
-  def _tableupdate(self, db, post):
+  def _tableupdate(self, db, data):
   #--------------------------------
-    updateflds = self._updatefldfn(post) if self._updatefldfn else { }
+    updateflds = self._updatefldfn(data) if self._updatefldfn else { }
     sql = 'update ' + self._table + ' set'
     for f in self._fields:
-      if f and f._colname and f._datacol and f._layout and not f._table and not f.readonly(post):
+      if f and f._colname and f._datacol and f._layout and not f._table and not f.readonly(data):
         if not f._colname in updateflds:
-          sql += ' ' + f._colname + "='" + database.escape(self._getdata(post, f)) + "',"
+          sql += ' ' + f._colname + "='" + database.escape(self._getdata(data, f)) + "',"
     for n, v in updateflds.iteritems(): sql += ' ' + n + '=' + v + ','
     sql = sql[:-1] + ' where rowid = ?'
-###    logging.error("SQL: (%d) %s", int(post['form_key']), sql)
+###    logging.error("SQL: (%d) %s", int(data['form_key']), sql)
     try:
-      db.execute(sql, (post['form_key'],))
+      db.execute(sql, (data['form_key'],))
       for f in self._fields:
         if f and f._table:
-          tdata = { f._table[1]: str(post['%s_%s' % (f._colname, f._table[0])]) }
+          tdata = { f._table[1]: str(data['%s_%s' % (f._colname, f._table[0])]) }
           for c in f._table[2]:
             if c._colname and c._layout:
-              v = str(post[c._colname])
+              v = str(data[c._colname])
               if c._mapping and c._mapping[1]: v = c._mapping[1](v)
               tdata[c._colname] = v
           db.assign(f._table[0], f._table[1], tdata)
 
     except IntegrityError:
-      return self._edit(post['form_key'], post, 'Code already exists', post['form_tab'])
+      return self._edit(data['form_key'], data, 'Code already exists', data['form_tab'])
     except DatabaseError, msg:
-      return self._edit(post['form_key'], post, str(msg), post['form_tab'])
+      return self._edit(data['form_key'], data, str(msg), data['form_tab'])
     return ''
 
 
-  def _checkfields(self, post):
+  def _checkfields(self, data):
   #----------------------------
     for f in self._fields:
       if (f and not f._optional and f._colname and f._datacol
-            and f._layout and not f._table and not f.readonly(post)
-            and post[f._colname] == ''):
+            and f._layout and not f._table and not f.readonly(data)
+            and data[f._colname] == ''):
         return 'Please ' + ('select' if f._choices else 'enter') + ' a ' + f._prompt
     return ''
 
 
-  def _doupdate(self, db, post):
+  def _doupdate(self, db, data):
   #-----------------------------
-#    logging.debug('%s', log('UPDATE', 'POST', post))
-    action = post['action']
+#    logging.debug('%s', log('UPDATE', 'POST', data))
+    action = data['action']
     if action == 'Cancel': return ''
     result = ''
-    if self._tabs: self._fields = self._tabs[num(post['form_tab'])][1]
+    if self._tabs: self._fields = self._tabs[num(data['form_tab'])][1]
     ##if action in ['Add', 'Update', 'Delete']:
-    error = self._checkfields(post)
+    error = self._checkfields(data)
     if not error and self._validation:
-      error = self._validation(db, self, post)
-      action = post['action']          # Validation code may change action
-    if error != '': return (self._add(post, error) if action == 'Add'
-                       else self._edit(post['form_key'], post, error, post['form_tab']))
+      error = self._validation(db, self, data)
+      action = data['action']          # Validation code may change action
+    if error != '': return (self._add(data, error) if action == 'Add'
+                       else self._edit(data['form_key'], data, error, data['form_tab']))
     if   action in self._editbtns:
-      if post['form_key']: result = self._tableupdate(db, post)
-      if not result: self._editbtns[action](db, self, post)
+      if data['form_key']: result = self._tableupdate(db, data)
+      if not result: self._editbtns[action](db, self, data)
     elif action == 'Add':
-      result = self._tableinsert(db, post)
+      result = self._tableinsert(db, data)
     elif action == 'Update':
-      result = self._tableupdate(db, post)
+      result = self._tableupdate(db, data)
     elif action == 'Delete':
       sql = 'delete from ' + self._table + ' where rowid = ?'
-      db.execute(sql, (post['form_key'],))
+      db.execute(sql, (data['form_key'],))
     if result == '' and action in self._btnactions:
       action = self._btnactions[action]
-      if action[1]: result = action[1](db, self, post)
+      if action[1]: result = action[1](db, self, data)
     if result == '' and action in self._submitacts:
       action = self._submitacts[action]
-      if action: result = action(db, self, post)
+      if action: result = action(db, self, data)
     return result
 
-  def _update(self, post):
+  def _update(self, data):
   #-----------------------
     xml = ''
     db = Database()                   #################
     try:
       db.begin()
-      xml = self._doupdate(db, post)
+      xml = self._doupdate(db, data)
     except Exception:
       logging.error('Error updating: %s', traceback.format_exc())
       db.rollback()
@@ -501,27 +501,26 @@ class DataPage(object):
     return xml
 
 
-  def show(self, get, post, session):
-  #----------------------------------
-    logging.debug('GET: %s', repr(get))
-    logging.debug('PST: %s', repr(post))
-    ##logging.debug('SES: %s', repr(session))
+  def show(self, data, session):
+  #----------------------------
+    logging.debug('DATA: %s', repr(data))
+    ##logging.debug('SESN: %s', repr(session))
     
-    if post.get('action') == 'Find':
-      xml = self._list(session, searchdata = post )
-    elif post.get('form_op'):
-      xml = self._list(session, searchdata = post, paging = post['form_op'] )
-    elif 'action' in post:
-      xml = self._update(post)
-      if xml == '': xml = self._list(session, paging = 'C', rowkey = post['form_key'])
-    elif 'add'    in get and not self._editonly:
-      xml = self._add(post)
-    elif 'edit'   in get:
-      xml = self._edit(str(get['edit']), tab=get.get('tab', ''))
-    elif 'sort'   in get:
-      if get.get('dirn'): dirn = get['dirn']
-      else:               dirn = 'asc'
-      xml = self._list(session, order = [ (str(get['sort']), dirn) ])
+    if data.get('action') == 'Find':
+      xml = self._list(session, searchdata = data )
+    elif data.get('form_op'):
+      xml = self._list(session, searchdata = data, paging = data['form_op'] )
+    elif 'action' in data:
+      xml = self._update(data)
+      if xml == '': xml = self._list(session, paging = 'C', rowkey = data['form_key'])
+    elif 'add'    in data and not self._editonly:
+      xml = self._add(data)
+    elif 'edit'   in data:
+      xml = self._edit(str(data['edit']), tab=data.get('tab', ''))
+    elif 'sort'   in data:
+      if data.get('dirn'): dirn = data['dirn']
+      else:                dirn = 'asc'
+      xml = self._list(session, order = [ (str(data['sort']), dirn) ])
     else:
       xml = self._list(session)
 
@@ -553,8 +552,8 @@ class FormPage(object):
     self._message = message
 
 
-  def show(self, get, post, session):
-  #----------------------------------
+  def show(self, data, session):
+  #-----------------------------
     form = []
     if self._message:
       form.append('<page alert="%s">' % xmlescape(self._message))
@@ -589,8 +588,8 @@ class BlankPage(object):
     self._content = content
     self._message = message
 
-  def show(self, get, post, session):
-  #----------------------------------
+  def show(self, data, session):
+  #----------------------------
     page = []
     if self._message:
       page.append('<page alert="%s">' % xmlescape(self._message))

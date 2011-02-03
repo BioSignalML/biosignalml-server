@@ -1,3 +1,5 @@
+// From https://github.com/douglascrockford/JSON-js/blob/master/json2.js
+// and run through jsmin
 
 if(!this.JSON){this.JSON={};}
 (function(){function f(n){return n<10?'0'+n:n;}

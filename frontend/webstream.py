@@ -4,7 +4,7 @@
 #
 #  Copyright (c) 2010  David Brooks
 #
-#  $Id$
+#  $Id: webstream.py,v a82ffb1e85be 2011/02/03 04:16:28 dave $
 #
 ######################################################
 
@@ -14,8 +14,8 @@ import threading, Queue
 import logging
 import web
 
-from edf import EDFSource
-from streaming import StreamSink
+from fileformats.edf import EDFSource
+from fileformats.streaming import StreamSink
 from metadata import Uri, rdf
 from metadata import model as triplestore
 from bsml import Recording, Signal, BSML

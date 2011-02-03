@@ -4,7 +4,7 @@
 #
 #  Copyright (c) 2010  David Brooks
 #
-#  $Id$
+#  $Id: webserver.py,v a82ffb1e85be 2011/02/03 04:16:28 dave $
 #
 ######################################################
 
@@ -36,14 +36,15 @@ urls = (
 
 webapp = web.application(urls, globals())
 
-dispatch = [ ('comet/metadata',  'biosignalml.metadata',   'json'),
-             ('comet/stream',    'comet.stream',           'json'),
-             ('recordings',      'biosignalml.recordings', 'html'),
-             ('search',          'biosignalml.search',     'html'),
-             ('sparql',          'biosignalml.sparql',     'html'),
-             ('logout',          'webpages.logout',        'html'),
-             ('login',           'webpages.login',         'html'),
-             ('',                'webpages.index',         'html'),
+dispatch = [ ('comet/metadata',      'biosignalml.metadata',   'json'),
+             ('comet/search/setup',  'search.template',        'json'),
+             ('comet/stream',        'comet.stream',           'json'),
+             ('recordings',          'biosignalml.recordings', 'html'),
+             ('searchform',          'search.searchform',      'html'),
+             ('sparql',              'search.sparql',          'html'),
+             ('logout',              'webpages.logout',        'html'),
+             ('login',               'webpages.login',         'html'),
+             ('',                    'webpages.index',         'html'),
            ]
 
 def get_processor(path):
@@ -126,11 +127,10 @@ class index(object):
       session.kill()
       fun = mod.index
 
-    get = web.input(_method = 'GET')
-    post = web.input(_method = 'POST')
+    submitted = web.input(_method = method)
     if responsetype == 'html':
       try:
-        xml = fun(get, post, session, params)
+        xml = fun(submitted, session, params)
       except Exception, msg:
         if str(msg) == "303 See Other": raise
         logging.error('Errors loading page: %s', str(msg))
@@ -142,7 +142,7 @@ class index(object):
 
     else:    # Return JSON
       try:
-        data = fun(get, post, params)
+        data = fun(submitted, params)
       except Exception, msg:
         if str(msg) == "303 See Other": raise
         logging.error('Errors loading page: %s', str(msg))
