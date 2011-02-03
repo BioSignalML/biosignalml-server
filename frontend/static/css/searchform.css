@@ -4,7 +4,7 @@
  *
  *  Copyright (c) 2010  David Brooks
  *
- *  $Id: searchform.css,v 4ec3a77e1460 2011/02/03 20:30:42 dave $
+ *  $Id: searchform.css,v a21580c27867 2011/02/03 21:53:41 dave $
  *
  ****************************************************/
 
@@ -92,6 +92,9 @@ span.group {
  display: inline-block;
  margin-right: 5px ;
  margin-left: 5px ;
+ }
+.fld1 {
+ width: 115px ;
  }
 .fld2 {
  width: 100px ;

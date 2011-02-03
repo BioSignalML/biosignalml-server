@@ -4,7 +4,7 @@
  *
  *  Copyright (c) 2010-2011  David Brooks
  *
- *  $Id: searchform.js,v 4ec3a77e1460 2011/02/03 20:30:42 dave $
+ *  $Id: searchform.js,v a21580c27867 2011/02/03 21:53:41 dave $
  *
  ****************************************************/
 
@@ -37,15 +37,22 @@ function search_types() {
  }
 
 function got_type() {
- if (this.selectedIndex > 0) {
-  var fld = fields[this.selectedIndex - 1] ;
+ var fld_index = this.value - 1 ; 
+ if (fld_index >= 0) {
+  var fld = fields[fld_index] ;
   $(this.nextElementSibling).replaceWith(search_relns(fld).addClass('fld2')) ;
   $(this.nextElementSibling
    .nextElementSibling).replaceWith(search_values(fld).addClass('fld3')) ;
-  if ($(this).parent().parent().children('.group').length <= 3)
+  if ($(this).parent().is('.col2 > .group:last-child')
+   && $(this).parent().parent().children('.group').length <= 3)
    $(this.nextElementSibling
-    .nextElementSibling
-    .nextElementSibling).replaceWith(or_values.clone().addClass('fld4').focus(save_value).change(new_group)) ;
+         .nextElementSibling
+         .nextElementSibling)
+    .replaceWith(
+        or_values.clone()
+                 .addClass('fld4')
+                 .focus(save_value)
+                 .change(change_or)) ;
   }
  else {
   $(this.nextElementSibling).replaceWith('<span class="fld2"></span>') ;
@@ -92,13 +99,15 @@ function save_value() {
  this.savedValue = this.value ;
  }
 
-function new_group() {
+
+function change_or() {
  if (this.selectedIndex > 0) {
   // Only if we are the last group...
   if (this.parentNode.nextElementSibling == null) {
     group.clone().insertAfter($(this).parent()) ;
     this.firstElementChild.text = "Remove..." ;
     }
+  $(this).parent().find('.fld1').children().first().remove() ;
   }
  else {
   $(this).parent().next().remove() ;
