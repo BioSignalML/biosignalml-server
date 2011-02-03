@@ -4,7 +4,7 @@
  *
  *  Copyright (c) 2010-2011  David Brooks
  *
- *  $Id: searchform.js,v a82ffb1e85be 2011/02/03 04:16:28 dave $
+ *  $Id: searchform.js,v 4ec3a77e1460 2011/02/03 20:30:42 dave $
  *
  ****************************************************/
 
@@ -42,9 +42,10 @@ function got_type() {
   $(this.nextElementSibling).replaceWith(search_relns(fld).addClass('fld2')) ;
   $(this.nextElementSibling
    .nextElementSibling).replaceWith(search_values(fld).addClass('fld3')) ;
-  $(this.nextElementSibling
-   .nextElementSibling
-   .nextElementSibling).replaceWith(or_values.clone().addClass('fld4').focus(save_value).change(new_group)) ;
+  if ($(this).parent().parent().children('.group').length <= 3)
+   $(this.nextElementSibling
+    .nextElementSibling
+    .nextElementSibling).replaceWith(or_values.clone().addClass('fld4').focus(save_value).change(new_group)) ;
   }
  else {
   $(this.nextElementSibling).replaceWith('<span class="fld2"></span>') ;

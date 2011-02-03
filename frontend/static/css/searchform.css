@@ -4,13 +4,22 @@
  *
  *  Copyright (c) 2010  David Brooks
  *
- *  $Id: searchform.css,v a82ffb1e85be 2011/02/03 04:16:28 dave $
+ *  $Id: searchform.css,v 4ec3a77e1460 2011/02/03 20:30:42 dave $
  *
  ****************************************************/
 
 
+div.formbox {
+  display: inline-block ;  /* So width expands to search box */
+  margin: 0 0 10px 10px ;
+  }
+
 div.form span {
  padding: 0 ;		/* Override inherited value */
+ }
+
+div.search {
+ margin-bottom: 20px ;
  }
 
 div.line {
@@ -34,12 +43,15 @@ div.line:first-child .col1 span.title {
  background: #CFC ;
  }
 
-div.line:only-child button.del,
-div.line button.add
- { visibility: hidden }
-
 div.line:last-child button.add
  { visibility: visible }
+
+div.line button.add,
+div.line:nth-child(0n+5) button.add
+ { visibility: hidden }
+
+div.line:only-child button.del
+ { visibility: hidden }
 
 .col1 {
  width: 150px ;
@@ -49,6 +61,7 @@ div.line:last-child button.add
  }
 .col3 {
  width: 60px ;
+ margin-left: 10px ;
  }
 span.col1 {
  position: absolute ;
@@ -80,7 +93,7 @@ span.group {
  margin-right: 5px ;
  margin-left: 5px ;
  }
-.fld1, .fld2 {
+.fld2 {
  width: 100px ;
  }
 span.fld2 {
@@ -94,5 +107,7 @@ input.fld3 {
  }
 .fld4 {
  width: 75px ;
+ margin-left: 15px ;
+ margin-right: 0 ;
  }
 
