@@ -4,7 +4,7 @@
  *
  *  Copyright (c) 2010  David Brooks
  *
- *  $Id$
+ *  $Id: stylesheet.css,v 2225129d2f7b 2011/02/04 01:05:15 dave $
  *
  ****************************************************/
 
@@ -292,6 +292,10 @@ form span.fixed input.button {
   width: 60px ;
   }
 
+span.right {
+  display: inline-block ;
+  float: right ;
+  }
 
 #leftside {
   position:absolute;

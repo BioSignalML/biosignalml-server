@@ -4,7 +4,7 @@
 #
 #  Copyright (c) 2010  David Brooks
 #
-#  $Id: search.py,v a82ffb1e85be 2011/02/03 04:16:28 dave $
+#  $Id: search.py,v 2225129d2f7b 2011/02/04 01:05:15 dave $
 #
 ######################################################
 
@@ -21,29 +21,39 @@ from sparql import search as sparql_search
 from sparql import namespaces, ns_prefix
 
 
+# Following is sent as JSON to web browser.
+# Field names have to match that in static/scripts/searchform.js
+
+FIELD_DATA = { 'and': ['AND', 'AND NOT', 'OR', 'OR NOT', ],
+               'or':  ['OR',  'OR NOT', ],
+ 
+               'fields': [ { 'prompt': 'text',
+                             'property': 'fulltext:search',
+                             'relns':  ['matching'],
+                             'values': [ '' ],
+                             },
+                           { 'prompt': 'units',
+                             'property': 'bsml:units',
+                             'relns':  ['equal'],
+                             'values': ['V', 'mV', '...'],  ## prefill with ?units from "?s bsml:units ?units"
+                             },
+                           { 'prompt': 'clock',
+                             'property': 'bsml:clock',
+                             'relns':  ['of type'],
+                             'values': ['Uniform', 'Irregular'],
+                           },
+                           { 'prompt': 'rate',
+                             'property': 'bsml:rate',
+                             'relns':  ['<', '<=', '=', '>=', '>', '!='],
+                             'values': ['1000.0', '100.0', '...'], ## prefill with ?rate from "?s bsml:rate ?rate"
+                           },
+                         ],
+             }
+
+
 def template(data, params):
 #==========================
-  return { 'and': ['AND', 'AND NOT', 'OR', 'OR NOT', ],
-           'or':  ['OR',  'OR NOT', ],
- 
-           'fields': [ { 'prompt': 'text',
-                         'relns':  ['matching'],
-                         'values': [ '' ],
-                         },
-                       { 'prompt': 'units',
-                         'relns':  ['equal'],
-                         'values': ['V', 'mV', '...'],  ## prefill with ?units from "?s bsml:units ?units"
-                         },
-                       { 'prompt': 'clock',
-                         'relns':  [ 'of type' ],
-                         'values': ['Uniform', 'Irregular'],
-                       },
-                       { 'prompt': 'rate',
-                         'relns':  ['<', '<=', '=', '>=', '>', '!='],
-                         'values': ['1000.0', '100.0', '...'], ## prefill with ?rate from "?s bsml:rate ?rate"
-                       },
-                     ],
-         }
+  return FIELD_DATA
 
 
 def highlight(s):
@@ -66,9 +76,81 @@ def make_link(s):
   return ''
 
 
+class SearchGroup(object):
+#========================
+
+  def __init__(self, fld):
+  #-----------------------
+    self._fld = fld
+    self._prop = fld['property']
+    self._reln = None
+    self._value = None
+    self._or = None
+
+  def set_reln(self, v):
+  #---------------------
+    if len(self._fld['relns']) > 1:
+      if v != '0': self._reln = self._fld['relns'][int(v)-1]
+    else:
+      self._reln = ''
+      self.set_value(v)
+
+  def set_value(self, v):
+  #----------------------
+    if len(self._fld['values']) > 1:
+      if v != '0': self._value = self._fld['values'][int(v)-1]
+    elif v: self._value = v
+
+  def set_or(self, v):
+  #-------------------
+    if v != '0': self._or = FIELD_DATA['or'][int(v)-1]
+
+  def store_tuple(self, grouplist):
+  #-------------------------------
+    if self._prop is not None and self._reln is not None and self._value is not None:
+      grouplist.append(((self._prop, self._reln, self._value), self._or))
+
+
 def searchform(data, session, param=''):
 #======================================
   logging.debug('DATA: %s', data)
+
+  # check data.get('action', '') == 'Search'
+
+  lines = [ ]
+  lastline = -1
+  line_and = None
+  groups = [ ]
+  group = None
+  lastgroupno = -1
+
+  fields = [(int(k[1]), k[2:], data[k]) for k in sorted(data) if k[0] == 'L']
+  for (l, g, v) in fields:
+    if lastline != l:  # Start of a new line
+      if group: group.store_tuple(groups)
+      if groups: lines.append((line_and, groups))
+      lastline = l
+      line_and = None
+      groups = [ ]
+      group = None
+      lastgroupno = -1
+
+    if   g == 'AND':
+      if len(lines) and v != '0': line_and = FIELD_DATA['and'][int(v)-1]
+    elif g[0] == 'G':
+      groupno = int(g[1])
+      if lastgroupno != groupno:
+        if group: group.store_tuple(groups)
+        lastgroupno = groupno
+        group = None
+      if   g[2:] == 'F0' and v != '0': group = SearchGroup(FIELD_DATA['fields'][int(v)-1])
+      elif g[2:] == 'F1': group.set_reln(v)
+      elif g[2:] == 'F2': group.set_value(v)
+      elif g[2:] == 'OR': group.set_or(v)
+
+  if group: group.store_tuple(groups)
+  if groups: lines.append((line_and, groups))
+  logging.debug('LINES: %s', lines)
 
   searchtext = data.get('text', '')
   if searchtext:

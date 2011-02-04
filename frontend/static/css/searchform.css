@@ -4,7 +4,7 @@
  *
  *  Copyright (c) 2010  David Brooks
  *
- *  $Id: searchform.css,v a21580c27867 2011/02/03 21:53:41 dave $
+ *  $Id: searchform.css,v 2225129d2f7b 2011/02/04 01:05:15 dave $
  *
  ****************************************************/
 
@@ -43,12 +43,14 @@ div.line:first-child .col1 span.title {
  background: #CFC ;
  }
 
+/*
 div.line:last-child button.add
  { visibility: visible }
 
 div.line button.add,
 div.line:nth-child(0n+5) button.add
  { visibility: hidden }
+*/
 
 div.line:only-child button.del
  { visibility: hidden }

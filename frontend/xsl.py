@@ -4,7 +4,7 @@
 #
 #  Copyright (c) 2010  David Brooks
 #
-#  $Id: xsl.py,v a82ffb1e85be 2011/02/03 04:16:28 dave $
+#  $Id: xsl.py,v 2225129d2f7b 2011/02/04 01:05:15 dave $
 #
 ######################################################
 
@@ -392,13 +392,14 @@ PAGEXSL = """<?xml version='1.0'?>
                  <span class="title"><xsl:value-of select="text()"/></span>
                 </div>
                 <div class="col2"></div>
-                <div class="col3">
-                 <button class='del'>-</button>
-                 <button class='add'>+</button>
-                </div>
+                <div class="col3"><button class='del'>-</button></div>
                 <div class="clear">&nbsp;</div>
                </div>
               </div>
+              <button class='add'>+</button>
+              <span class="right">
+               <input class="button" type="submit" name="action" value="Search"/>
+              </span>
              </form>
             </div>
            </div>

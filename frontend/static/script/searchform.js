@@ -4,19 +4,19 @@
  *
  *  Copyright (c) 2010-2011  David Brooks
  *
- *  $Id: searchform.js,v a21580c27867 2011/02/03 21:53:41 dave $
+ *  $Id: searchform.js,v 2225129d2f7b 2011/02/04 01:05:15 dave $
  *
  ****************************************************/
 
 
 function rename() {
  $('form > div.search > div.line').each(function(line) {
-  $(this).find('.col1 select').attr({'name': 'l' + line + 'AND'}) ;
+  $(this).find('.col1 select').attr({'name': 'L' + line + 'AND'}) ;
   $(this).find('.col2 .group').each(function(grp) {
    $(this).find('select:not(.fld4), input').each(function(fld) {
-    $(this).attr({'name': 'l' + line + 'g' + grp + 'f' + fld})
+    $(this).attr({'name': 'L' + line + 'G' + grp + 'F' + fld})
     }) ;
-   $(this).find('select.fld4').attr({'name': 'l' + line + 'OR' + grp}) ;
+   $(this).find('select.fld4').attr({'name': 'L' + line + 'G' + grp + 'OR' }) ;
    });
   }) ;
  }
@@ -144,15 +144,19 @@ $(document).ready(function() {
    }) ;
 
  $('button.add').click(function() {
-  $('div.search div.line:first-child').clone(true)
-   .insertAfter('div.search div.line:last-child') ;
-  $('div.search div.line:last-child > .col2 > span.group').replaceWith(group.clone()) ;
-  rename() ;
+  if ($('div.search div.line').length < 5) {
+   $('div.search div.line:first-child').clone(true)
+    .insertAfter('div.search div.line:last-child') ;
+   $('div.search div.line:last-child > .col2 > span.group').replaceWith(group.clone()) ;
+   if ($('div.search div.line').length == 5) $(this).hide() ;
+   rename() ;
+   }
   return false ;
   }) ;
 
  $('button.del').click(function() {
   $(this).parent().parent().remove() ;
+  $('button.add').show() ;
   rename() ;
   }) ;
 
