@@ -4,12 +4,12 @@
 #
 #  Copyright (c) 2010  David Brooks
 #
-#  $Id$
+#  $Id: model.py,v eeabfc934961 2011/02/14 17:47:59 dave $
 #
 ######################################################
 
 
-from bsml import BSML, Recording
+from bsml import BSML, Recording, Signal
 from metadata import Uri
 from metadata import rdf, rdfs, dct, make_literal
 from metadata import model as triplestore
@@ -31,6 +31,11 @@ def recordings():
 def get_recording(uri):
 #=====================
   return Recording.open(Uri(uri))
+
+
+def get_signal(uri):
+#=====================
+  return Signal.open(Uri(uri))
 
 
 def signals(recording, properties):

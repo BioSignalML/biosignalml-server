@@ -4,7 +4,7 @@
 #
 #  Copyright (c) 2010  David Brooks
 #
-#  $Id: webpages.py,v a82ffb1e85be 2011/02/03 04:16:28 dave $
+#  $Id: webpages.py,v eeabfc934961 2011/02/14 17:47:59 dave $
 #
 ######################################################
 
@@ -76,7 +76,7 @@ def login(data, session, params):
   btn = data.get('action', '')
   if btn:
     if btn == 'Login': user.login(data)
-    if user.level(): raise web.seeother('/recordings')
+    if user.level(): raise web.seeother(biosignalml.REPOSITORY)
   return FormPage('Please log in:',
                   [Field('username', 'Username', layout=Layout(20, 1, (1, 11))),
                    Field('password', 'Password', layout=Layout(20, 2, (1, 11)), password=True),
@@ -97,6 +97,6 @@ def logout(data, session, params):
 def index(data, session, params):
 #===============================
   if user.loggedin():
-    return biosignalml.recordings(data, session, params)
+    return biosignalml.repository(data, session, params)
   else:
     return login(data, session, params)

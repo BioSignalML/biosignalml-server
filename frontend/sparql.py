@@ -2,62 +2,86 @@ import web
 import logging
 
 from metadata import NAMESPACES
-from metadata import model as triplestore
 from utils import xmlescape
 from repository import options
+from repository import model as repo
 from bsml import BSML
 
 
 namespaces = {
   'bsml': str(BSML.uri),
-  'repo': options.repository['import_base'],
   }
 
 namespaces.update(NAMESPACES)
 
+querybase = options.repository['base']
 
-def ns_prefix(s):
-#===============
+
+def prologue():
+#==============
+  p = [ 'BASE <%s>' % querybase ]
+  for ns, prefix in namespaces.iteritems():
+    p.append('PREFIX %s: <%s>' % (ns, prefix))
+  return '\n'.join(p)
+
+
+def abbreviate(s):
+#=================
   if s:
     for ns, prefix in namespaces.iteritems():
       if s.startswith(prefix): return xmlescape('%s:%s' % (ns, s[len(prefix):]))
+    if s.startswith(querybase): return xmlescape('<%s>' % s[len(querybase):])
     return s
   return ''
+
+
+def make_link(s):
+#===============
+  if s.startswith(querybase):
+    local = xmlescape(s[len(querybase):])
+##    href = biosignalml.REPO_LINK + local
+    href = '/repository/' + local
+    return '<a href="%s" id="%s" class="cluetip">%s</a>' % (href, s, local)
+  else:
+    return abbreviate(s)
 
 
 
 def search(sparql):
 #=================
-  cols = [ 'error' ]
-  words = sparql.split()
-  for w in words:
-    if w[0] == '?' and w[1:] not in cols: cols.append(w[1:])
 
-  results = triplestore.query(sparql)
-  ### Return XML or whatever.
-  ### Can we request format??
-  ### What about CONSTRUCT, ASK, DESCRIBE ??
-  ### XML will have column headings, so give them even if no data rows.
+  results = repo.triplestore.query(sparql,
+                                   format='turtle')   # If CONSTRUCT graph
+  r = results.next()
 
-##  logging.debug('--> %s', results)
-  hdr = False
-  body = ['<table class="search">']
-  odd = True
-  for r in results:
-    if r:
-      if not hdr:
-        body.append('<tr>')
-        for c in cols:
-          if c in r: body.append('<th>%s</th>' % xmlescape(c))
-        body.append('</tr>\n')
-        hdr = True
+  if   isinstance(r, list):
+    cols = r
+    body = ['<table class="search">']
+    body.append('<tr>')
+    for c in cols: body.append('<th>%s</th>' % xmlescape(c))
+    body.append('</tr>\n')
+    odd = True
+    for r in results:
       body.append('<tr class="odd">' if odd else '<tr>')
-      for c in cols:
-        if c in r: body.append('<td>%s</td>' % xmlescape(ns_prefix(str(r[c]))))
+      for d in r: body.append('<td>%s</td>' % make_link(unicode(d)))
       body.append('</tr>\n')
       odd = not odd
-  body.append('</table>\n')
-  return (len(results), ''.join(body))
+    body.append('</table>\n')
+    return ''.join(body)
+
+  elif isinstance(r, bool):
+    return '<div class="search">%s</div>' % r
+
+  elif isinstance(r, str):
+    return '<div class="search">%s</div>' % xmlescape(r).replace('\n', '<br/>')
+
+  ## elif isinstance(r, ???) ## a stream iterator
+  ## or do we return a serialiased graph ???
+
+##  logging.debug('QResult: %s', results)
+##  logging.debug('--> %s', results)
+
+  return ''
 
 
 class query(object):
@@ -66,7 +90,7 @@ class query(object):
   def _process(self, method, path):
     data = web.input(_method = method)
 #    logging.debug('Request: %s %s %s', method, path, str(data))
-    sparql = str(data.get('query', ''))
+    sparql = unicode(data.get('query', ''))
     logging.debug('SPARQL: %s', sparql)
     return '<html><body><h1>%d results:</h1>%s</body></html>' % search(sparql)
 

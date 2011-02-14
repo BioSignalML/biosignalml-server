@@ -4,7 +4,7 @@
 #
 #  Copyright (c) 2010  David Brooks
 #
-#  $Id: search.py,v 2225129d2f7b 2011/02/04 01:05:15 dave $
+#  $Id: search.py,v eeabfc934961 2011/02/14 17:47:59 dave $
 #
 ######################################################
 
@@ -17,8 +17,7 @@ from page import BlankPage
 import repository
 from repository.fulltext import BOLD_ON, BOLD_OFF
 
-from sparql import search as sparql_search
-from sparql import namespaces, ns_prefix
+import sparql
 
 
 # Following is sent as JSON to web browser.
@@ -34,7 +33,7 @@ FIELD_DATA = { 'and': ['AND', 'AND NOT', 'OR', 'OR NOT', ],
                              },
                            { 'prompt': 'units',
                              'property': 'bsml:units',
-                             'relns':  ['equal'],
+                             'relns':  ['equal', 'not equal'],
                              'values': ['V', 'mV', '...'],  ## prefill with ?units from "?s bsml:units ?units"
                              },
                            { 'prompt': 'clock',
@@ -51,6 +50,11 @@ FIELD_DATA = { 'and': ['AND', 'AND NOT', 'OR', 'OR NOT', ],
              }
 
 
+
+## select distinct ?value where { ?s property ?value } order by ?value
+
+
+
 def template(data, params):
 #==========================
   return FIELD_DATA
@@ -60,20 +64,6 @@ def highlight(s):
 #===============
   x = xmlescape(s)
   return x.replace(BOLD_ON, '<b>').replace(BOLD_OFF, '</b>')
-
-
-def make_link(s):
-#===============
-  if s:
-    for ns, prefix in namespaces.iteritems():
-      if s.startswith(prefix):
-        local = s[len(prefix):]
-        link = xmlescape('%s:%s' % (ns, local))
-        if ns != 'repo': return link
-        else:
-           href = REPO_LINK + local
-           return '<a href="%s" id="%s" class="cluetip">%s</a>' % (href, s, link)
-  return ''
 
 
 class SearchGroup(object):
@@ -159,9 +149,9 @@ def searchform(data, session, param=''):
     for r in repository.fulltext.search(data['text']):
       logging.debug("ROW: %s", r)
       xml.append('<tr class="odd">' if odd else '<tr>')
-      xml.append('<td>%s</td><td>%s</td><td>%s</td><td>%s</td>' % (ns_prefix(r[0]),
-                                                                   make_link(r[1]),
-                                                                   ns_prefix(r[2]),
+      xml.append('<td>%s</td><td>%s</td><td>%s</td><td>%s</td>' % (sparql.abbreviate(r[0]),
+                                                                   sparql.make_link(r[1]),
+                                                                   sparql.abbreviate(r[2]),
                                                                    highlight(r[3])))
       xml.append('</tr>')
       odd = not odd
@@ -175,6 +165,9 @@ def searchform(data, session, param=''):
   ## Also check action = Search v's Advanced..
   # else:
   return BlankPage('Text search...',
+
+## Simple text search v's advanced...
+
     ## Add search box here.... (as a form, action=/search?, and advanced button/link??)
 #                  """<form action="/search" height="1">
 #                      <button name="action" prompt="Search" row="1" col="42"/>
@@ -193,32 +186,32 @@ def searchform(data, session, param=''):
 
 
 
-def sparql(data, session, param=''):
-#==================================
-  logging.debug('DATA: %s', data)
+def sparqlsearch(data, session, param=''):
+#========================================
+#  logging.debug('DATA: %s', data)
 
   query = data.get('query', '')
   if query:
-    results = sparql_search(query) ## , namespaces)
-    table = results[1] if results[0] else ''
+    result = sparql.search(query)
   else:
     table = ''
     p = [ ]
-    for ns, prefix in namespaces.iteritems():
-      p.append('PREFIX %s: <%s>' % (ns, prefix))
+    p.append(sparql.prologue())
     p.append('PREFIX fulltext: <fulltext:>')
     p.append('')
-    p.append('')
+    p.append('select * where {')
+    p.append('  ?s ?p ?o')
+    p.append('  } limit 20')
     query = '\n'.join(p) # Default namespace prefixes
 
   return BlankPage('SPARQL search...',
     ## Add search box here.... (as a form, action=/search?, and advanced button/link??)
-                   """<form action="/sparql" height="15">
+                   """<form action="/sparqlsearch" height="15">
                        <button name="action" prompt="Search" row="1" col="80"/>
                        <field name="query" prompt="SPARQL"
                          type="text"
                          rows="20" cols="75">%s</field>
                       </form>
                       %s
-                    """ % (xmlescape(query), table)
+                    """ % (xmlescape(query), result)
                      ).show(data, session)

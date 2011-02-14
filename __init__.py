@@ -4,21 +4,22 @@
 #
 #  Copyright (c) 2010  David Brooks
 #
-#  $Id$
+#  $Id: __init__.py,v eeabfc934961 2011/02/14 17:47:59 dave $
 #
 ######################################################
 
 
+import sys, os
 import RDF
 
 import metadata
 import fulltext
 
-from config import Options
+from utils.config import Options
 
 DEFAULTS = { 'repository':
-               { 'import_base': 'http://repository.biosignalml.org/signal/files',
-                 'signal_store': './signal/files',
+               { 'base':    'http://repository.biosignalml.org/signal/files',
+                 'signals': '~/biosignalml/signal/files',
                },
              'triplestore':
                { 'store':     'postgresql',      # Or 'mysql'
@@ -29,9 +30,11 @@ DEFAULTS = { 'repository':
                },
            }
 
-options = Options(DEFAULTS)
-if options.repository['import_base'][-1] not in '#/':
-  options.repository['import_base'] += '/'
+if hasattr(sys, "frozen"): path = os.path.dirname(sys.executable)
+else:                      path = os.path.dirname(__file__)
+if path == '': path = '.'
+options = Options(file='biosignalml.ini', path=path, defaults=DEFAULTS)
+if options.repository['base'][-1] not in '#/': options.repository['base'] += '/'
 
 
 def dbOptions(storeopts, create=False):

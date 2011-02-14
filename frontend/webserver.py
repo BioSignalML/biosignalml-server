@@ -4,7 +4,7 @@
 #
 #  Copyright (c) 2010  David Brooks
 #
-#  $Id: webserver.py,v a82ffb1e85be 2011/02/03 04:16:28 dave $
+#  $Id: webserver.py,v eeabfc934961 2011/02/14 17:47:59 dave $
 #
 ######################################################
 
@@ -16,11 +16,11 @@ import web, json
 from web.wsgiserver import CherryPyWSGIServer
 
 import xslt, xsl
-from utils import num, cp1252, xmlescape, nbspescape
+from utils import num, cp1252, xmlescape, nbspescape, unescape
 import webstream
 from sparql import query
 
-SESSION_TIMEOUT = 1200 # seconds  ## num(config.config['idletime'])
+SESSION_TIMEOUT = 1800 # seconds  ## num(config.config['idletime'])
 WEB_MODULE      = 'repository.frontend'  # We do a "import webpages from repository.frontend"
 
 web.config.debug = False
@@ -39,9 +39,9 @@ webapp = web.application(urls, globals())
 dispatch = [ ('comet/metadata',      'biosignalml.metadata',   'json'),
              ('comet/search/setup',  'search.template',        'json'),
              ('comet/stream',        'comet.stream',           'json'),
-             ('recordings',          'biosignalml.recordings', 'html'),
+             ('repository',          'biosignalml.repository', 'html'),
              ('searchform',          'search.searchform',      'html'),
-             ('sparql',              'search.sparql',          'html'),
+             ('sparqlsearch',        'search.sparqlsearch',    'html'),
              ('logout',              'webpages.logout',        'html'),
              ('login',               'webpages.login',         'html'),
              ('',                    'webpages.index',         'html'),
@@ -127,7 +127,8 @@ class index(object):
       session.kill()
       fun = mod.index
 
-    submitted = web.input(_method = method)
+    submitted = dict([ (k, unescape(v))
+                         for k, v in web.input(_method = method, _unicode=True).iteritems() ])
     if responsetype == 'html':
       try:
         xml = fun(submitted, session, params)

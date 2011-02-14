@@ -4,7 +4,7 @@
 #
 #  Copyright (c) 2010  David Brooks
 #
-#  $Id: menu.py,v a82ffb1e85be 2011/02/03 04:16:28 dave $
+#  $Id: menu.py,v eeabfc934961 2011/02/14 17:47:59 dave $
 #
 ######################################################
 
@@ -25,9 +25,9 @@ UPDATEMENU = """<menu></menu>"""
 
 def VIEWERMENU(level):
 #=====================
-  return """<menu prompt="View Recordings"   action="recordings"></menu>
-            <menu prompt="Search Recordings" action="searchform"></menu>
-            <menu prompt="SPARQL Query"      action="sparql"></menu>"""
+  return """<menu prompt="View Repository"   action="repository"></menu>
+            <menu prompt="Search Repository" action="searchform"></menu>
+            <menu prompt="SPARQL Query"      action="sparqlsearch"></menu>"""
 
 LOGINMENU  = """<menu prompt="Login"  action="login"/>"""
 LOGOUTMENU = """<menu prompt="Logout" action="logout"/>"""
@@ -81,6 +81,6 @@ def hasaction(action):
 if __name__ == "__main__":
 #=========================
   menu = MAINMENU()
-  print hasaction('recordings')
+  print hasaction('repository')
   print hasaction('users')
   print hasaction('login')

@@ -4,7 +4,7 @@
 #
 #  Copyright (c) 2010  David Brooks
 #
-#  $Id$
+#  $Id: importers.py,v eeabfc934961 2011/02/14 17:47:59 dave $
 #
 ######################################################
 
@@ -35,8 +35,8 @@ from repository import options
 from metadata import NS
 from bsml import Recording
 
-from edf import EDFRecording
-import edf.minerva
+from fileformats.edf import EDFRecording
+import fileformats.edf.minerva
 
 
 class FileImport(threading.Thread):
@@ -49,7 +49,7 @@ class FileImport(threading.Thread):
     self._extension = '*.%s' % extension
     ##os.path.join(path, '*.%s' % extension))
     logging.debug("Importer loaded for '%s'", self._extension)
-    self._importNS = NS(options.repository['import_base'])
+    self._importNS = NS(options.repository['base'])
     self._interval = interval
     self._running = False
     self.start()
@@ -73,14 +73,14 @@ class FileImport(threading.Thread):
         fullname = os.path.join(root, fname)
         filename = os.path.relpath(fullname, self._searchpath)
         uri = self._importNS[os.path.splitext(filename)[0]].uri
-        storename = os.path.normpath(os.path.join(options.repository['signal_store'], filename))
-        try:    os.makedirs(os.path.dirname(storename))
+        signalstore = os.path.normpath(os.path.join(options.repository['signals'], filename))
+        try:    os.makedirs(os.path.dirname(signalstore))
         except: pass
         try:     ################## CHECK NOT IN STORE
-          shutil.move(fullname, storename)          ## Move first, before importing metadata
+          shutil.move(fullname, signalstore)          ## Move first, before importing metadata
           ## Better to try import then move? So if error can reset?
           ## Also need to log to file... NO, better to add provenance triples
-          self.save_metadata(storename, uri)
+          self.save_metadata(signalstore, uri)
         except Exception, msg:
           logging.error("Error importing '%s': %s", fullname, msg)
           raise  ##################
@@ -115,7 +115,7 @@ class MinervaEvent(FileImport):
 
     ## What if recording not yet in repository...
 
-    m = edf.minerva.EventFile(filepath)
+    m = fileformats.edf.minerva.EventFile(filepath)
     m.read_header()
     events = m.read_events()
     for n, e  in enumerate(events):

@@ -4,7 +4,7 @@
 #
 #  Copyright (c) 2010  David Brooks
 #
-#  $Id: biosignalml.py,v a82ffb1e85be 2011/02/03 04:16:28 dave $
+#  $Id: biosignalml.py,v eeabfc934961 2011/02/14 17:47:59 dave $
 #
 ######################################################
 
@@ -14,16 +14,14 @@ import logging
 from utils import xmlescape, maketime, trimdecimal, chop
 from page import BlankPage
 
-import repository
+import repository.model as repo
 import mktree
-from sparql import search as sparql_search
-from sparql import namespaces, ns_prefix
+import sparql
 
 #########
 import metadata as meta
 import bsml.signal
 from bsml import BSML, Recording
-from metadata import model as triplestore
 #########
 
 
@@ -107,7 +105,7 @@ signal_metadata = [ ('Id',    'uri',   (chop, ['n'])),
 def signal_details(recuri, signal=None):
 #======================================
   lenhdr = len(recuri) + 1
-  recording = repository.model.get_recording(recuri)
+  recording = repo.get_recording(recuri)
   xml = [ '<table>' ]
   odd = True
   xml.append('<tr>%s</tr>' % table_header(signal_metadata))
@@ -120,6 +118,26 @@ def signal_details(recuri, signal=None):
     odd = not odd
   xml.append('</table>')
   return ''.join(xml)
+
+
+
+def event_details(recuri, signal=None):
+#======================================
+  lenhdr = len(recuri) + 1
+  recording = repo.get_recording(recuri)
+  xml = [ '<table>' ]
+  odd = True
+  xml.append('<tr>%s</tr>' % table_header(signal_metadata))
+  for sig in recording.signals():
+    xml.append('<tr class="selected">' if str(sig.uri) == signal
+          else '<tr class="odd">'      if odd
+          else '<tr>')
+    xml.append(property_details(sig, signal_metadata, True, n=lenhdr))
+    xml.append('</tr>')
+    odd = not odd
+  xml.append('</table>')
+  return ''.join(xml)
+
 
 
 recording_metadata = [ ('Desc',     'description',    None),
@@ -138,14 +156,15 @@ def build_metadata(uri):
   html = [ '<div class="metadata">' ]
   if uri:
     source = meta.Uri(uri)
-    objtype = triplestore.get_target(source, meta.rdf.type)
+    objtype = repo.triplestore.get_target(source, meta.rdf.type)
     if   objtype == BSML.Recording:
-      rec = repository.model.get_recording(source)
+      rec = repo.get_recording(source)
       ## What about a local cache of opened recordings?? (keyed by uri)
-      ## in bsml.recordings module ?? in repository.model ??
+      ## in bsml.recordings module ?? in repo ??
       html.append(property_details(rec, recording_metadata, False))
     elif objtype == BSML.Signal:
-      pass
+      sig = repo.get_signal(source)
+      html.append(property_details(sig, signal_metadata, False))
     elif objtype == BSML.Annotation:
       html.append('annotation comment, time, etc')
   html.append('</div>')
@@ -161,11 +180,11 @@ def metadata(data, params):
 
 # Generate tree of recordings along with details of signals when recording clicked on.
 
-REPO_LINK = '/recordings/'       #  Prefix to repository objects 
+REPOSITORY = '/repository/'       #  Prefix to repository objects 
 
-def recordings(data, session, record=''):
+def repository(data, session, record=''):
 #=======================================
-  prefix = namespaces['repo'][:-1]
+  prefix = sparql.querybase[:-1]
   if record:
     recuri = '%s/%s' % (prefix, record)
     baserec = bsml.signal.recording(recuri)
@@ -175,11 +194,11 @@ def recordings(data, session, record=''):
     else:
       sig = None
     return BlankPage(recuri,
-                      xmltree(repository.model.recordings(), prefix, REPO_LINK, record)
+                      xmltree(repo.recordings(), prefix, REPOSITORY, record)
                     + build_metadata(recuri)
                     + signal_details(recuri, sig)
                      ).show(data, session)
   else:
     return BlankPage('Recordings in "repo:" (%s)' % prefix,
-                      xmltree(repository.model.recordings(), prefix, REPO_LINK)
+                      xmltree(repo.recordings(), prefix, REPOSITORY)
                      ).show(data, session)

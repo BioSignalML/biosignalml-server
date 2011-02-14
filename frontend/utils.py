@@ -4,7 +4,7 @@
 #
 #  Copyright (c) 2010  David Brooks
 #
-#  $Id$
+#  $Id: utils.py,v eeabfc934961 2011/02/14 17:47:59 dave $
 #
 ######################################################
 
@@ -56,7 +56,12 @@ def nbspescape(s):
 def xmlescape(s):
 #===============
   if s:
-    return s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+    return s.replace('&',
+                     '&amp;').replace('<',
+                                      '&lt;').replace('>',
+                                                      '&gt;').replace('"',
+                                                                      '&quot;').encode('ascii',
+                                                                                       'xmlcharrefreplace')
   else:
     return ''
 
@@ -112,6 +117,39 @@ def hexdump(s, prompt='', offset=0):
     sp += j
     if l > 0: h.append('\n' + offset*' ')
   return ''.join(h)
+
+#############################################################
+##
+## From http://effbot.org/zone/re-sub.htm#unescape-html
+
+import re, htmlentitydefs
+
+##
+# Removes HTML or XML character references and entities from a text string.
+#
+# @param text The HTML (or XML) source text.
+# @return The plain text, as a Unicode string, if necessary.
+
+def unescape(text):
+  def fixup(m):
+    text = m.group(0)
+    if text[:2] == "&#":  # character reference
+      try:
+        if text[:3] == "&#x": return unichr(int(text[3:-1], 16))
+        else:                 return unichr(int(text[2:-1]))
+      except ValueError:
+        pass
+    else:                 # named entity
+      try:
+        text = unichr(htmlentitydefs.name2codepoint[text[1:-1]])
+      except KeyError:
+        pass
+    return text           # leave as is
+  return re.sub("&#?\w+;", fixup, text)
+
+##
+#############################################################
+
 
 
 if __name__ == '__main__':
