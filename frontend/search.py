@@ -187,15 +187,15 @@ def searchquery(data, params):
     sparql.append('PREFIX fulltext: <fulltext:>')
     sparql.append('')
     # Redland 'distinct' is buggy..
-    sparql.append('select ?s where {')
+    sparql.append('select ?s ?t where {')
     sparql.append(query)
-    sparql.append('?s rdf:type %s .' % stype)
+    sparql.append('?s rdf:type ?t .')   ##  % stype)
     sparql.append('}')
     subjects = set()
     rows = repo.triplestore.query('\n'.join(sparql))
     rows.next()     # Skip header
     for r in rows:
-      if r[0]: subjects.add(unicode(r[0]))
+      if r[0]: subjects.add((unicode(r[0]), unicode(r[1]) if r[1] else ''))
     return subjects
 
 
@@ -236,7 +236,9 @@ def searchquery(data, params):
   sigs = list(sigs)
   sigs.sort()
 
-  return { 'html': '<p>' + '</p><p>'.join([ xmlescape(s) for s in sigs ]) + '</p>' }
+  return { 'html': '<p>' + '</p><p>'.join(
+   [ sparql.make_link(s) + ' ' + sparql.make_link(t) for s, t in sigs ]
+   ) + '</p>' }
 
   ## We need a SignalSet, created from the list of signal uris
 
