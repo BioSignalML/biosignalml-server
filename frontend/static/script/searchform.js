@@ -9,18 +9,6 @@
  ****************************************************/
 
 
-function rename() {
- $('form > div.search > div.line').each(function(line) {
-  $(this).find('.col1 select').attr({'name': 'L' + line + 'LINE'}) ;
-  $(this).find('.col2 .group').each(function(grp) {
-   $(this).find('select:not(.fld4), input').each(function(fld) {
-    $(this).attr({'name': 'L' + line + 'G' + grp + 'F' + fld})
-    }) ;
-   $(this).find('select.fld4').attr({'name': 'L' + line + 'G' + grp + 'TERM' }) ;
-   });
-  }) ;
- }
-
 var fields      = [ ] ;   // Content sent from server
 var group       = null ;  // Set when fields received
 var group_relns = null ;
@@ -49,7 +37,7 @@ function type_list() {
 
 function got_type() {
  var fld_index = this.value ; 
- if (fld_index >= 0) {
+ if (fld_index != '') {
   var fld = fields[fld_index] ;
   $(this.nextElementSibling).replaceWith(search_tests(fld).addClass('fld2')) ;
   $(this.nextElementSibling
@@ -73,7 +61,6 @@ function got_type() {
    .nextElementSibling
    .nextElementSibling).replaceWith('<span class="fld4"></span>') ;
   }
- rename() ;
  }
 
 function search_tests(fld) {
@@ -115,7 +102,29 @@ function change_group_reln() {
   if (this.parentNode.nextElementSibling) this.value = this.savedValue ;
   else                                    this.firstElementChild.text = "Expand..." ;
   }
- rename() ;
+ }
+
+
+function get_data() {   // When form is submitted
+ var data = { } ;
+ $('form > div.search > div.line').each(function(line) {
+  $(this).find('.col1 select').each(function(fld) {
+    data['L' + line + 'LINE'] = this.value ;
+    }) ;
+  $(this).find('.col2 .group').each(function(grp) {
+   $(this).find('select:not(.fld4), input').each(function(fld) {
+    if (fld > 0 && this.value == '') {
+     alert('Missing test or search value') ;
+     return '' ;
+     }
+    data['L' + line + 'G' + grp + 'F' + fld] = this.value ;
+    }) ;
+   $(this).find('select.fld4').each(function(fld) {
+    data['L' + line + 'G' + grp + 'TERM'] = this.value ;
+    }) ;
+   }) ;
+  }) ;
+ return data ;
  }
 
 
@@ -157,7 +166,6 @@ $(document).ready(function() {
     .insertAfter('div.search div.line:last-child') ;
    $('div.search div.line:last-child > .col2 > span.group').replaceWith(group.clone()) ;
    if ($('div.search div.line').length == 5) $(this).hide() ;
-   rename() ;
    }
   return false ;
   }) ;
@@ -165,7 +173,25 @@ $(document).ready(function() {
  $('button.del').click(function() {
   $(this).parent().parent().remove() ;
   $('button.add').show() ;
-  rename() ;
+  }) ;
+
+ $('form#searchform').submit(function() {
+  var searchdata = get_data() ;
+  if (searchdata != '') {
+   $.ajax({
+    url: '/comet/search/query',
+    type: 'POST',
+    data: searchdata,
+    dataType: 'json',
+    complete:
+     function(response, status) {
+      if (status == 'success') {
+       var results = response.responseText ;
+       }
+      }
+    }) ;
+   }
+  return false ;
   }) ;
 
  }) ;

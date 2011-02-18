@@ -134,9 +134,9 @@ class SearchGroup(object):
       grouplist.append(((self._index, self._test, self._value), self._termreln))
 
 
-def searchform(data, session, param=''):
-#======================================
-  #logging.debug('DATA: %s', data)
+def searchquery(data, params):
+#============================
+  logging.debug('DATA: %s', data)
 
   # check data.get('action', '') == 'Search'
 
@@ -254,7 +254,6 @@ def searchform(data, session, param=''):
   for op, line in lines:
     if op: print '%s ' % op
     print '( %s )' % expr(line)
-  """
 
   searchtext = data.get('text', '')
   if searchtext:
@@ -273,11 +272,18 @@ def searchform(data, session, param=''):
   else:
     xml = [ ]
 
+  """
+
+  return { 'results': 'stuff to display...' }
 
    ## Lookup up text
   # Advanced will have other data fields...
   ## Also check action = Search v's Advanced..
   # else:
+
+def searchform(data, session, param=''):
+#=======================================
+
   return BlankPage('Text search...',
 
 ## Simple text search v's advanced...

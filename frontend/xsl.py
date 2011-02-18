@@ -385,7 +385,7 @@ PAGEXSL = """<?xml version='1.0'?>
           <!--==========================-->
            <div class="formbox">
             <div class="form">
-             <form method="post" action="{@action}" id="form" autocomplete="off">
+             <form method="post" action="{@action}" id="searchform" autocomplete="off">
               <div class="search">
                <div class="line">
                 <div class="col1">
