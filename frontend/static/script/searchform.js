@@ -11,36 +11,47 @@
 
 function rename() {
  $('form > div.search > div.line').each(function(line) {
-  $(this).find('.col1 select').attr({'name': 'L' + line + 'AND'}) ;
+  $(this).find('.col1 select').attr({'name': 'L' + line + 'LINE'}) ;
   $(this).find('.col2 .group').each(function(grp) {
    $(this).find('select:not(.fld4), input').each(function(fld) {
     $(this).attr({'name': 'L' + line + 'G' + grp + 'F' + fld})
     }) ;
-   $(this).find('select.fld4').attr({'name': 'L' + line + 'G' + grp + 'OR' }) ;
+   $(this).find('select.fld4').attr({'name': 'L' + line + 'G' + grp + 'TERM' }) ;
    });
   }) ;
  }
 
-var fields     = [ ] ;   // Content sent from server
-var group      = null ;  // Set when fields received
-var or_values  = null ;
+var fields      = [ ] ;   // Content sent from server
+var group       = null ;  // Set when fields received
+var group_relns = null ;
 
 
-function search_types() {
+function select_list(prompt, options, nbr) {
  sel = [ '<select>' ] ;
- sel.push(' <option value="0">Please select:</option>') ;
- for (var i in fields) {
-  sel.push('  <option value="' + String(Number(i)+1) + '">Search ' + fields[i].prompt + '</option>') ;
+ if (prompt != '') sel.push(' <option value="">' + prompt + '</option>') ;
+ for (var i in options) {
+  if (nbr) sel.push('  <option value="' + String(Number(i)) + '">' + options[i] + '</option>') ;
+  else     sel.push('  <option>'                                   + options[i] + '</option>') ;
   }
  sel.push('</select>') ;
- return $(sel.join('\n')).addClass('fld1').change(got_type) ;
+ return $(sel.join('\n')) ;
+ }
+
+function type_list() {
+ sel = [ '<select>' ] ;
+ sel.push(' <option value="">Please select:</option>') ;
+ for (var i in fields) {
+  sel.push('  <option value="' + String(Number(i)) + '">' + fields[i].prompt + '</option>') ;
+  }
+ sel.push('</select>') ;
+ return $(sel.join('\n'))
  }
 
 function got_type() {
- var fld_index = this.value - 1 ; 
+ var fld_index = this.value ; 
  if (fld_index >= 0) {
   var fld = fields[fld_index] ;
-  $(this.nextElementSibling).replaceWith(search_relns(fld).addClass('fld2')) ;
+  $(this.nextElementSibling).replaceWith(search_tests(fld).addClass('fld2')) ;
   $(this.nextElementSibling
    .nextElementSibling).replaceWith(search_values(fld).addClass('fld3')) ;
   if ($(this).parent().is('.col2 > .group:last-child')
@@ -49,10 +60,10 @@ function got_type() {
          .nextElementSibling
          .nextElementSibling)
     .replaceWith(
-        or_values.clone()
-                 .addClass('fld4')
-                 .focus(save_value)
-                 .change(change_or)) ;
+        group_relns.clone()
+                   .addClass('fld4')
+                   .focus(save_value)
+                   .change(change_group_reln)) ;
   }
  else {
   $(this.nextElementSibling).replaceWith('<span class="fld2"></span>') ;
@@ -65,34 +76,24 @@ function got_type() {
  rename() ;
  }
 
-function select_list(prompt, options) {
- sel = [ '<select>' ] ;
- if (prompt != '') sel.push(' <option value="0">' + prompt + '</option>') ;
- for (var i in options) {
-  sel.push('  <option value="' + String(Number(i)+1) + '">' + options[i] + '</option>') ;
+function search_tests(fld) {
+ if      (fld.tests.length > 1) {
+  return select_list('Select test:', fld.tests, true) ;
   }
- sel.push('</select>') ;
- return $(sel.join('\n')) ;
- }
-
-function search_relns(fld) {
- if      (fld.relns.length > 1) {
-  return select_list('Select reln:', fld.relns) ;
-  }
- else if (fld.relns.length == 1) {
-  return $('<span>' + fld.relns[0] + '</span>') ;
+ else if (fld.tests.length == 1) {
+  return $('<span>' + fld.tests[0] + '</span>') ;
   }
  return '' ;
  }
 
 function search_values(fld) {
  if (fld.values.length > 1) {
-  return select_list('Select value:', fld.values) ;
+  return select_list('Select value:', fld.values, false) ;
   }
- else if (fld.relns.length == 1) {
+ else if (fld.tests.length == 1) {
   return $('<input></input>') ;
   }
- return '' ;
+ return select_list('', fld.values) ;
  }
 
 function save_value() {
@@ -100,7 +101,7 @@ function save_value() {
  }
 
 
-function change_or() {
+function change_group_reln() {
  if (this.selectedIndex > 0) {
   // Only if we are the last group...
   if (this.parentNode.nextElementSibling == null) {
@@ -131,13 +132,20 @@ $(document).ready(function() {
            var data = JSON.parse(text) ;
            fields = data.fields ;
            group = $('<span class="group"></span>')
-             .append(search_types())
+             .append(type_list().addClass('fld1').change(got_type))
              .append('<span></span>')
              .append('<span></span>')
              .append('<span></span>') ;
-           select_list('', data.and).appendTo($('div.line > .col1')) ;
+           select_list('', data.relns).appendTo($('div.line > .col1')) ;
            group.clone().prependTo($('div.line > .col2')) ;
-           or_values = select_list('Expand...', data.or) ;
+           group_relns = select_list('Expand...', data.relns) ;
+
+           // Now go through any data sent with HTML <script> (as JSON) and
+           // populate...
+
+           // OR have [Search] button make a Comet request (so page doesnt get refreshed...)
+           // (and could then send an expression after first validity checking...)
+
            }
          }
        }
