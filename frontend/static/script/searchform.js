@@ -182,11 +182,15 @@ $(document).ready(function() {
     url: '/comet/search/query',
     type: 'POST',
     data: searchdata,
-    dataType: 'json',
     complete:
      function(response, status) {
       if (status == 'success') {
-       var results = response.responseText ;
+       var text = response.responseText ;
+       $('div#searchresults').empty() ;
+       if (text != '') {
+        var results = JSON.parse(text) ;
+        $('div#searchresults').append(results.html) ;
+        }
        }
       }
     }) ;

@@ -236,8 +236,7 @@ def searchquery(data, params):
   sigs = list(sigs)
   sigs.sort()
 
-
-  print sigs
+  return { 'html': '<p>' + '</p><p>'.join([ xmlescape(s) for s in sigs ]) + '</p>' }
 
   ## We need a SignalSet, created from the list of signal uris
 
@@ -274,9 +273,7 @@ def searchquery(data, params):
 
   """
 
-  return { 'results': 'stuff to display...' }
-
-   ## Lookup up text
+  ## Lookup up text
   # Advanced will have other data fields...
   ## Also check action = Search v's Advanced..
   # else:

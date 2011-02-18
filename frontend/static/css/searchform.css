@@ -18,6 +18,15 @@ div.form span {
  padding: 0 ;		/* Override inherited value */
  }
 
+div#searchresults {
+  display: inline-block ;
+  margin: 0 0 10px 10px ;
+  background-color: #69C;
+  border: 2px dotted #036;
+  padding: 10px ;
+  }
+
+
 div.search {
  margin-bottom: 20px ;
  }

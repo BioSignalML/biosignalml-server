@@ -403,6 +403,8 @@ PAGEXSL = """<?xml version='1.0'?>
              </form>
             </div>
            </div>
+           <div id="searchresults">
+           </div>
           </xsl:template>
 
           <xsl:template match="link">
