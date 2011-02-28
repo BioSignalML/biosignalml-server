@@ -18,6 +18,13 @@ div.form span {
  padding: 0 ;		/* Override inherited value */
  }
 
+#spinner {
+  position: absolute ;
+  top: 100px ;
+  width: 100% ;
+  text-align: center ;
+  }
+
 div#searchresults {
   display: inline-block ;
   margin: 0 0 10px 10px ;

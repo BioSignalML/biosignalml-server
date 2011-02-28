@@ -128,8 +128,43 @@ function get_data() {   // When form is submitted
  }
 
 
+function setup_result_click() {
+ $('.result').click(function () {
+  $('.result').css('background-color', 'white') ;
+  $(this).css('background-color', 'blue') ;
+  $("div#spinner").html("<img src='./static/img/ajax-loader.gif'>") ;
+  $.ajax({
+   url: '/comet/search/related',
+   type: 'POST',
+   data: { 'id': this.id },
+   complete:
+    function(response, status) {
+     if (status == 'success') {
+      var text = response.responseText ;
+      if (text != '') {
+       var related = JSON.parse(text) ;
+       for (n in related.ids)
+         $('#' + related.ids[n]).css('background-color', '#88F') ;
+       }
+      }
+     $("div#spinner").html(" ") ;
+     }
+   }) ;
+  } ) ;
+
+ $(".result").mouseover(function () {
+   $(this).css('color', '#C00') ;
+   } ) ;
+
+ $(".result").mouseout(function () {
+   $(this).css('color', '#000') ;
+   } ) ;
+ }
+
+
 $(document).ready(function() {
 
+ $("div#spinner").html("<img src='./static/img/ajax-loader.gif'>") ;
  $.ajax({
    url: '/comet/search/setup',
    type: 'POST',
@@ -157,6 +192,7 @@ $(document).ready(function() {
 
            }
          }
+       $("div#spinner").html(" ") ;
        }
    }) ;
 
@@ -178,6 +214,7 @@ $(document).ready(function() {
  $('form#searchform').submit(function() {
   var searchdata = get_data() ;
   if (searchdata != '') {
+   $("div#spinner").html("<img src='./static/img/ajax-loader.gif'>") ;
    $.ajax({
     url: '/comet/search/query',
     type: 'POST',
@@ -192,6 +229,8 @@ $(document).ready(function() {
         $('div#searchresults').append(results.html) ;
         }
        }
+      setup_result_click() ;
+      $("div#spinner").html(" ") ;
       }
     }) ;
    }

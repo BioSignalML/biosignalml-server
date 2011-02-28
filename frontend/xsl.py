@@ -383,6 +383,7 @@ PAGEXSL = """<?xml version='1.0'?>
 
           <xsl:template match="searchform">
           <!--==========================-->
+           <div id="spinner"></div>
            <div class="formbox">
             <div class="form">
              <form method="post" action="{@action}" id="searchform" autocomplete="off">

@@ -39,6 +39,7 @@ webapp = web.application(urls, globals())
 dispatch = [ ('comet/metadata',      'biosignalml.metadata',   'json'),
              ('comet/search/setup',  'search.template',        'json'),
              ('comet/search/query',  'search.searchquery',     'json'),
+             ('comet/search/related', 'search.related',        'json'),
              ('comet/stream',        'comet.stream',           'json'),
              ('repository',          'biosignalml.repository', 'html'),
              ('searchform',          'search.searchform',      'html'),

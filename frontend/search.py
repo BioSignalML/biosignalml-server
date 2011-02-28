@@ -236,9 +236,12 @@ def searchquery(data, params):
   sigs = list(sigs)
   sigs.sort()
 
-  return { 'html': '<p>' + '</p><p>'.join(
-   [ sparql.make_link(s) + ' ' + sparql.make_link(t) for s, t in sigs ]
-   ) + '</p>' }
+  html = [ '<div>' ]
+  for s, t in sigs:
+   html.append('<div class="result" id="%s">%s %s</div>'
+              % (s, sparql.make_link(s), sparql.make_link(t)))
+  html.append('</div>')
+  return { 'html': '\n'.join(html) }
 
   ## We need a SignalSet, created from the list of signal uris
 
@@ -279,6 +282,19 @@ def searchquery(data, params):
   # Advanced will have other data fields...
   ## Also check action = Search v's Advanced..
   # else:
+
+
+def related(data, params):
+#=========================
+  related = [ ]
+  clicked = data.get('id', '')
+
+  related.append('id...')
+
+  return { 'ids': related }
+
+
+
 
 def searchform(data, session, param=''):
 #=======================================
