@@ -163,6 +163,24 @@ class index(object):
   #--------------------
     return self._process('POST', name)
 
+  def PUT(self, name):
+  #-------------------
+    logging.debug('PUT: %s', name)
+    web.header('Allow', 'GET, POST')
+    raise web.HTTPError(405)  # Method Not Allowed
+
+  def DELETE(self, name):
+  #--------------------
+    logging.debug('DELETE: %s', name)
+    web.header('Allow', 'GET, POST')
+    raise web.HTTPError(405)  # Method Not Allowed
+
+  def HEAD(self, name):
+  #--------------------
+    logging.debug('HEAD: %s', name)
+    web.header('Allow', 'GET, POST')
+    raise web.HTTPError(405)  # Method Not Allowed
+
 
 class stream(object):
 #===================
