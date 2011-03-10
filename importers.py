@@ -28,12 +28,11 @@ Watch specified directories and import signal files:
 import threading
 import os, sys, glob, shutil, fnmatch
 import logging
-
 from time import sleep
 
+from model import Recording
 from repository import options
-from metadata import NS
-from bsml import Recording
+from rdfmodel import NS
 
 from fileformats.edf import EDFRecording
 import fileformats.edf.minerva
