@@ -14,14 +14,14 @@ import logging
 from utils import xmlescape, maketime, trimdecimal, chop
 from page import BlankPage
 
-import repository.model as repo
+import repository as repo
 import mktree
 import sparql
 
 #########
 import metadata as meta
-import bsml.signal
-from bsml import BSML, Recording
+from rdfmodel import Uri
+from bsml import BSML
 #########
 
 
@@ -79,7 +79,8 @@ def property_details(obj, properties, table, **args):
   cls = '</td>' if table else '</p>'
   r = [ ]
   for prm, prop, fn in properties:
-    v = getattr(obj, prop)
+    v = getattr(obj, prop, '')
+    if v is None: v = ''
     if fn:                    t = fn[0](v, *[ args[a] for a in fn[1] ] if fn[1] else [ ])
     elif isinstance(v, list): t = '<br/>'.join([ xmlescape(str(s)) for s in v ])
     else:                     t = xmlescape(str(v))
@@ -105,7 +106,7 @@ signal_metadata = [ ('Id',    'uri',   (chop, ['n'])),
 def signal_details(recuri, signal=None):
 #======================================
   lenhdr = len(recuri) + 1
-  recording = repo.get_recording(recuri)
+  recording = repo.get_recording_signals(recuri)
   xml = [ '<table>' ]
   odd = True
   xml.append('<tr>%s</tr>' % table_header(signal_metadata))
@@ -126,26 +127,17 @@ def event_details(recuri, signal=None):
   lenhdr = len(recuri) + 1
   recording = repo.get_recording(recuri)
   xml = [ '<table>' ]
-  odd = True
-  xml.append('<tr>%s</tr>' % table_header(signal_metadata))
-  for sig in recording.signals():
-    xml.append('<tr class="selected">' if str(sig.uri) == signal
-          else '<tr class="odd">'      if odd
-          else '<tr>')
-    xml.append(property_details(sig, signal_metadata, True, n=lenhdr))
-    xml.append('</tr>')
-    odd = not odd
   xml.append('</table>')
   return ''.join(xml)
 
 
 
-recording_metadata = [ ('Desc',     'description',    None),
-                       ('Created',  'start_datetime', None),
-                       ('Duration', 'duration',       (maketime, None)),
+recording_metadata = [ ('Desc',     'description',     None),
+                       ('Created',  'recording_start', None),
+                       ('Duration', 'recording_duration',       (maketime, None)),
                        ('Format',   'format',         None),
                        ('Study',    'investigation',  None),
-                       ('Comments', 'comments',       None),
+                       ('Comments', 'comment',        None),
                        ('Source',   'source',         None),
                      ]
 
@@ -155,7 +147,7 @@ def build_metadata(uri):
   logging.debug('Get metadata for: %s', uri)
   html = [ '<div class="metadata">' ]
   if uri:
-    source = meta.Uri(uri)
+    source = Uri(uri)
     objtype = repo.triplestore.get_target(source, meta.rdf.type)
     if   objtype == BSML.Recording:
       rec = repo.get_recording(source)
@@ -164,7 +156,7 @@ def build_metadata(uri):
       html.append(property_details(rec, recording_metadata, False))
     elif objtype == BSML.Signal:
       sig = repo.get_signal(source)
-      html.append(property_details(sig, signal_metadata, False))
+      html.append(property_details(sig, signal_metadata, False, n=0))
     elif objtype == BSML.Annotation:
       html.append('annotation comment, time, etc')
   html.append('</div>')
@@ -187,7 +179,7 @@ def repository(data, session, record=''):
   prefix = sparql.querybase[:-1]
   if record:
     recuri = '%s/%s' % (prefix, record)
-    baserec = bsml.signal.recording(recuri)
+    baserec = repo.signal_recording(recuri)
     if baserec:
       sig = recuri
       recuri = str(baserec)
