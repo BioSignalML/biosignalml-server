@@ -16,8 +16,8 @@ from utils import xmlescape
 from page import BlankPage
 
 import repository
+from repository import triplestore
 from repository.fulltext import BOLD_ON, BOLD_OFF
-from repository import model as repo
 
 import sparql
 
@@ -35,7 +35,7 @@ def _values(predicate, rtype):
 ##       + "\n\nselect ?v where { { ?s %s ?v } union { graph ?g { ?s %s ?v } } }"
 ##       % (predicate, predicate) )
          + "\n\nselect ?v where { ?s %s ?v }" % predicate )
-  rows = repo.triplestore.query(sparql)
+  rows = triplestore.query(sparql)
   rows.next()     # Skip header
   for r in rows:
     if r[0]:
@@ -192,7 +192,7 @@ def searchquery(data, params):
     sparql.append('?s rdf:type ?t .')   ##  % stype)
     sparql.append('}')
     subjects = set()
-    rows = repo.triplestore.query('\n'.join(sparql))
+    rows = triplestore.query('\n'.join(sparql))
     rows.next()     # Skip header
     for r in rows:
       if r[0]: subjects.add((unicode(r[0]), unicode(r[1]) if r[1] else ''))
