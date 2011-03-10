@@ -17,8 +17,8 @@ import web
 from fileformats.edf import EDFSource
 from fileformats.streaming import StreamSink
 from metadata import Uri, rdf
-from metadata import model as triplestore
 from bsml import Recording, Signal, BSML
+from repository import triplestore
 from repository import options
 
 
