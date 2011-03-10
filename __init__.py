@@ -12,14 +12,20 @@
 import sys, os
 import RDF
 
-import metadata
-import fulltext
 
+from bsml import BSML
+from model import Recording, Signal
+from model.mapping import Mapping  ## Need format specific table (or keep in RDF store against recording??)
+from metadata import rdf, rdfs, dct
+from rdfmodel import RDFModel, make_literal
 from utils.config import Options
 
+import fulltext
+
+
 DEFAULTS = { 'repository':
-               { 'base':    'http://repository.biosignalml.org/signal/files',
-                 'signals': '~/biosignalml/signal/files',
+               { 'base':    'http://repository.biosignalml.org/recordings',
+                 'signals': '~/biosignalml/recordings',
                },
              'triplestore':
                { 'store':     'postgresql',      # Or 'mysql'
@@ -37,8 +43,8 @@ options = Options(file='biosignalml.ini', path=path, defaults=DEFAULTS)
 if options.repository['base'][-1] not in '#/': options.repository['base'] += '/'
 
 
-def dbOptions(storeopts, create=False):
-#======================================
+def _dbOptions(storeopts, create=False):
+#=======================================
   opts = storeopts.copy()
   opts['contexts'] = 'yes'
   opts['index-predicates'] = 1
@@ -46,20 +52,65 @@ def dbOptions(storeopts, create=False):
   return ', '.join([("%s='%s'" % (n, v)) for n, v in opts.iteritems() if n != 'store'])
 
 
-def openstore():
-#===============
+def _openstore():
+#================
   dbopts = options.triplestore
   dbname = dbopts['database']
   dbtype = dbopts['store']
   try:
-    store = RDF.Storage(name=dbname, storage_name=dbtype, options_string=dbOptions(dbopts))
+    store = RDF.Storage(name=dbname, storage_name=dbtype, options_string=_dbOptions(dbopts))
   except RDF.RedlandError:
-    store = RDF.Storage(name=dbname, storage_name=dbtype, options_string=dbOptions(dbopts, True))
-  metadata.initialise(store)
-
+    store = RDF.Storage(name=dbname, storage_name=dbtype, options_string=_dbOptions(dbopts, True))
   fulltext.initialise(dbopts)
+  return RDFModel(store)
 
 
-openstore()
+triplestore = _openstore()
 
-import model as model
+
+
+
+def _recordings(properties):
+#==========================
+  r = [ (s, [ [ make_literal(t, '')
+                  for t, sg in triplestore.get_targets_context(s, p) if sg == g ]
+                    for p in properties ])
+                      for s, g in triplestore.get_sources_context(rdf.type, BSML.Recording)
+                        if s == g ]
+  r.sort()
+  return r
+
+def recordings():
+#===============
+  return [ Recording(s)
+    for s, g in triplestore.get_sources_context(rdf.type, BSML.Recording) if s == g ]
+
+
+def get_recording(uri):
+#=====================
+  return Recording.create_from_RDFmodel(uri, triplestore, Mapping())  ## New Mapping...
+
+def get_recording_signals(uri):
+#==============================
+  rec = get_recording(uri)
+  rec.signals_from_RDFmodel(triplestore, Mapping())                   ## New Mapping...
+  return rec
+
+
+def signal_recording(uri):
+#=========================
+  return triplestore.get_property(uri, BSML.recording)
+
+
+def get_signal(uri):
+#===================
+  return Signal.create_from_RDFmodel(uri, triplestore, Mapping())     ## New Mapping...
+
+
+def signal(sig, properties):              # In context of signal's recording...
+#===========================
+  if triplestore.contains((sig, rdf.type, BSML.Signal)):
+    r = [ [ make_literal(t, '') for t in triplestore.get_targets(sig, p) ] for p in properties ]
+    r.sort()
+    return r
+  else: return None
