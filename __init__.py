@@ -15,7 +15,8 @@ import RDF
 
 from bsml import BSML
 from model import Recording, Signal
-from model.mapping import Mapping  ## Need format specific table (or keep in RDF store against recording??)
+from model.mapping import bsml_mapping
+
 from metadata import rdf, rdfs, dct
 from rdfmodel import RDFModel, make_literal
 from utils.config import Options
@@ -88,12 +89,12 @@ def recordings():
 
 def get_recording(uri):
 #=====================
-  return Recording.create_from_RDFmodel(uri, triplestore, Mapping())  ## New Mapping...
+  return Recording.create_from_RDFmodel(uri, triplestore, bsml_mapping)
 
 def get_recording_signals(uri):
 #==============================
   rec = get_recording(uri)
-  rec.signals_from_RDFmodel(triplestore, Mapping())                   ## New Mapping...
+  rec.signals_from_RDFmodel(triplestore, bsml_mapping)
   return rec
 
 
@@ -104,7 +105,7 @@ def signal_recording(uri):
 
 def get_signal(uri):
 #===================
-  return Signal.create_from_RDFmodel(uri, triplestore, Mapping())     ## New Mapping...
+  return Signal.create_from_RDFmodel(uri, triplestore, bsml_mapping)
 
 
 def signal(sig, properties):              # In context of signal's recording...
