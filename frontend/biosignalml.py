@@ -79,13 +79,14 @@ def property_details(obj, properties, table, **args):
   cls = '</td>' if table else '</p>'
   r = [ ]
   for prm, prop, fn in properties:
-    v = getattr(obj, prop, '')
-    if v is None: v = ''
-    if fn:                    t = fn[0](v, *[ args[a] for a in fn[1] ] if fn[1] else [ ])
-    elif isinstance(v, list): t = '<br/>'.join([ xmlescape(str(s)) for s in v ])
-    else:                     t = xmlescape(str(v))
-    if table: r.append(t)
-    elif v:   r.append(prm + ': ' + t) if prm else r.append(t)
+    v = getattr(obj, prop, None)
+    if v is None: r.append('')
+    else:
+      if fn:                    t = fn[0](v, *[ args[a] for a in fn[1] ] if fn[1] else [ ])
+      elif isinstance(v, list): t = '<br/>'.join([ xmlescape(str(s)) for s in v ])
+      else:                     t = xmlescape(unicode(v))
+      if table: r.append(t)
+      elif v:   r.append(prm + ': ' + t) if prm else r.append(t)
   return opn + (cls + opn).join(r) + cls
 
 
