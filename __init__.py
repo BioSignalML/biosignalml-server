@@ -69,23 +69,10 @@ def _openstore():
 triplestore = _openstore()
 
 
-
-
-def _recordings(properties):
-#==========================
-  r = [ (s, [ [ make_literal(t, '')
-                  for t, sg in triplestore.get_targets_context(s, p) if sg == g ]
-                    for p in properties ])
-                      for s, g in triplestore.get_sources_context(rdf.type, BSML.Recording)
-                        if s == g ]
-  r.sort()
-  return r
-
 def recordings():
 #===============
   return [ Recording(s)
     for s, g in triplestore.get_sources_context(rdf.type, BSML.Recording) if s == g ]
-
 
 def get_recording(uri):
 #=====================
