@@ -9,7 +9,7 @@ def maketree(nodes, prefix):
   for node in nodes:
     path = str(node.uri)[namestart:]
     components = path.split('/')
-    if components[0] == '':  components[0] = '/'
+    if components[0] == '': components[0] = '/'
     if components[-1] == '': del components[-1]
     else:                    components[-1] = (components[-1], path, node)
     tree = addpath(components, tree)
@@ -24,16 +24,13 @@ def addpath(c, t):
   t[c[0]] = addpath(c[1:], t1)
   return t
 
-def _text(k):
-#============
-  if isinstance(k, tuple): return _text(k[0])
-  else:                    return str(k)  
 
 def sort(t):
 #===========
   if t == { }: return [ ]
-  return sorted([ (k, sort(v)) for k, v in t.iteritems() ],
-                cmp=lambda x,y: cmp(_text(x).lower(), _text(y).lower()))
+  l = [ (k, sort(v)) for k, v in t.iteritems() ]
+  l.sort()
+  return l
 
 
 

@@ -11,11 +11,12 @@
 
 import logging
 
+from utils import cp1252, num, xmlescape
 from webserver import sessionGet, sessionSet
 
 
-def stream(data, session, params):
-#=================================
+def stream(get, post, params):
+#============================
   msgs = [ ]
   alerts = [ ]
   return {'message': ''.join(msgs),

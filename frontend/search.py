@@ -16,8 +16,8 @@ from utils import xmlescape
 from page import BlankPage
 
 import repository
-from repository import triplestore
 from repository.fulltext import BOLD_ON, BOLD_OFF
+from repository import model as repo
 
 import sparql
 
@@ -35,7 +35,7 @@ def _values(predicate, rtype):
 ##       + "\n\nselect ?v where { { ?s %s ?v } union { graph ?g { ?s %s ?v } } }"
 ##       % (predicate, predicate) )
          + "\n\nselect ?v where { ?s %s ?v }" % predicate )
-  rows = triplestore.query(sparql)
+  rows = repo.triplestore.query(sparql)
   rows.next()     # Skip header
   for r in rows:
     if r[0]:
@@ -84,8 +84,8 @@ SEARCH_FIELDS = [ { 'prompt': 'having text',
 # Build search template that is sent as JSON to web browser.
 # Field names have to match that in static/scripts/searchform.js
 
-def template(data, session, params):
-#===================================
+def template(data, params):
+#==========================
   fields = [ ]
   for f in SEARCH_FIELDS:
     values = f['values'] if f['values'] != [ ] else _values(f['property'], f.get('type', str))
@@ -134,8 +134,8 @@ class SearchGroup(object):
       grouplist.append(((self._index, self._test, self._value), self._termreln))
 
 
-def searchquery(data, session, params):
-#=====================================
+def searchquery(data, params):
+#============================
   logging.debug('DATA: %s', data)
 
   # check data.get('action', '') == 'Search'
@@ -182,7 +182,6 @@ def searchquery(data, session, params):
 # This goes into repository.model....
 
   def sparql_find(stype, query):
-  #-----------------------------
     sparql = [ ]
     sparql.append(PREFIXES)
     sparql.append('PREFIX fulltext: <fulltext:>')
@@ -193,23 +192,23 @@ def searchquery(data, session, params):
     sparql.append('?s rdf:type ?t .')   ##  % stype)
     sparql.append('}')
     subjects = set()
-    rows = triplestore.query('\n'.join(sparql))
+    rows = repo.triplestore.query('\n'.join(sparql))
     rows.next()     # Skip header
     for r in rows:
       if r[0]: subjects.add((unicode(r[0]), unicode(r[1]) if r[1] else ''))
     return subjects
 
+
 ##############################################
 
+
   def join(s1, op, s2):
-  #--------------------
     if   op == 'OR':      return s1.union(s2)
     elif op == 'AND':     return s1.intersection(s2)
     elif op == 'AND NOT': return s1.difference(s2)
     else:                 return s1
 
   def termsearch(term):
-  #--------------------
     field = SEARCH_FIELDS[term[0]]
     sparql = field['sparql']
     if term[1] >= 0:
@@ -220,8 +219,8 @@ def searchquery(data, session, params):
     return sparql_find('bsml:Signal',
                        sparql % { 'property': field['property'], 'test': test, 'value': term[2] })
 
+
   def linesearch(line):
-  #--------------------
     sigs = set()
     nextop = 'OR'
     for term, op in line:
@@ -250,7 +249,6 @@ def searchquery(data, session, params):
 
   """
   def expr(line):
-  #--------------
     ex = [ ]
     for term, op in line:
       ex.append('( %s )' % str(term))
@@ -286,8 +284,8 @@ def searchquery(data, session, params):
   # else:
 
 
-def related(data, session, params):
-#==================================
+def related(data, params):
+#=========================
   related = [ ]
   clicked = data.get('id', '')
 

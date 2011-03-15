@@ -17,12 +17,8 @@ from web.wsgiserver import CherryPyWSGIServer
 
 import xslt, xsl
 from utils import num, cp1252, xmlescape, nbspescape, unescape
-
-import recording
-from recording import Rest
-
-from sparql import query     #### REMOVE... (Use RedStore for SPARQL...??)
-
+import webstream
+from sparql import query
 
 SESSION_TIMEOUT = 1800 # seconds  ## num(config.config['idletime'])
 WEB_MODULE      = 'repository.frontend'  # We do a "import webpages from repository.frontend"
@@ -32,31 +28,26 @@ web.config.debug = False
 
 pagexsl = None   # Initialise once we start running
 
-urls = ( '/(recording)',    'Rest',
-         '/(recording/.*)', 'Rest',
-
-         '/query/(.*)',     'query',
-         '/(.*)',           'Index',
+urls = (
+         '/(stream)',   'stream',
+         '/query/(.*)', 'query',
+         '/(.*)',       'index',
        )
 
 webapp = web.application(urls, globals())
 
-dispatch = [ ('comet/metadata',       'biosignalml.metadata',   'json'),
-             ('comet/search/setup',   'search.template',        'json'),
-             ('comet/search/query',   'search.searchquery',     'json'),
+dispatch = [ ('comet/metadata',      'biosignalml.metadata',   'json'),
+             ('comet/search/setup',  'search.template',        'json'),
+             ('comet/search/query',  'search.searchquery',     'json'),
              ('comet/search/related', 'search.related',        'json'),
-             ('comet/stream',         'comet.stream',           'json'),
-
-             ('repository',           'biosignalml.repository', 'html'),
-             ('searchform',           'search.searchform',      'html'),
-             ('sparqlsearch',         'search.sparqlsearch',    'html'),
-
-             ('logout',               'webpages.logout',        'html'),
-             ('login',                'webpages.login',         'html'),
-             ('',                     'biosignalml.repository', 'html'),
-##             ('',                     'webpages.index',         'html'),
+             ('comet/stream',        'comet.stream',           'json'),
+             ('repository',          'biosignalml.repository', 'html'),
+             ('searchform',          'search.searchform',      'html'),
+             ('sparqlsearch',        'search.sparqlsearch',    'html'),
+             ('logout',              'webpages.logout',        'html'),
+             ('login',               'webpages.login',         'html'),
+             ('',                    'webpages.index',         'html'),
            ]
-
 
 def get_processor(path):
 #=======================
@@ -65,9 +56,6 @@ def get_processor(path):
       params = path[len(p)+1:] if path.startswith(p + '/') else ''
       return f.rsplit('.', 1) + [ params, t ]
   return [ 'webpages', 'index', '', 'html' ]
-
-
-web.config.session_parameters['timeout'] = SESSION_TIMEOUT
 
 
 class Session(web.session.Session):
@@ -79,7 +67,6 @@ class Session(web.session.Session):
     self._save()
     user.logout()
     raise web.seeother('/login?expired')
-
 
 if web.config.get('_session') is None:
   session = Session(webapp, web.session.DiskStore('sessions'),
@@ -106,21 +93,8 @@ def sessionSet(key, value):
 import user, menu
 
 
-class Index(object):
+class index(object):
 #===================
-
-  @staticmethod
-  def _call(fun, submitted, session, params):
-  #------------------------------------------
-    try:
-      return (fun(submitted, session, params), '')
-    except web.HTTPError, msg:
-      logging.error('Errors loading page: %s', str(msg))
-      raise
-    except Exception, msg:
-      logging.error('Errors loading page: %s', str(msg))
-      logging.error('Error loading page: %s', traceback.format_exc())
-    return ('', '')
 
   def _process(self, method, path):
   #--------------------------------
@@ -157,16 +131,26 @@ class Index(object):
 
     submitted = dict([ (k, unescape(v))
                          for k, v in web.input(_method = method, _unicode=True).iteritems() ])
-
     if responsetype == 'html':
-      xml, err = self._call(fun, submitted, session, params)
-      if not xml: xml = '<page alert="Page can not be loaded... %s"/>' % xmlescape(str(err))
+      try:
+        xml = fun(submitted, session, params)
+      except Exception, msg:
+        if str(msg) == "303 See Other": raise
+        logging.error('Errors loading page: %s', str(msg))
+        logging.error('Error loading page: %s', traceback.format_exc())
+        xml = '<page alert="Page can not be loaded... %s"/>' % xmlescape(str(msg))
       html = pagexsl.transform(xml, { } )
+##      logging.debug(html)
       return html
 
     else:    # Return JSON
-      data, err = self._call(fun, submitted, session, params)
-      if not data: data = {'message': 'Error: %s' % str(err)}
+      try:
+        data = fun(submitted, params)
+      except Exception, msg:
+        if str(msg) == "303 See Other": raise
+        logging.error('Errors loading page: %s', str(msg))
+        logging.error('Error loading page: %s', traceback.format_exc())
+        data = {'message': 'Error: %s' % str(msg)}
       web.header('content-type', 'text/html')
       return json.dumps(data)
 
@@ -180,6 +164,32 @@ class Index(object):
     return self._process('POST', name)
 
 
+class stream(object):
+#===================
+
+  def GET(self, name):
+  #------------------
+    uri = web.input().uri
+    #### Time fragment; metadata only; specific signals...
+    logging.debug("Streaming '%s'", uri)
+    try:
+      web.header('Content-Type','binary/octet-stream')
+      web.header('Transfer-Encoding','chunked')
+      web.header('Content-Disposition', 'attachment; filename=test.stream')
+       
+      sendq = Queue.Queue()
+      source = webstream.Sender(sendq, uri)
+      while source.isAlive() or not sendq.empty():
+        try:
+          data = sendq.get(True, 0.001)
+          # logging.debug("Streaming '%s'", data)
+          yield data
+        except Empty:
+          pass
+    except Exception, msg:
+      raise    ##############
+      yield pagexsl.transform('<page alert="Can not stream signal... %s"/>' % xmlescape(str(msg)))
+
 
 class WebServer(threading.Thread):
 #=================================
@@ -190,7 +200,6 @@ class WebServer(threading.Thread):
     global pagexsl
     pagexsl = xslt.Engine(xsl.PAGEXSL)
     if web.config.debug: web.webapi.internalerror = web.debugerror
-    recording.initialise()
     self._address = web.net.validip(address)
     self._server = None
     self.start()
