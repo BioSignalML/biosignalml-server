@@ -40,7 +40,7 @@ class TreeBuilder(object):
     l = [ '<subtree>' ] if depth else [ ]
     last = len(tree) - 1
     for n, t in enumerate(tree):
-      if t[1] == [ ]:
+      if isinstance(t[0], tuple):
         details = t[0]
         l.append('<leaf action="%s%s" id="%s" %s>%s</leaf>'
                 % (self._prefix, details[1], details[2].uri,
@@ -80,6 +80,9 @@ def property_details(obj, properties, table, **args):
   r = [ ]
   for prm, prop, fn in properties:
     v = getattr(obj, prop, None)
+    if v is None:
+      meta = getattr(obj, 'metadata', None)
+      if meta: v = meta.get(prop)
     if v is None: r.append('')
     else:
       if fn:                    t = fn[0](v, *[ args[a] for a in fn[1] ] if fn[1] else [ ])
@@ -133,13 +136,14 @@ def event_details(recuri, signal=None):
 
 
 
-recording_metadata = [ ('Desc',     'description',     None),
-                       ('Created',  'recording_start', None),
-                       ('Duration', 'recording_duration',       (maketime, None)),
-                       ('Format',   'format',         None),
-                       ('Study',    'investigation',  None),
-                       ('Comments', 'comment',        None),
-                       ('Source',   'source',         None),
+recording_metadata = [ ('Desc',      'description',     None),
+                       ('Created',   'recording_start', None),
+                       ('Duration',  'recording_duration', (maketime, None)),
+                       ('Format',    'format',          None),
+                       ('Study',     'investigation',   None),
+                       ('Comments',  'comment',         None),
+                       ('Source',    'source',          None),
+                       ('Submitted', 'dateSubmitted',   (lambda d: str(d) + ' UTC', None)),
                      ]
 
 
@@ -166,8 +170,8 @@ def build_metadata(uri):
 
 # Tooltip pop-up:
 
-def metadata(data, params):
-#==========================
+def metadata(data, session, params):
+#===================================
   return { 'html': build_metadata(data.get('uri', '')) }
 
 
