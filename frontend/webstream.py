@@ -31,7 +31,10 @@ class Sender(threading.Thread):
       source = Uri(uri)
 
       """
-      Allow specification of time segments (use fragment # with list like for -t option)
+      Allow specification of time segments
+        (use fragment # with list like for -t option) NO, since frag id is client side only.
+        Instead use query variable ?start=123.233?duration=10.34
+        Or in URI .../segment/123.233-10.34
 
       Allow metadata only request (don't stream any data)
 
