@@ -13,7 +13,7 @@ import logging
 import web, json
 from web.wsgiserver import CherryPyWSGIServer
 
-from metadata import model as triplestore
+from repository import triplestore
 
 urls = ('/query/(.*)', 'Query')
 server = web.application(urls, globals())
