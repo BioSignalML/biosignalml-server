@@ -36,6 +36,7 @@ LOGOUTMENU = """<menu prompt="Logout" action="logout"/>"""
 def setmenu():
 #=============
   level = user.level()
+  level = 1   ##############################
   ##logging.debug('LEVEL: %s', str(level))   ##############
   menu = '<menu>'
   if level >= user.VIEWER:        menu += VIEWERMENU(level)
@@ -71,6 +72,7 @@ def _find(element, attrib, value):
 
 def hasaction(action):
 #=====================
+  return True  ########################
   if action in ['index', 'login', 'logout']: return True
   menu = MAINMENU()
   ##logging.debug("A=%s, M=%s", action, menu)

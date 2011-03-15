@@ -28,27 +28,31 @@ Watch specified directories and import signal files:
 import threading
 import os, sys, glob, shutil, fnmatch
 import logging
-
 from time import sleep
 
-from repository import options
-from metadata import NS
-from bsml import Recording
+from model.mapping import bsml_mapping
 
-from fileformats.edf import EDFRecording
+from rdfmodel import NS, Graph
+
+from fileformats.edf import EDFRecording  ## Dynamically import..
+from fileformats.sdf import SDFRecording
+
 import fileformats.edf.minerva
+
+from repository import options, triplestore
 
 
 class FileImport(threading.Thread):
 #==================================
 
-  def __init__(self, path, extension, interval=1, **kwds):
-  #-------------------------------------------------------
+  def __init__(self, cls, path, extension, interval=1, **kwds):
+  #------------------------------------------------------------
     threading.Thread.__init__(self, **kwds)
-    self._searchpath = os.path.normpath(path)
-    self._extension = '*.%s' % extension
+    self._class = cls
+    self._searchpath = os.path.abspath(path)
+    self._extension = '*.%s' % extension if extension else None
     ##os.path.join(path, '*.%s' % extension))
-    logging.debug("Importer loaded for '%s'", self._extension)
+    logging.debug("Importer loaded for '%s'", cls)
     self._importNS = NS(options.repository['base'])
     self._interval = interval
     self._running = False
@@ -66,42 +70,39 @@ class FileImport(threading.Thread):
     self._running = False
     self.join()
 
+  def _import(self, root, fname):
+  #------------------------------
+    fullname = os.path.abspath(os.path.join(root, fname))
+    filename = os.path.relpath(fullname, self._searchpath)
+    uri = self._importNS[os.path.splitext(filename)[0]].uri
+    storedname = os.path.abspath(os.path.join(options.repository['signals'], filename))
+    try:    os.makedirs(os.path.dirname(storedname))
+    except: pass
+    try:     ################## CHECK NOT IN STORE
+      shutil.move(fullname, storedname)          ## Move first, before importing metadata
+      # Also of we are importing a (SDF) directory, better to move
+      # into containing level otherwise a sub-directory of the signal
+      # directory is created underneath if it already esisted...
+
+      ## Better to try import then move? So if error can reset?
+      ## Also need to log to file... NO, better to add provenance triples
+      recording = self._class(storedname, uri)
+      recording.add_to_RDFmodel(triplestore, bsml_mapping, Graph(uri))
+      recording.close()
+      logging.debug("Imported '%s'", storedname)
+    except Exception, msg:
+      logging.error("Error importing '%s': %s", fullname, msg)
+
   def _checkdir(self):
   #-------------------
     for root, dirs, files in os.walk(self._searchpath):
-      for fname in fnmatch.filter(files, self._extension):
-        fullname = os.path.join(root, fname)
-        filename = os.path.relpath(fullname, self._searchpath)
-        uri = self._importNS[os.path.splitext(filename)[0]].uri
-        signalstore = os.path.normpath(os.path.join(options.repository['signals'], filename))
-        try:    os.makedirs(os.path.dirname(signalstore))
-        except: pass
-        try:     ################## CHECK NOT IN STORE
-          shutil.move(fullname, signalstore)          ## Move first, before importing metadata
-          ## Better to try import then move? So if error can reset?
-          ## Also need to log to file... NO, better to add provenance triples
-          self.save_metadata(signalstore, uri)
-        except Exception, msg:
-          logging.error("Error importing '%s': %s", fullname, msg)
-          raise  ##################
-
-
-  def save_metadata(self, filepath, uri):    # Override in format specific subclass
-  #-------------------------------------
-    pass
+      if self._extension:
+        for fname in fnmatch.filter(files, self._extension): self._import(root, fname)
+      else:
+        for fname in dirs: self._import(root, fname)
 
 
 #########################################################
-
-
-class EDFImport(FileImport):
-#===========================
-
-  def save_metadata(self, filepath, uri):
-  #-------------------------------------
-    logging.debug("Importing '%s'", filepath)
-    edf = EDFRecording.open(filepath, uri)
-    edf.close()
 
 
 class MinervaEvent(FileImport):
@@ -111,7 +112,8 @@ class MinervaEvent(FileImport):
   #-------------------------------------
     logging.debug("Events from '%s' for '%s'...", filepath, uri)
 
-    rec = Recording.open(uri)
+    ## Find in triplestore... 
+    #### rec = Recording.open(uri)
 
     ## What if recording not yet in repository...
 
@@ -137,9 +139,15 @@ class Importers(object):
     loaders = options.loaders
     formats = options.imports
     self._threads = [ ]
-    for extn, path in formats.iteritems():
-      if extn in loaders: self._threads.append(classes[loaders[extn]](path, extn, interval=interval))
-      else:               logging.error("Unknown file format: '%s'", extn)
+    for key, path in formats.iteritems():
+      if key[-1] != '/': extn = key
+      else:
+        key = key[:-1]
+        extn = None
+      if key in loaders:
+        self._threads.append(FileImport(classes[loaders[key]], path, extn, interval=interval))
+      else:
+        logging.error("Unknown file format: '%s'", key)
 
   def stop(self):
   #--------------

@@ -3,9 +3,9 @@ import logging
 
 from metadata import NAMESPACES
 from utils import xmlescape
-from repository import options
-from repository import model as repo
 from bsml import BSML
+
+import repository as repo
 
 
 namespaces = {
@@ -14,7 +14,7 @@ namespaces = {
 
 namespaces.update(NAMESPACES)
 
-querybase = options.repository['base']
+querybase = repo.options.repository['base']
 
 
 def prologue():
