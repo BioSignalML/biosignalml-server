@@ -68,10 +68,10 @@ class Rest(object):
       raise web.NotFound()
     logging.debug("Streaming '%s'", recording.source)
     try:
+      rfile = urllib.urlopen(str(recording.source)).fp
       web.header('Content-Type','binary/octet-stream')
       web.header('Transfer-Encoding','chunked')
       web.header('Content-Disposition', 'attachment; filename=%s' % paths[-1])
-      rfile = urllib.urlopen(str(recording.source)).fp
       while True:
         data = rfile.read(32768)
         if not data: break
@@ -97,18 +97,26 @@ class Rest(object):
   def PUT(self, name):
   #-------------------
     paths = name.split('/')
-    if len(paths) < 3 or not paths[1]: raise web.NotFound()
-    RecordingClass = _importers.get(paths[1])
+    if len(paths) < 2 or not paths[1]: raise web.NotFound()
+    source = '/'.join(paths[1:])
+
+    ctype = web.ctx.get('CONTENT_TYPE', None)
+    if ctype and ctype.startswith('application/x-'): format = ctype[14:]
+    else:                                            format = 'raw'
+    RecordingClass = _importers.get(format)
     if not RecordingClass: raise web.NotFound()
 
-    source = '/'.join(paths[2:])
     file_uri = options.repository['base'] + source
     if triplestore.contains(file_uri, rdf.type, BSML.Recording):
       err = "Import error: Recording '%s' is already in repository" % source
       logging.error(err)
       return err + '\n'
-    file_id   = str(uuid.uuid4()) + '.' + paths[1]
-    file_name = os.path.abspath(os.path.join(options.repository['signals'], file_id))
+
+    ##file_id   = str(uuid.uuid4()) + '.' + format
+    ##file_name = os.path.abspath(os.path.join(options.repository['signals'], file_id))
+    file_name = os.path.abspath(os.path.join(options.repository['signals'], source))
+    try:    os.makedirs(os.path.dirname(file_name))
+    except: pass
 
     try:
       output = open(file_name, 'wb')
