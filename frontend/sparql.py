@@ -14,12 +14,11 @@ namespaces = {
 
 namespaces.update(NAMESPACES)
 
-querybase = repo.options.repository['base']
 
 
 def prologue():
 #==============
-  p = [ 'BASE <%s>' % querybase ]
+  p = [ 'BASE <%s>' % repo.base ]
   for ns, prefix in namespaces.iteritems():
     p.append('PREFIX %s: <%s>' % (ns, prefix))
   return '\n'.join(p)
@@ -30,15 +29,15 @@ def abbreviate(s):
   if s:
     for ns, prefix in namespaces.iteritems():
       if s.startswith(prefix): return xmlescape('%s:%s' % (ns, s[len(prefix):]))
-    if s.startswith(querybase): return xmlescape('<%s>' % s[len(querybase):])
+    if s.startswith(repo.base): return xmlescape('<%s>' % s[len(repo.base):])
     return s
   return ''
 
 
 def make_link(s):
 #===============
-  if s.startswith(querybase):
-    local = xmlescape(s[len(querybase):])
+  if s.startswith(repo.base):
+    local = xmlescape(s[len(repo.base):])
 ##    href = biosignalml.REPO_LINK + local
     href = '/repository/' + local
     return '<a href="%s" id="%s" class="cluetip">%s</a>' % (href, s, local)
