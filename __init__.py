@@ -22,6 +22,7 @@ from rdfmodel import RDFModel, make_literal
 from utils.config import Options
 
 import fulltext
+from provenance import ProvenanceGraph
 
 
 DEFAULTS = { 'repository':
@@ -41,7 +42,10 @@ if hasattr(sys, "frozen"): path = os.path.dirname(sys.executable)
 else:                      path = os.path.dirname(__file__)
 if path == '': path = '.'
 options = Options(file='biosignalml.ini', path=path, defaults=DEFAULTS)
-if options.repository['base'][-1] not in '#/': options.repository['base'] += '/'
+base = options.repository['base']
+if base[-1] not in '#/': base += '/'
+
+storepath = options.repository['signals']
 
 
 def _dbOptions(storeopts, create=False):
@@ -67,6 +71,7 @@ def _openstore():
 
 
 triplestore = _openstore()
+provenance = ProvenanceGraph(triplestore, base[:-1])
 
 
 def recordings():
