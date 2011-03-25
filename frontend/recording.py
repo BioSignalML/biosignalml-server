@@ -21,7 +21,7 @@ from rdfmodel import Graph
 from metadata import rdf, rdfs, dct
 from bsml import BSML
 
-from repository import options, triplestore, get_recording
+import repository
 
 import fileformats
 
@@ -40,7 +40,7 @@ _importers = { }
 def initialise():
 #================
   global _importers
-  loaders = options.loaders
+  loaders = repository.options.loaders
   for extn, cls in loaders.iteritems():
     try:
       _importers[extn] = getattr(fileformats, cls)
@@ -49,72 +49,69 @@ def initialise():
       logging.error("Unknown importer: fileformats.%s", cls)
 
 
+def log_error(msg):
+#==================
+  logging.error(msg)
+  return msg + '\n'
+
+
 class Rest(object):
 #==================
 
-  def GET(self, name):
-  #-------------------
+  @staticmethod
+  def _pathname(name):
+  #------------------
     paths = name.split('/')
     if len(paths) < 2 or not paths[1]: raise web.NotFound()
+    return ('/'.join(paths[1:]), paths[-1])
 
-    ## Who is our client?
-    ## What type of content have they requested???
-     
-    source = '/'.join(paths[1:])
-    rec_uri = options.repository['base'] + source
-    recording = get_recording(rec_uri)
-    if getattr(recording, 'source', None) is None:
-      logging.error("Recording '%s' is not in repository", source)
+
+  def GET(self, name):
+  #-------------------
+    # Also we may be GETting a signal, not a recording
+    # - check rdf:type. If Signal then find/open bsml:recording
+    source, filename = self._pathname(name)
+    rec_uri = repository.base + source
+    recording = repository.get_recording(rec_uri)
+    if recording.source is None:
+      log_error("Recording '%s' is not in repository" % source)
       raise web.NotFound()
     logging.debug("Streaming '%s'", recording.source)
     try:
       rfile = urllib.urlopen(str(recording.source)).fp
-      web.header('Content-Type','binary/octet-stream')
+      web.header('Content-Type','binary/octet-stream')  # Or lookup what original was
       web.header('Transfer-Encoding','chunked')
-      web.header('Content-Disposition', 'attachment; filename=%s' % paths[-1])
+      web.header('Content-Disposition', 'attachment; filename=%s' % filename)
       while True:
         data = rfile.read(32768)
         if not data: break
         yield data
       rfile.close()
     except Exception, msg:
-      logging.error("Error serving recording: %s", msg)
+      log_error("Error serving recording: %s" % msg)
       raise web.InternalError(msg)
-
-
-  def POST(self, name):
-  #---------------
-    paths = name.split('/')
-    if len(paths) < 2 or not paths[1]: raise web.NotFound()
-    return "<html><body><p>POST: %s</p></body></html>" % paths
-
-
-  def HEAD(self, name):
-  #--------------------
-    return "<html><body><p>HEAD: %s</p></body></html>" % name
 
 
   def PUT(self, name):
   #-------------------
-    paths = name.split('/')
-    if len(paths) < 2 or not paths[1]: raise web.NotFound()
-    source = '/'.join(paths[1:])
+    ctype = web.ctx.environ.get('CONTENT_TYPE', 'application/x-raw')
+    if not ctype.startswith('application/x-'):
+      return log_error("Invalid Content-Type: '%s'" % ctype)
+    format = ctype[14:]
 
-    ctype = web.ctx.get('CONTENT_TYPE', None)
-    if ctype and ctype.startswith('application/x-'): format = ctype[14:]
-    else:                                            format = 'raw'
+    # Can we also PUT RDF content ???
+
     RecordingClass = _importers.get(format)
     if not RecordingClass: raise web.NotFound()
 
-    file_uri = options.repository['base'] + source
-    if triplestore.contains(file_uri, rdf.type, BSML.Recording):
-      err = "Import error: Recording '%s' is already in repository" % source
-      logging.error(err)
-      return err + '\n'
+    source = self._pathname(name)[0]
+    file_uri = repository.base + source
+    if repository.triplestore.contains(file_uri, rdf.type, BSML.Recording):
+      return log_error("Import error: Recording '%s' is already in repository" % source)
 
     ##file_id   = str(uuid.uuid4()) + '.' + format
-    ##file_name = os.path.abspath(os.path.join(options.repository['signals'], file_id))
-    file_name = os.path.abspath(os.path.join(options.repository['signals'], source))
+    ##file_name = os.path.abspath(os.path.join(repository.storepath, file_id))
+    file_name = os.path.abspath(os.path.join(repository.storepath, source))
     try:    os.makedirs(os.path.dirname(file_name))
     except: pass
 
@@ -127,20 +124,49 @@ class Rest(object):
         output.write(data)
       output.close()
 
-      graph = Graph(file_uri)
       recording = RecordingClass(file_name, file_uri)
-      recording.add_to_RDFmodel(triplestore, bsml_mapping, graph)
-
-      ## Add source, date/time, etc statements.
-      triplestore.append(file_uri, dct.dateSubmitted, datetime.utcnow().isoformat())
-
+      recording.add_to_RDFmodel(repository.triplestore, bsml_mapping, Graph(file_uri))
       recording.close()
+      repository.provenance.add(file_uri, ctype)
 
     except Exception, msg:
-      err = "Import error '%s': %s -> %s" % (msg, '/'.join(paths), file_name)
-      logging.error(err)
-      return err + '\n'
+      return log_error("Import error '%s': %s -> %s" % (msg, source, file_name))
 
-    logging.debug("Imported %s -> %s", '/'.join(paths), file_name)
-    return file_uri + '\n'       ## Do we retirn text/xml with result or error msg ??
+    logging.debug("Imported %s -> %s", source, file_name)
 
+    location = '%s://%s/%s' % (web.ctx.environ['wsgi.url_scheme'],
+                               web.ctx.environ['HTTP_HOST'],
+                               name)
+    # Does web.ctx give us the original URL ???
+    raise web.Created(file_uri, {'Location': location, 'Content-Type': ctype})
+
+  def POST(self, name):
+  #--------------------
+    source = self._pathname(name)[0]
+    return "<html><body><p>POST: %s</p></body></html>" % source
+
+
+  def DELETE(self, name):
+  #----------------------
+    ###print name, web.ctx.environ
+    source, filename = self._pathname(name)
+    rec_uri = repository.base + source
+    recording = repository.get_recording(rec_uri)
+    if recording.source is None:
+      log_error("Recording '%s' is not in repository" % source)
+      raise web.NotFound()
+
+    file_name = urllib.urlopen(str(recording.source)).fp.name
+    if file_name != '<socket>': os.unlink(file_name)
+    ## But if multiple files in the recording?? eg. SDF, WFDB, ...
+
+    repository.triplestore.remove_graph(Graph(rec_uri))
+    repository.provenance.remove(rec_uri)
+
+    logging.debug("Deleted '%s'", recording.source)
+    raise web.OK
+
+
+  def HEAD(self, name):
+  #--------------------
+    return "<html><body><p>HEAD: %s</p></body></html>" % name
