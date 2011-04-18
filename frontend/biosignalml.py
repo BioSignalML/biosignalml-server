@@ -181,7 +181,7 @@ REPOSITORY = '/repository/'       #  Prefix to repository objects
 
 def repository(data, session, record=''):
 #=======================================
-  prefix = sparql.querybase[:-1]
+  prefix = repo.base[:-1]
   if record:
     recuri = '%s/%s' % (prefix, record)
     baserec = repo.signal_recording(recuri)
