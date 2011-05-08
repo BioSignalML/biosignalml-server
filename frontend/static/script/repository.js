@@ -8,14 +8,14 @@ $(function () {
 
       clickThrough: true,
 
-      titleAttribute: 'id',
+      titleAttribute: 'uri',
 
       ajaxCache: false,   // ####
 
       ajaxSettings: {
         dataType: 'json',
         type:     'POST',
-        data:     'uri=' + $(this).attr('id').toString()
+        data:     'uri=' + $(this).attr('uri').toString()
         },
 
       ajaxProcess: function(data) {

@@ -1,0 +1,44 @@
+#*
+
+A menu is defined by a list of tuples, each tuple being (prompt, action)
+
+ [ ('Browse Repository', 'repository'),
+   ('Sub Menu',          '',       [ ( 'First', 'first'), ('Second', 'second') ] ),
+   ('Sub Menu Action',   'action', [ ( 'First', 'first'), ('Second', 'second') ] ),
+ ]
+
+
+*#
+##
+##
+#def sub_menu($submenu)
+#######################
+ <ul class="sub_menu">
+  #for $m in $submenu
+   $menu_entry($m) #slurp
+  #end for
+ </ul>
+#end def
+##
+##
+#def menu_entry($m)
+###################
+ <li>
+ #if $m[1]
+  <a href="/$m[1]" title="$m[0]" onClick="return oktoexit(this)">$m[0]</a>
+ #elif $m[0]
+  <span class="menu">$m[0]</span>
+ #end if
+ #if len($m) > 2# $sub_menu($m[2]) #end if
+ </li>
+#end def
+##
+##
+#def menubar($menu)
+###################
+ <ul class="jd_menu">
+  #for $m in $menu
+   $menu_entry($m) #slurp
+  #end for
+ </ul>
+#end def

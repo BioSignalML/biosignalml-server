@@ -12,7 +12,8 @@
 import logging
 
 from utils import xmlescape, maketime, trimdecimal, chop
-from page import BlankPage
+import templates
+from menu import MAINMENU
 
 import repository as repo
 import mktree
@@ -24,48 +25,12 @@ from rdfmodel import Uri
 from bsml import BSML
 #########
 
-
-class TreeBuilder(object):
-#=========================
-
-  def __init__(self, tree, prefix, selected=''):
-  #--------------------------------------------
-    self._tree = tree
-    self._prefix = prefix
-    self._selected = selected.split('/')
-
-
-  def _element(self, tree, depth):
-  #-------------------------------
-    l = [ '<subtree>' ] if depth else [ ]
-    last = len(tree) - 1
-    for n, t in enumerate(tree):
-      if isinstance(t[0], tuple):
-        details = t[0]
-        l.append('<leaf action="%s%s" id="%s" %s>%s</leaf>'
-                % (self._prefix, details[1], details[2].uri,
-                   'class="selected"' if depth < len(self._selected) and details[0] == self._selected[depth] else '',
-                   details[0]) )
-      else:
-        l.append('<node %s>%s'
-                % ('class="jstree-open"' if depth < len(self._selected) and t[0] == self._selected[depth] else '',
-                   xmlescape(t[0])) )
-        l.extend(self._element(t[1], depth+1))
-        l.append('</node>')
-    if depth: l.append('</subtree>')
-    return l
-
-  def xml(self):
-  #-------------
-    l = [ '<tree>' ]
-    l.extend(self._element(self._tree, 0))
-    l.append('</tree>')
-    return '\n'.join(l)
-
+_tree_template = templates.Tree()
 
 def xmltree(nodes, base, prefix, selected=''):
 #============================================
-  return TreeBuilder(mktree.maketree(nodes, base), prefix, selected).xml()
+  tree = mktree.maketree(nodes, base)
+  return _tree_template.htmltree(tree, prefix, selected)
 
 
 def table_header(properties):
@@ -111,18 +76,18 @@ def signal_details(recuri, signal=None):
 #======================================
   lenhdr = len(recuri) + 1
   recording = repo.get_recording_signals(recuri)
-  xml = [ '<table>' ]
+  html = [ '<table class="signal">' ]
   odd = True
-  xml.append('<tr>%s</tr>' % table_header(signal_metadata))
+  html.append('<tr>%s</tr>' % table_header(signal_metadata))
   for sig in recording.signals():
-    xml.append('<tr class="selected">' if str(sig.uri) == signal
+    html.append('<tr class="selected">' if str(sig.uri) == signal
           else '<tr class="odd">'      if odd
           else '<tr>')
-    xml.append(property_details(sig, signal_metadata, True, n=lenhdr))
-    xml.append('</tr>')
+    html.append(property_details(sig, signal_metadata, True, n=lenhdr))
+    html.append('</tr>')
     odd = not odd
-  xml.append('</table>')
-  return ''.join(xml)
+  html.append('</table>')
+  return ''.join(html)
 
 
 
@@ -130,9 +95,9 @@ def event_details(recuri, signal=None):
 #======================================
   lenhdr = len(recuri) + 1
   recording = repo.get_recording(recuri)
-  xml = [ '<table>' ]
-  xml.append('</table>')
-  return ''.join(xml)
+  html = [ '<table>' ]
+  html.append('</table>')
+  return ''.join(html)
 
 
 
@@ -177,6 +142,8 @@ def metadata(data, session, params):
 
 # Generate tree of recordings along with details of signals when recording clicked on.
 
+_page_template = templates.Page()
+
 REPOSITORY = '/repository/'       #  Prefix to repository objects 
 
 def repository(data, session, record=''):
@@ -190,12 +157,21 @@ def repository(data, session, record=''):
       recuri = str(baserec)
     else:
       sig = None
-    return BlankPage(recuri,
-                      xmltree(repo.recordings(), prefix, REPOSITORY, record)
-                    + build_metadata(recuri)
-                    + signal_details(recuri, sig)
-                     ).show(data, session)
+
+    return _page_template.page(subtitle = recuri,
+                               menu     = MAINMENU(),
+                               content  = xmltree(repo.recordings(), prefix, REPOSITORY)
+                                        + build_metadata(recuri)
+                                        + signal_details(recuri, sig)
+                              )
+
+#    return BlankPage(recuri,
+#                      xmltree(repo.recordings(), prefix, REPOSITORY, record)
+#                    + build_metadata(recuri)
+#                    + signal_details(recuri, sig)
+#                     ).show(data, session)
   else:
-    return BlankPage('Recordings in "repo:" (%s)' % prefix,
-                      xmltree(repo.recordings(), prefix, REPOSITORY)
-                     ).show(data, session)
+    return _page_template.page(subtitle = 'Recordings in repo: %s' % prefix,
+                               menu     = MAINMENU(),
+                               content  = xmltree(repo.recordings(), prefix, REPOSITORY),
+                              )

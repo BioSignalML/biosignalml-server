@@ -155,7 +155,7 @@ div.title h1 {
 
 /* Table layout */
 
-div.table {
+div.table, table.signal {
   margin: 10px ;
   width: 100% ;
   }
@@ -186,7 +186,7 @@ html>body div.table {
   }
 
 
-table.form, table.field {
+table.form, table.signal {
   width: 100%;
   border: 2px solid #80FFFF;
   text-align: left;
@@ -198,7 +198,7 @@ tr.odd {
 tr.key {
   background-color: #FF6;
   }
-table.form th, table.field th {
+table.form th, table.signal th {
   margin: 0 ;
   background: yellow ;
   border: 2px solid #063;
@@ -209,7 +209,7 @@ table.form th, table.field th {
 th.order {
   background: red ;
   }
-table.form td, table.field td {
+table.form td, table.signal td {
   margin: 0 ;
   padding: 2px 10px ;
   font-size: 10px;

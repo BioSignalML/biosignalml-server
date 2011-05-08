@@ -15,7 +15,6 @@ from time import time
 import web, json
 from web.wsgiserver import CherryPyWSGIServer
 
-import xslt, xsl
 from utils import num, cp1252, xmlescape, nbspescape, unescape
 
 import recording
@@ -30,7 +29,6 @@ WEB_MODULE      = 'repository.frontend'  # We do a "import webpages from reposit
 web.config.debug = False
 
 
-pagexsl = None   # Initialise once we start running
 
 urls = ( '/(recording)',    'Rest',
          '/(recording/.*)', 'Rest',
@@ -159,9 +157,8 @@ class Index(object):
                          for k, v in web.input(_method = method, _unicode=True).iteritems() ])
 
     if responsetype == 'html':
-      xml, err = self._call(fun, submitted, session, params)
-      if not xml: xml = '<page alert="Page can not be loaded... %s"/>' % xmlescape(str(err))
-      html = pagexsl.transform(xml, { } )
+      html, err = self._call(fun, submitted, session, params)
+###      if not html: html = '<page alert="Page can not be loaded... %s"/>' % xmlescape(str(err))
       return html
 
     else:    # Return JSON
@@ -186,9 +183,11 @@ class WebServer(threading.Thread):
 
   def __init__(self, address, **kwds):
   #-----------------------------------
+    version = CherryPyWSGIServer.version[9:].split('.')
+    if version[0] < 3 or version[0] == 3 and version[1] < 2:
+      raise Exception("Require CherryPy/3.2.0 or greater")
+      # svn co http://svn.cherrypy.org/tags/cherrypy-3.2.0/cherrypy/wsgiserver
     threading.Thread.__init__(self, **kwds)
-    global pagexsl
-    pagexsl = xslt.Engine(xsl.PAGEXSL)
     if web.config.debug: web.webapi.internalerror = web.debugerror
     recording.initialise()
     self._address = web.net.validip(address)
@@ -197,7 +196,6 @@ class WebServer(threading.Thread):
 
   def run(self):
   #-------------
-    pagexsl.start()
     wsgifunc = webapp.wsgifunc()
     wsgifunc = web.httpserver.StaticMiddleware(wsgifunc)
     ## wsgifunc = web.httpserver.LogMiddleware(wsgifunc)
@@ -209,8 +207,6 @@ class WebServer(threading.Thread):
   #--------------
     logging.debug('Stopping http://%s:%d/', self._address[0], self._address[1])
     if self._server: self._server.stop()
-    pagexsl.stop()
-    self.join()
 
 
 if __name__ == "__main__":
