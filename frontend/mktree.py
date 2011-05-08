@@ -40,16 +40,15 @@ def sort(t):
 if __name__ == '__main__':
 #=========================
 
-  def test(l):
-  #-----------
-    print l
-    print '-->', maketree(l)
-    print ''
+  class Uri(object):
+    def __init__(self, uri):
+      self.uri = uri
 
-  test([ "a"])
-  test([ "a", "b/c"])
-  test([ "a/b", "a", "a/c", "d" ])
-  test([ "a/r1",   "a/b/r2",   "a/b/r3",   "d/r4",   "r0", ])
+  print        maketree([Uri("http://www.example.org/pre/a/r1"),
+                         Uri("http://www.example.org/pre/a/b/r2"),
+                         Uri("http://www.example.org/pre/a/b/r3"),
+                         Uri("http://www.example.org/pre/d/r4"),
+                         Uri("http://www.example.org/pre/r0")], 'http://www.example.org/pre'),
 
 """
   [ ('a',  [ ('b',  [ ('r2', [ ]),
