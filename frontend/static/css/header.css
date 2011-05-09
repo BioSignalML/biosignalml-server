@@ -14,7 +14,7 @@ div#header {
   width: 100%;
   text-align: center;
 /*  background: #ef2e24 ; */
-  background: #6b8323 url("/static/img/header-logo.png") no-repeat ;
+  background: #6b8323 ; /* url("/static/img/header-logo.png") no-repeat ; */
   border-bottom: 2px solid #063;
   }
 
