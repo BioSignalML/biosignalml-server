@@ -107,6 +107,7 @@ $(function() {
   
   function hideMenu(ul, animate) {
     var ul = $(ul);
+    // return;  // Otherwise menu disappears...
     // $('.bgiframe', ul).remove();
     ul      .filter(':not(.jd_menu)')
       .find('> li > ul:eq(0):visible')

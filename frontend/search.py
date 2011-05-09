@@ -13,7 +13,7 @@ import logging
 import copy
 
 from utils import xmlescape
-from page import BlankPage
+import templates
 
 import repository
 from repository import triplestore
@@ -296,15 +296,17 @@ def related(data, session, params):
   return { 'ids': related }
 
 
+_page_template   = templates.Page()
+
+_search_template = templates.SearchForm()
+
+_sparql_template = templates.SparqlForm()
 
 
 def searchform(data, session, param=''):
 #=======================================
 
-  return BlankPage('Text search...',
-
 ## Simple text search v's advanced...
-
     ## Add search box here.... (as a form, action=/search?, and advanced button/link??)
 #                  """<form action="/search" height="1">
 #                      <button name="action" prompt="Search" row="1" col="42"/>
@@ -316,10 +318,9 @@ def searchform(data, session, param=''):
 #                   %s
 #                   """ % (xmlescape(searchtext), ''.join(xml))
 
-                  """<searchform action="/searchform">Search signals...</searchform>
-                     <script type="text/javascript" src="/static/script/searchform.js"/>
-                     <stylesheet src="/static/css/searchform.css"/>
-                  """).show(data, session)
+  return _page_template.page(title   = 'Query repository',
+                             content = _search_template.search('Search...', '/searchform')
+                            )
 
 
 
@@ -340,15 +341,7 @@ def sparqlsearch(data, session, param=''):
     p.append('  ?s ?p ?o')
     p.append('  } limit 20')
     query = '\n'.join(p) # Default namespace prefixes and query
-
-  return BlankPage('SPARQL search...',
-    ## Add search box here.... (as a form, action=/search?, and advanced button/link??)
-                   """<form action="/sparqlsearch" height="15">
-                       <button name="action" prompt="Search" row="1" col="80"/>
-                       <field name="query" prompt="SPARQL"
-                         type="text"
-                         rows="20" cols="75">%s</field>
-                      </form>
-                      %s
-                    """ % (xmlescape(query), result)
-                     ).show(data, session)
+  return _page_template.page(title   = 'SPARQL search...',
+                             content = _sparql_template.sparqlquery('SPARQL', '/sparqlsearch', query)
+                                     + result
+                            )

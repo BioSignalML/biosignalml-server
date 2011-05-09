@@ -1,13 +1,14 @@
-#def page($title       = 'BioSignalML Repository',
-          $subtitle    = '',
-          $menu        = [ ],
+#def page($title       = '',
           $content     = '',
           $stylesheets = [ ],
+          $scripts     = [ ],
           $refresh     = 0,
           $alert       = '',
           $message     = '',
           $keypress    = None,
           )
+#set $headtitle = 'BioSignalML Repository'
+#from repository.frontend.menu import MAINMENU
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 ##
@@ -69,17 +70,18 @@ A menu is defined by a list of tuples, each tuple being (prompt, action)
                      "repository.js",
                    ]
 ##                   "jquery-1.5.min.js",
+#silent $javascript.extend($scripts)
 ##
  <head>
-  <title>$title</title>
+  <title>$headtitle</title>
   #if $refresh#<meta http-equiv='Refresh' content='$refresh'/>#end if
   <link rel="shortcut icon" href="/static/favicon.ico"/>
   #for $script in $javascript
    <script type="text/javascript" src="/static/script/$script"></script>
   #end for
-  <link type="text/css" href="/static/css/stylesheet.css" rel="stylesheet"></stylesheet>
+  <link type="text/css" href="/static/css/stylesheet.css" rel="stylesheet"/>
   #for $css in $stylesheets
-   <link type="text/css" href="/static/css/$css" rel="stylesheet"></stylesheet>
+   <link type="text/css" href="/static/css/$css" rel="stylesheet"/>
   #end for
  </head>
  <body
@@ -89,12 +91,12 @@ A menu is defined by a list of tuples, each tuple being (prompt, action)
   <noscript>These pages use Javascript - please enable it in your browser</noscript>
   <div id="header">
    <div class="spacer"></div>
-   <div id="menubar">$menubar($menu)</div>
+   <div id="menubar">$menubar($MAINMENU)</div>
   </div>
   #if $message#<div id="message">$message</div>#end if
   <div id="content">
    <div class="title">
-    <h1>$subtitle</h1>
+    <h1>$title</h1>
    </div>
    <div id="contentbody">
     $content

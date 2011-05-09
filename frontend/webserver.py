@@ -49,10 +49,9 @@ dispatch = [ ('comet/metadata',       'biosignalml.metadata',   'json'),
              ('searchform',           'search.searchform',      'html'),
              ('sparqlsearch',         'search.sparqlsearch',    'html'),
 
-             ('logout',               'webpages.logout',        'html'),
-             ('login',                'webpages.login',         'html'),
+             ('logout',               'user.logout',            'html'),
+             ('login',                'user.login',             'html'),
              ('',                     'biosignalml.repository', 'html'),
-##             ('',                     'webpages.index',         'html'),
            ]
 
 
@@ -62,7 +61,7 @@ def get_processor(path):
     if path == p or path.startswith(p + '/'):
       params = path[len(p)+1:] if path.startswith(p + '/') else ''
       return f.rsplit('.', 1) + [ params, t ]
-  return [ 'webpages', 'index', '', 'html' ]
+  return [ 'biosignalml', 'index', '', 'html' ]
 
 
 web.config.session_parameters['timeout'] = SESSION_TIMEOUT

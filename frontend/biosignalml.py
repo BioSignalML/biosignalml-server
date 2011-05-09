@@ -13,11 +13,11 @@ import logging
 
 from utils import xmlescape, maketime, trimdecimal, chop
 import templates
-from menu import MAINMENU
 
 import repository as repo
 import mktree
 import sparql
+import user
 
 #########
 import metadata as meta
@@ -29,6 +29,7 @@ _tree_template = templates.Tree()
 
 def xmltree(nodes, base, prefix, selected=''):
 #============================================
+  logging.debug('Selected: %s', selected)
   tree = mktree.maketree(nodes, base)
   return _tree_template.htmltree(tree, prefix, selected)
 
@@ -158,11 +159,10 @@ def repository(data, session, record=''):
     else:
       sig = None
 
-    return _page_template.page(subtitle = recuri,
-                               menu     = MAINMENU(),
-                               content  = xmltree(repo.recordings(), prefix, REPOSITORY)
-                                        + build_metadata(recuri)
-                                        + signal_details(recuri, sig)
+    return _page_template.page(title   = recuri,
+                               content = xmltree(repo.recordings(), prefix, REPOSITORY, record)
+                                       + build_metadata(recuri)
+                                       + signal_details(recuri, sig)
                               )
 
 #    return BlankPage(recuri,
@@ -171,7 +171,13 @@ def repository(data, session, record=''):
 #                    + signal_details(recuri, sig)
 #                     ).show(data, session)
   else:
-    return _page_template.page(subtitle = 'Recordings in repo: %s' % prefix,
-                               menu     = MAINMENU(),
-                               content  = xmltree(repo.recordings(), prefix, REPOSITORY),
+    return _page_template.page(title   = 'Recordings in repo: %s' % prefix,
+                               content = xmltree(repo.recordings(), prefix, REPOSITORY),
                               )
+
+def index(data, session, params):
+#===============================
+  if user.loggedin():
+    return repository(data, session, params)
+  else:
+    return user.login(data, session, params)
