@@ -112,14 +112,14 @@ $(function() {
     ul      .filter(':not(.jd_menu)')
       .find('> li > ul:eq(0):visible')
         .each(function() {
+          if ( animate === undefined ) {
+            ul.hide()
+          } else {
+            animate.apply( ul[0], [false] );
+          }
           hideMenu( this );
         })
       .end();
-    if ( animate === undefined ) {
-      ul.hide()
-    } else {
-      animate.apply( ul[0], [false] );
-    }
 
     ul      .trigger('jdMenuHide')
       .parents('li:eq(0)')
