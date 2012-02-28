@@ -1,0 +1,376 @@
+/*****************************************************
+ *
+ *  BioSignalML Management in Python
+ *
+ *  Copyright (c) 2010  David Brooks
+ *
+ *  $Id: stylesheet.css,v 2225129d2f7b 2011/02/04 01:05:15 dave $
+ *
+ ****************************************************/
+
+
+ @import "jquery-ui-1.8.2.css" ;
+ @import "jquery.jdMenu.css" ;
+ @import "jquery.cluetip.css" ;
+
+ @import "header.css" ;
+ @import "footer.css" ;
+
+/*
+
+   NB. IE includes the top/bottom border and padding as part of the height of a box
+       - this is not the CSS standard...
+
+       A box within a box is used as a workaround  -  see div.formbox and div.form
+
+*/
+
+
+body {
+  margin: 0;
+  padding: 0;
+  margin-right:auto;
+  margin-left:auto;
+  font-family: Verdana, Tahoma, Arial, Helvetica, sans-serif;
+  font-size: 12px;
+  }
+
+
+a:link, a:visited {
+  color: #00F;
+  }
+
+a:hover, a:active {
+  color: #063 ;
+  }
+
+
+/* Make links look like buttons */
+a.btn:hover,
+a.btn:active,
+a.btn:visited,
+a.btn:link {
+  color: #000;
+  background-color: #CBEB8D;
+  text-decoration: none ;
+  border: 1px ridge #063 ;
+  padding: 1px ;
+  font-weight: bold ;
+  font-size: 10px;
+  }
+a.btn:hover {
+  background-color: #ACD655 ;
+  border: 1px ridge #031 ;
+  padding: 1px ;
+  }
+
+
+div.spacer {
+  clear: both;
+  }
+
+div#content {
+  margin-left: 0px ;
+  border: 0 ;
+  width: 100% ;	    /* IE 7 needs something to pull out RH margin... */	
+  }
+
+/* IE box model hack... */
+div.formbox {
+  background-color: #CBEB8D;
+  border: 2px dotted #063;
+  padding: 10px ;
+  margin: 10px ;
+  margin-top: 0px ;
+  margin-right: 3em ;
+  }
+
+div.form span {
+  padding: 5px ;
+  }
+
+form {
+  position: relative ;
+  width: 100%;
+  margin: auto;
+  padding: 0 ;
+  }
+
+form span.prompt {
+  font-weight: bold ;
+  }
+
+form span.fixed {
+  position: absolute ;
+  font-size: 9px;
+  }
+
+
+form span.fixed input,
+form span.fixed select,
+form span.fixed textarea {
+  margin: 0 ;
+  padding: 0 ;
+  font-size: 12px;
+  }
+
+form span.fixed input[type='text'],
+form span.fixed input[type='password'],
+form span.fixed textarea {
+  background: #FFC ;
+  border: 0.1em inset;
+  padding-left: 0.2em ;
+  }
+
+form span.fixed input[type='text'][readonly],
+form span.fixed textarea[readonly] {
+  background: #CCC ;
+  border: 0.1em inset;
+  padding-left: 0.2em ;
+  }
+
+form span.fixed select {
+  background: #FFC ;
+  margin-top: -2px ;
+  font-size: 10px;
+  }
+
+div.title {
+  text-align: left ;
+  margin: 0px ;
+  margin-top: 5px ;
+  margin-bottom: 10px ;
+  padding-left: 10px ;
+  padding-right: 19px ;
+  background: #ACD655 ;
+  }
+
+div.title h1 {
+  margin: 0 ;
+/*  margin-top: 0.4em ; */
+  font-weight: bold;
+  font-size: 1.4em ;
+  color: #063;
+  }
+
+
+/* Table layout */
+
+div.form {
+  margin: 10px ;
+  }
+div.form div.table {
+  margin: 0 ;
+  }
+
+
+html>body div.table {
+  width: inherit ;
+  }
+
+.tabletitle {
+  font-weight: bold ;
+  }
+
+.fixed table {
+  border: 1px solid #063 ;
+  }
+.fixed th { 
+  border: 0 ;
+  }
+.fixed td {
+  border-top: 1px solid #063 ;
+  }
+
+
+table.form, table.signal {
+  margin-top: 10px ;
+  width: 100%;
+  border: 2px solid #80FFFF;
+  text-align: left;
+  background-color: #CFF;
+  }
+tr.odd {
+  background-color: #FFF;
+  }
+tr.key {
+  background-color: #FF6;
+  }
+table.form th, table.signal th {
+  margin: 0 ;
+  background: yellow ;
+  border: 2px solid #063;
+  padding: 4px ;
+  padding-left: 6px ;
+  font-size: 9px;
+  }
+th.order {
+  background: red ;
+  }
+table.form td, table.signal td {
+  margin: 0 ;
+  padding: 2px 10px ;
+  font-size: 10px;
+  }
+
+div.block {
+  padding-right: 1em ;
+  padding-bottom: 0.5em ;
+  float: right ;
+  }
+
+div.block a {
+  padding-right: 3em ;
+  }
+
+
+
+.tabs {
+  padding: 0 ;
+  margin: 0 ;
+  margin-left: 10px ;
+  margin-bottom: 2px ;
+  }
+
+.tabs a, .tabs .sel {
+  padding: 4px 3px ;
+  margin: 1px 6px 0 0 ;
+  position: relative;
+  border: 2px dotted #063 ;
+  border-bottom: none ;
+  text-align: center ;
+  font: normal normal bold 0.9em tahoma, verdana, sans-serif ;
+  text-decoration: none ;
+  color: #063;
+  background: #ACD655 ;
+  z-index: 1;
+  }
+
+.tabs a {
+  top: -2px;
+  z-index: 3;
+/*  background: #ffc ; */
+  background-color: #CBEB8D;
+  border: 1px solid #edbb85 ;
+  border-bottom: none ;
+  }
+
+.tabs a:hover {
+  margin-top: 0 ;
+  color: #806020 ;
+  background: #ffefcf ;
+  padding-bottom: 5px ;
+  }
+
+
+
+.emphasised {
+  font-weight: bold ;
+  }
+
+
+.search th {
+  text-align: left ;
+  }
+
+td.search {
+/*  background-color: #080; */
+  }
+
+tr.search input, tr.search select {
+  background-color: #0FF;
+  padding-left: 4px ;
+  margin-left: -7px ;
+  margin-bottom: 5px ;
+  font-size: 11px;
+  }
+
+tr.search input[type='text'], tr.search select {
+  background-color: #8FF;
+  }
+
+form span.fixed input.button {
+  font-size: 9px ;
+  width: 60px ;
+  }
+
+span.right {
+  display: inline-block ;
+  float: right ;
+  }
+
+#leftside {
+  position:absolute;
+  left: 5px ;
+  top: 78px ;
+  }
+
+#message {
+  background:#ffc;
+  /* height: 100px ; */
+  border-bottom: 1px solid #008000 ;
+  margin: 0 ;
+  padding: 0 ;
+  }
+
+#message span {
+  margin-left: 5px ;
+  padding-right: 5px ;
+  border-right: 1px solid #008000 ;
+  }
+
+.error {
+  color: red ;
+  font-weight: bold ;
+  }
+
+.warn {
+  color: orange ;
+  }
+
+.info {
+  color: #008000 ;
+  }
+
+#tree {
+  float: left ;
+  width: 250px ;
+  margin-right: 10px ;
+  }
+
+div#contentbody {
+  margin-left: 0px ;
+  border: 0 ;
+/*  width: 88% ;   */
+/*  width: 100% ;  */	    /* IE 7 needs something to pull out RH margin... */	
+  }
+
+
+div.signal {
+  margin-left: 260px ;      /* tree width + margins */
+  margin-right: 10px ;
+  }
+
+
+/* clueTip layout */
+
+.cluetip-default {
+  margin-left: 5px ;
+  }
+
+#cluetip-inner p,
+.metadata p {
+  margin-top: 0 ;
+  margin-bottom: 0 ;
+  }
+
+.cluetip-default #cluetip-inner {
+  padding-top: 5px ;
+  }
+
+.selected,
+.jstree-leaf.selected,
+.selected.jstree-leaf,
+.selected.jstree-last.jstree-leaf {
+  background: #7AD ;
+  }

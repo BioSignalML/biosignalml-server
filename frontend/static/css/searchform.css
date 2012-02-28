@@ -1,0 +1,135 @@
+/*****************************************************
+ *
+ *  BioSignalML Management in Python
+ *
+ *  Copyright (c) 2010  David Brooks
+ *
+ *  $Id: searchform.css,v 2225129d2f7b 2011/02/04 01:05:15 dave $
+ *
+ ****************************************************/
+
+
+div.formbox {
+  display: inline-block ;  /* So width expands to search box */
+  margin: 0 0 10px 10px ;
+  }
+
+div.form span {
+ padding: 0 ;		/* Override inherited value */
+ }
+
+#spinner {
+  position: absolute ;
+  top: 100px ;
+  width: 100% ;
+  text-align: center ;
+  }
+
+div#searchresults {
+  display: inline-block ;
+  margin: 0 0 10px 10px ;
+  background-color: #69C;
+  border: 2px dotted #036;
+  padding: 10px ;
+  }
+
+
+div.search {
+ margin-bottom: 20px ;
+ }
+
+div.line {
+ position: relative ;
+ width: 600px ;
+ margin: 10px 0 ;
+ }
+
+div.line .col1 span.title,
+div.line:first-child .col1 select {
+  display: none
+  }
+div.line:first-child .col1 span.title {
+  display: inline
+  }
+
+.col1 select {
+ background: #FCC ;
+ }
+.col2 select.fld4 {
+ background: #CFC ;
+ }
+
+/*
+div.line:last-child button.add
+ { visibility: visible }
+
+div.line button.add,
+div.line:nth-child(0n+5) button.add
+ { visibility: hidden }
+*/
+
+div.line:only-child button.del
+ { visibility: hidden }
+
+.col1 {
+ width: 150px ;
+ padding-bottom: 5px ;
+ }
+.col2 {
+ width: 500px ;
+ }
+.col3 {
+ width: 60px ;
+ margin-left: 10px ;
+ }
+span.col1 {
+ position: absolute ;
+ display: inline-block;
+ }
+div.col1, div.col2, div.col3 {
+ float: left ;
+ }
+div.clear {
+ clear: both ;
+ height: 0 ;
+ }
+span.col2 {
+ display: inline-block;
+ position: absolute ;
+ left: 200px ;
+ }
+span.col3 {
+ position: absolute ;
+ left: 1250px ;
+ display: inline-block;
+ }
+span.group {
+ display: inline-block;
+ width: 500px ;
+ }
+.fld1, .fld2, .fld3, .fld4 {
+ display: inline-block;
+ margin-right: 5px ;
+ margin-left: 5px ;
+ }
+.fld1 {
+ width: 115px ;
+ }
+.fld2 {
+ width: 100px ;
+ }
+span.fld2 {
+ text-align: center ;
+ }
+.fld3 {
+ width: 150px ;
+ }
+input.fld3 {
+ width: 144px ;  /* Allow for 3px border */
+ }
+.fld4 {
+ width: 75px ;
+ margin-left: 15px ;
+ margin-right: 0 ;
+ }
+

@@ -1,0 +1,29 @@
+# Setting up repository configuration:
+#
+
+# Create an empty 4store database.
+4s-backend-setup biosignal
+
+# Start 4store and its httpd frontend (on port 8083).
+4s-backend biosignal
+
+# Load configuration graphs
+4s-import biosignal --model system:config --format turtle ~/biosignalml/python/apps/server/fulltext.ttl 
+4s-import biosignal --model http://biosignalml/configuration --format turtle ~/biosignalml/python/apps/server/config.ttl 
+
+# Load PhysioBank database...
+4s-import biosignal --format trig ~/biosignalml/physiobank/index/nifecgdb.trig 
+
+
+# Start httpd frontend on port 8083
+4s-httpd -p 8083 biosignal
+
+### Use 4s-import above...
+### Replace the graph system:config with the contents of fulltext.ttl
+##curl -T fulltext.ttl -H 'Content-Type: application/x-turtle' http://localhost:8083/data/system:config
+###
+### Replace the graph <http://biosignalml/configuration> with the contents of config.ttl
+##curl -T config.ttl -H 'Content-Type: application/x-turtle' http://localhost:8083/data/http://biosignalml/configuration
+
+
+

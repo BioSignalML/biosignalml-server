@@ -1,0 +1,115 @@
+/*****************************************************
+ *
+ *  BioSignalML Management in Python
+ *
+ *  Copyright (c) 2010  David Brooks
+ *
+ *  $Id$
+ *
+ ****************************************************/
+
+
+* {
+ margin: 0 ;
+ padding: 0 ;
+ }
+
+body {
+ font: 13px Helvetica, Sans-Serif ;
+ }
+  
+a,
+span.menu {
+ text-decoration: none ;
+ }
+
+ul {
+ list-style: none ;
+ }
+
+p {
+ margin: 15px 0 ;
+ }
+
+/* 
+  LEVEL ONE
+*/
+ul.dropdown {
+ position: relative ;
+ }		   	
+
+ul.dropdown li {
+ font-weight: bold ;
+ float: left ;
+ zoom: 1 ;
+ background: #efefef;
+ border-top: 1px solid #063 ;
+ margin-top: 4px ;
+ }
+
+ul.dropdown a:hover {
+  color:#806020;
+ }
+
+ul.dropdown a:active {
+  color:#806020;
+ }
+
+span.menu,
+ul.dropdown li a {
+ display: block ;
+ padding: 2px 4px ;
+ border-right: 1px solid #063 ;
+ color:#008000;
+ }
+
+ul.dropdown li:last-child a {
+ border-right: none ;
+ } /* Doesn't work in IE */
+
+ul.dropdown li.hover,
+ul.dropdown li:hover {
+  background:#ffefcf;
+ position: relative ;
+ }
+
+ul.dropdown li.hover a {
+  color:#008000;
+ }
+
+
+/* 
+  LEVEL TWO
+*/
+ul.dropdown ul {
+ width: 230px ;
+ visibility: hidden ;
+ position: absolute ;
+ top: 100% ;
+ left: 0 ;
+ }
+
+ul.dropdown ul li {
+ color: #000 ;
+ border: 1px solid #063 ;
+ float: none ;
+ }
+                    
+/* IE 6 & 7 Needs Inline Block */
+ul.dropdown ul li a {
+ border-right: none ;
+ width: 100% ;
+ display: inline-block ;
+ } 
+
+/* 
+  LEVEL THREE
+*/
+ul.dropdown ul ul {
+ left: 100% ;
+ top: 0 ;
+ }
+
+ul.dropdown li:hover > ul {
+ visibility: visible ;
+ }

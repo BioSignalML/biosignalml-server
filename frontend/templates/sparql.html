@@ -1,0 +1,15 @@
+#extends frontend.templates.form
+#implements respond
+##
+#def sparqlquery($prompttext, $action='', $query='')
+##==================================================
+<div class="formbox" style="height: 24em;">
+  <div class="form">
+    <form method="post" action="$action" id="form" autocomplete="off">
+      $button('Search', 10, 1)
+      $prompt($prompttext)
+      $textarea('query', 20, 75, $query)
+    </form>
+  </div>
+</div>
+#end def

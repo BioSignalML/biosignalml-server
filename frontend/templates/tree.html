@@ -1,0 +1,50 @@
+#def treeaction($text, $action='', $uri='')
+##=========================================
+ #if $action
+  <a href="$action" class="cluetip" uri="$uri">$text</a>
+ #else
+  <span>$text</span>
+ #end if
+#end def
+##
+#def subtree($tree, $prefix, $depth, $selected)
+##=============================================
+ <ul>
+  #set $last = len($tree) - 1
+  #for $t in $tree:
+   #if isinstance($t[0], tuple)
+    #set $details = $t[0]
+    <li
+     #if $depth < len($selected) and $details[0] == $selected[$depth]#class="selected"#end if
+     id="$details[1]"
+     >
+     $treeaction($details[0], $prefix + $details[1].replace(':', '%3A'), $details[2].uri)
+    </li>
+   #else
+    <li
+     #if $depth < len($selected) and $t[0] == $selected[$depth]#class="jstree-open"#end if
+     >
+    $treeaction($t[0])
+    $subtree($t[1], $prefix, $depth+1, $selected)
+    </li>
+   #end if
+  #end for
+ </ul>
+#end def
+##
+#def htmltree($tree, $prefix, $selectpath=[], $theme='default')
+##=============================================================
+ <script type="text/javascript">
+  \$(function () {
+    \$.jstree._themes = "/static/themes/" ;
+    \$("#tree").jstree({
+      core: { animation: 0, initially_open: [ "$selectpath" ], load_open: true },
+      plugins: [ "themes", "html_data" ],
+      themes: { theme: "$theme", dots: true, icons: true }
+      }) ;
+    }) ;
+ </script>
+ <div class="jstree" id="tree">
+  $subtree($tree, $prefix, 0, $selectpath)
+ </div>
+#end def

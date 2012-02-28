@@ -1,0 +1,10 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dc:   <http://purl.org/dc/elements/1.1/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix text: <http://4store.org/fulltext#> .
+@prefix bsml: <http://www.biosignalml.org/ontologies/2011/04/biosignalml#> .
+
+rdfs:label      text:index text:stem .
+rdfs:comment    text:index text:stem .
+dc:description  text:index text:stem .
+dcterms:description text:index text:stem .

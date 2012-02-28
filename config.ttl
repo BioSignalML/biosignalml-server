@@ -1,0 +1,20 @@
+@prefix bsml:   <http://www.biosignalml.org/ontologies/2011/04/biosignalml#> .
+@prefix config: <http://www.biosignalml.org/ontologies/2011/06/configuration#> .
+
+
+bsml:EDF
+  config:recordingClass "EDFRecording" ;
+  config:mimetype       "application/x-edf" .
+
+bsml:SDF
+  config:recordingClass "SDFRecording" ;
+  config:mimetype       "application/x-sdf" .
+
+bsml:WFDB
+  config:recordingClass "WFDBRecording" ;
+  config:mimetype       "application/x-wfdb" .
+
+bsml:RAW
+  config:recordingClass "RAWRecording" ;
+  config:mimetype       "application/x-raw" .
+

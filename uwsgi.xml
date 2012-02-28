@@ -1,0 +1,9 @@
+<uwsgi>
+  <pythonpath>/Users/dave/biosignalml/python/api</pythonpath>
+  <pythonpath>/Users/dave/biosignalml/python/apps/server</pythonpath>
+  <socket>127.0.0.1:3031</socket>
+  <module>wsgi</module>
+  <logto>/tmp/uwsgi.log</logto>
+  <uid>_www</uid>
+  <master/>
+</uwsgi>

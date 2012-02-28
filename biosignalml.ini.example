@@ -1,0 +1,39 @@
+[repository]
+base_uri = http://repository.biosignalml.org/recording
+
+
+[webserver]
+address = 0.0.0.0:8082
+base_path = /www/repository
+
+## Need to do something with this
+[logging]
+log_file  = biosignalml.log
+log_level = 5   ; 5 = DEBUG, 4 = INFO, 3 = WARNING, 2 = ERROR, 1 = CRITICAL
+
+
+[triplestore]
+store    = sqlite
+database = /www/repository/database/BioSignalML.db
+
+
+[imports]
+; extension = path
+edf     = /Users/dave/Desktop/edf
+
+sdf/    = /Users/dave/Desktop/sdf
+
+EVT     = /Users/dave/Desktop/edf
+; minerva = ./imports
+
+[loaders]
+raw = Recording
+
+edf = EDFRecording
+sdf = SDFRecording
+
+EVT = MinervaEvent
+
+[mappings]
+edf = 
+sdf = 
