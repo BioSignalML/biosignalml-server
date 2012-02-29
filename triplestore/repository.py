@@ -110,12 +110,16 @@ class Repository(object):
       elif r['o']['type'] == 'typed-literal': return r['o']['value'] ## check datatype and convert...
     return None
 
-  def statements(self, graph, where, params = { }):
-  #------------------------------------------------
-    ttl = self.construct(graph, where, params, Format.TURTLE)
-    ##logging.debug("Statements: %s", ttl)  ###
-    parser = librdf.Parser('turtle')
-    return parser.parse_string_as_stream(ttl, Uri(self.base))
+  def make_graph(self, template, where, params = { }):
+  #---------------------------------------------------
+    '''
+    Construct a RDF graph from a query againt the repository/
+
+    :rtype: :class:`~biosignalml.rdf.Graph`
+    '''
+    ttl = self.construct(template, where, params, Format.TURTLE)
+    #logging.debug("Statements: %s", ttl)  ###
+    return Graph.create_from_string(ttl, Format.TURTLE, Uri(self.base))
 
   def get_type(self, uri):
   #-----------------------
@@ -147,21 +151,31 @@ class BSMLRepository(Repository):
     '''
     Return a list of all the Recordings in the repository.
 
-    :rtype: list[Recording]
+    :rtype: list[:class:`~biosignalml.Recording`]
     '''
     return [ Recording(r['r']['value'])
                for r in self.triplestore.select('?r', 'graph ?r { ?r a <%s> }' % BSML.Recording) ]
 
   def get_recording_uri(self, uri):
   #--------------------------------
-    ''' Get the URI of the Recording that the object is part of. '''
+    '''
+    Get the URI of the Recording in the graph that the object is in.
+
+    :param uri: The URI of some object.
+    :rtype: :class:`~biosignalml.rdf.Uri`
+    '''
     for r in self.triplestore.select('?g', 'graph ?g { ?g a <%s> . <%s> a ?t }' % (BSML.Recording, uri)):
       return Uri(r['g']['value'])
     return None
 
   def get_recording(self, uri):
   #----------------------------
-    ''' Get the Recording that the URI is part of. '''
+    '''
+    Get the Recording in the graph that the object is in.
+
+    :param uri: The URI of some object.
+    :rtype: :class:`~biosignalml.Recording`
+    '''
     #logging.debug('Getting: %s', uri)
     if self.get_type(uri) != BSML.Recording: uri = self.get_object(uri, BSML.recording)
     #logging.debug('Recording: %s', uri)
@@ -172,13 +186,19 @@ class BSMLRepository(Repository):
     else:
       return None
 
-  def get_recording_signals(self, uri):
-  #------------------------------------
+  def get_recording_with_signals(self, uri):
+  #-----------------------------------------
+    '''
+    Get the Recording that the URI is part of.
+
+    :param uri: The URI of the Recording.
+    :rtype: :class:`~biosignalml.Recording`
+    '''
     '''
     Get a list of all Signals in a Recording.
 
     :param uri: The URI of a Recording.
-    :rtype: list[Signal]
+    :rtype: list[:class:`~biosignalml.Signal`]
     '''
     rec = self.get_recording(uri)
     if rec is not None:
@@ -199,6 +219,7 @@ class BSMLRepository(Repository):
     Get a Signal from the repository.
 
     :param uri: The URI of a Signal.
+    :rtype: :class:`~biosignalml.Signal`
     '''
     graph = self.make_graph('<%(uri)s> ?p ?o',
                             '<%(uri)s> a  <%(type)s> . <%(uri)s> ?p ?o',
