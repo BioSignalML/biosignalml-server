@@ -49,7 +49,7 @@ class Database(object):
 
   def execute(self, sql, *args):
   #-----------------------------
-    logging.debug('Execute: %s', sql)
+    ##logging.debug('Execute: %s', sql)
     return self._connection.execute(sql, *args)
 
   def readlist(self, table, col, where=None, order=None, limit=None):
@@ -162,7 +162,7 @@ class Database(object):
 
   def begin(self):
   #---------------
-    logging.debug('Start transaction')
+    ##logging.debug('Start transaction')
     transaction_lock.acquire()
     return self.execute('begin immediate')
 
@@ -180,14 +180,14 @@ class Database(object):
 
   def transaction(self, sql, *args):
   #---------------------------------
-    logging.debug('Begin transaction')
+    ##logging.debug('Begin transaction')
     transaction_lock.acquire()
     self._connection.execute('begin immediate')
-    logging.debug('Execute: %s', sql)
+    ##logging.debug('Execute: %s', sql)
     r = self._connection.execute(sql, *args)
     self._connection.execute('commit')
     transaction_lock.release()
-    logging.debug('End transaction')
+    ##logging.debug('End transaction')
     return r
 
   def get_status(self, key):
@@ -254,7 +254,7 @@ class PagedTable(object):
     if primary not in self._keycols:
       self._keycols.append(primary)
       self._keyorder.append('asc')
-    logging.debug('keycols: %s', self._keycols)
+    ##logging.debug('keycols: %s', self._keycols)
     self._defsort = defsort
     self._pagesize = pagesize
     self._toprow = self._botrow = None
@@ -269,14 +269,14 @@ class PagedTable(object):
     sql = 'select '
     for k in self._keycols: sql += k + ','
     sql = sql[:-1] + ' from %s where rowid=%d' % (self._table, rowid)
-    logging.debug('KEYS: %s', sql)
+    ##logging.debug('KEYS: %s', sql)
     for r in db.execute(sql): return list(r)
     return None
 
   def _where(self, keydata, next, equals):
   #---------------------------------------
     if keydata == None: return ''
-    logging.debug("keys: %s %s %s", repr(self._keycols), repr(self._keyorder), repr(keydata))
+    ##logging.debug("keys: %s %s %s", repr(self._keycols), repr(self._keyorder), repr(keydata))
     sql = ['(']
     for i in xrange(0, len(keydata)):
       if self._keyorder[i] == 'desc':
@@ -380,7 +380,7 @@ class PagedTable(object):
       data.append(d[1:])
     if len(data): self._botrow = int(d[0])
 ###    for d in data: logging.debug('DATA: %s', str(d))
-    logging.debug('Got %d rows', len(data))
+    ##logging.debug('Got %d rows', len(data))
     return data
 
   def nextpage(self, db):
