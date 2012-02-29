@@ -18,7 +18,7 @@ import web
 
 ##import rpdb2; rpdb2.start_embedded_debugger('test')
 
-import biosignalml.repository as repository
+import triplestore.repository as repository
 
 LOGFORMAT = '%(asctime)s %(levelname)8s %(threadName)s: %(message)s'
 

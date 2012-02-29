@@ -13,8 +13,9 @@ import httplib2
 import json
 import logging
 
+from biosignalml.rdf import Format
+
 from triplestore import TripleStore
-from formats     import Format
 
 
 class FourStore(TripleStore):

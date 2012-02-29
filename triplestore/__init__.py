@@ -9,7 +9,7 @@
 ######################################################
 
 
-from formats import Format
+from biosignalml.rdf import Format
 
 
 class TripleStore(object):
