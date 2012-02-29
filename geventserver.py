@@ -43,7 +43,7 @@ class BioSignalMLServer(WebSocketServer):
   def __init__(self, address, *args, **kwargs):
   #--------------------------------------------
     gevent.pywsgi.WSGIServer.__init__(self, address, *args, **kwargs)
-    self.application = StreamUpgrade(handler=self.handler)
+    self.application = StreamUpgrade(app=self.handler)
 
 
 
