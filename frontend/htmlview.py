@@ -159,9 +159,8 @@ def repository(data, session, record=''):
     recuri = (record if record.startswith('http://') or record.startswith('file://')
              else '%s/%s' % (prefix, record))
     ##logging.debug('RECORDING: %s', recuri)
-    recording = repo.get_recording(recuri)
+    recording = repo.get_recording_with_signals(recuri)
     if recording is None: raise web.NotFound('Unknown recording...')
-    recording.load_signals_from_repository(repo)
     if str(recording.uri) != recuri:
       selectedsig = recuri
       recuri = str(recording.uri)
