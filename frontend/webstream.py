@@ -36,6 +36,16 @@ class StreamServer(WebSocket):
     self._parser.process(msg.data)
     self.close()
 
+  def send_block(self, block, check=stream.Checksum.STRICT):
+  #---------------------------------------------------------
+    '''
+    Send a :class:`~biosignalml.transports.stream.StreamBlock` over a web socket.
+
+    :param block: The block to send.
+    :param check: Set to :attr:`~biosignalml.transports.stream.Checksum.STRICT`
+      to append a MD5 checksum to the block.
+    '''
+    self.send(block.bytes(), True)
 
 
 class StreamEchoSocket(StreamServer):
@@ -43,8 +53,7 @@ class StreamEchoSocket(StreamServer):
 
   def got_block(self, block):
   #--------------------------
-    self.send(block.bytes(), True)
-
+    self.send_block(block)
 
 
 class StreamDataSocket(StreamServer):
