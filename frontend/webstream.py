@@ -25,9 +25,9 @@ class StreamServer(WebSocket):
   def __init__(self, *args, **kwds):
   #---------------------------------
     WebSocket.__init__(self, *args, **kwds)
-    self._parser = stream.BlockParser(self._gotblock, check=stream.Checksum.CHECK)
+    self._parser = stream.BlockParser(self.got_block, check=stream.Checksum.CHECK)
 
-  def _gotblock(self, block):
+  def got_block(self, block):
   #--------------------------
     pass
 
@@ -41,7 +41,7 @@ class StreamServer(WebSocket):
 class StreamEchoSocket(StreamServer):
 #====================================
 
-  def _gotblock(self, block):
+  def got_block(self, block):
   #--------------------------
     self.send(block.bytes(), True)
 
@@ -52,7 +52,7 @@ class StreamDataSocket(StreamServer):
 
   MAXPOINTS = 4096 ### ?????
 
-  def _gotblock(self, block):
+  def got_block(self, block):
   #--------------------------
     if block.type == stream.BlockType.DATA_REQ:
       repo = web.config.biosignalml['repository']
