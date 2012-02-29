@@ -27,3 +27,11 @@
 
 
 
+
+
+curl -T ~/biosignalml/testdata/sinewave.edf -H "Content-type: application/x-edf" \
+  http://devel.biosignalml.org/recording/test/sinewave
+
+curl -H 'Accept: application/x-stream'						 \
+  http://devel.biosignalml.org/recording/test/sinewave
+
