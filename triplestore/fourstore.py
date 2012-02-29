@@ -98,10 +98,10 @@ class FourStore(TripleStore):
      ]"""
 
 
-  def construct(self, graph, where, params = { }, format=Format.RDFXML):
-  #---------------------------------------------------------------------
-    return self.query('construct { %(graph)s } where { %(where)s }'
-                        % { 'graph': graph % params, 'where': where % params, },
+  def construct(self, template, where, params = { }, format=Format.RDFXML):
+  #------------------------------------------------------------------------
+    return self.query('construct { %(tplate)s } where { %(where)s }'
+                        % { 'tplate': template % params, 'where': where % params, },
                       format)
 
   def describe(self, uri, format=Format.RDFXML):

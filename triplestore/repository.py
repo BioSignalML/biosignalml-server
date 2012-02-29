@@ -83,9 +83,9 @@ class Repository(object):
     return QueryResults(self, sparql, header, html, abbreviate)
 
 
-  def construct(self, graph, where, params = { }, format=Format.RDFXML):
-  #---------------------------------------------------------------------
-    return self.triplestore.construct(graph, where, params, format)
+  def construct(self, template, where, params = { }, format=Format.RDFXML):
+  #------------------------------------------------------------------------
+    return self.triplestore.construct(template, where, params, format)
 
 
   def describe(self, uri, format=Format.RDFXML):

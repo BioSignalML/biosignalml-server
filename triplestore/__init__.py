@@ -31,8 +31,8 @@ class TripleStore(object):
   #-----------------------------------------------------------
     pass
 
-  def construct(self, graph, where, params = { }, format=Format.RDFXML):
-  #---------------------------------------------------------------------
+  def construct(self, template, where, params = { }, format=Format.RDFXML):
+  #------------------------------------------------------------------------
     pass
 
   def describe(self, uri, format=Format.RDFXML):
