@@ -14,7 +14,11 @@ import web
 from ws4py.websocket import WebSocket
 
 import biosignalml.transports.stream as stream
-from biosignalml.rdf import Uri
+
+from biosignalml      import BSML
+from biosignalml.rdf  import Uri
+from biosignalml.data import UniformTimeSeries
+import biosignalml.formats as formats
 
 
 class StreamServer(WebSocket):
@@ -61,103 +65,87 @@ class StreamDataSocket(StreamServer):
 
   MAXPOINTS = 4096 ### ?????
 
+  def _add_signal(self, uri):
+  #--------------------------
+    if self._repo.is_signal(uri):
+      rec = self._repo.get_recording(uri)
+      recclass = formats.CLASSES.get(str(rec.format))
+      if recclass:
+        sig = self._repo.get_signal(uri)
+        rec.add_signal(sig)
+        recclass.changeclass(rec, str(rec.source))   ## Assumes signal index is last part of s.uri
+        self._sigs.append(sig)
+
   def got_block(self, block):
   #--------------------------
+    logging.debug('GOT: %s', block)
+
     if block.type == stream.BlockType.DATA_REQ:
-      repo = web.config.biosignalml['repository']
-      uri = block.header.uri
+      self._repo = web.config.biosignalml['repository']
+      uri = block.header.get('uri')
+      self._sigs = [ ]
       if isinstance(uri, list):
-        recsigs = [ (repo.get_recording(s), s)
-                      for s in [ repo.get_signal(u) for u in uri ] if s is not None ]
-      elif repo.is_recording(uri):
-        rec = repo.get_recording(uri)
-        recsigs = [ (rec, s) for s in repo.get_recording_signals(uri) ]
-      elif repo.is_signal(uri):
-        signals = [ (repo.get_recording(uri), repo.get_signal(uri)) ]
-
-      for (r, s) in signals:
-        pass
-        '''
-        rec = formats.open(rec.uri)  ## Want to extend...?? Attach source...
-
-
-        s.recording.source
-        s.recording.type
-
-        sigdata(s)
-
-        source
-
-
-   get ts data
-    --> sd = stream.SignalData(uri, start, data, rate, clock)
-
-
-    --> self.send(sd.streamblock().bytes(), True)
-
-    repo = web.config.biosignalml['repository']
-'''
-
-'''
-from biosignalml.formats.edf import EDFSource
-from biosignalml.formats.streaming import StreamSink
-from biosignalml.rdf import Uri, EDF
-from biosignalml.model import Recording, Signal, BSML
-from biosignalml.repository import triplestore
-from biosignalml.repository import options
-
-
-class Sender(threading.Thread):
-#=============================
-
-  def __init__(self, queue, uri, **kwds):
-  #-------------------------------------
-    if uri:
-      source = Uri(uri)
-
-      """
-      Allow specification of time segments
-        (use fragment # with list like for -t option) NO, since frag id is client side only.
-        Instead use query variable ?start=123.233?duration=10.34
-        Or in URI .../segment/123.233-10.34
-
-      Allow metadata only request (don't stream any data)
-
-      Allow specification of signals to stream...
-
-      """
-      objtype = triplestore.get_target(source, RDF.type)
-      if   objtype == BSML.Recording:
-        rec = Recording.open(source)
-        signals = rec.signals()
-      elif objtype == BSML.Signal:
-        sig = Signal.open(source)    #### Need open() to find recording...
-                                     #### either from URI structure
-                                     #### or global statement...
-        rec = sig.recording
-        signals = [ sig ]
-
-      self._sendQ = queue
-      if rec.format in [ BSML.EDF, BSML.EDFplus ]:
-        logging.debug("Opening EDF '%s' with signals: %s", rec.source, signals)
-        self._datasource = EDFSource(rec.source, signals)
+        for s in uri: self._add_signal(s)
+      elif self._repo.is_recording(uri):
+        rec = self._repo.get_recording_with_signals(uri)
+        recclass = formats.CLASSES.get(str(rec.format))
+        if recclass:
+          recclass.changeclass(rec, str(rec.source))   ## Assumes signal index is last part of s.uri
+          self._sigs = rec.signals()
       else:
-        raise Exception('Unsupported data format...')
+        self._add_signal(uri)
+      start = block.header.get('start')
+      duration = block.header.get('duration')
+      if start is None and duration is None: interval = None
+      else:                                  interval = (start, duration)
+      offset = block.header.get('offset')
+      count = block.header.get('count')
+      if offset is None and count is None: segment = None
+      else:                                segment = (offset, count)
+      for sig in self._sigs:
+        try:
+          for d in sig.read(interval=sig.recording.interval(*interval) if interval else None,
+                            segment=segment,
+                            points=block.header.get('maxsize', 0)):
+            if isinstance(d.dataseries, UniformTimeSeries):
+              timing = { 'rate': d.dataseries.rate }
+            else:
+              timing = { 'clock': d.dataseries.times }
+            self.send_block(stream.SignalData(str(sig.uri), d.starttime, d.dataseries.data, **timing).streamblock())
+        except Exception, msg:
+          self.send_block(stream.ErrorBlock(0, block, str(msg)))
+          if web.config.debug: raise
 
-      self._sink = StreamSink(self, rec.uri, [ s.uri for s in signals ] )
 
-      self._sink.send_metadata(rec, options.repository['import_base'])
-      threading.Thread.__init__(self, **kwds)
-      self.start()
+if __name__ == '__main__':
+#=========================
 
-  def write(self, data):
-  #--------------------
-    self._sendQ.put(data)
+  import sys
 
-  def run(self):
-  #------------
-    for data in self._datasource.frames():
-      logging.debug("Signal: '%s'", str(data))
-      self._sink.send_signal(data)
-    self._sink.flush_signals()
-'''
+  from triplestore import repository
+
+  def print_object(obj):
+  #=====================
+    attrs = [ '', repr(obj) ]
+    for k in sorted(obj.__dict__):
+      attrs.append('  %s: %s' % (k, obj.__dict__[k]))
+    print '\n'.join(attrs)
+
+
+  def test(uri):
+  #-------------
+
+    repo = repository.BSMLRepository('http://devel.biosignalml.org', 'http://localhost:8083')
+
+
+
+  if len(sys.argv) < 2:
+    print "Usage: %s uri..." % sys.argv[0]
+    sys.exit(1)
+
+  uri = sys.argv[1:]
+  if len(uri) == 1: uri = uri[0]
+
+
+  test(uri)
+
