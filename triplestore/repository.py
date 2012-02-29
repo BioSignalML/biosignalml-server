@@ -181,7 +181,7 @@ class BSMLRepository(Repository):
     #logging.debug('Recording: %s', uri)
     if uri:
       graph = self.make_graph('<%(uri)s> ?p ?o',
-                              '{ <%(uri)s> ?p ?o }', { 'uri': str(uri) })
+                              'graph <%(uri)s> { <%(uri)s> ?p ?o }', { 'uri': str(uri) })
       return Recording.create_from_graph(str(uri), graph, bsml_mapping())
     else:
       return None
@@ -222,8 +222,15 @@ class BSMLRepository(Repository):
     :rtype: :class:`~biosignalml.Signal`
     '''
     graph = self.make_graph('<%(uri)s> ?p ?o',
-                            '<%(uri)s> a  <%(type)s> . <%(uri)s> ?p ?o',
-                             { 'uri': str(uri), 'type': str(BSML.Signal) })
+                            'graph ?rec { ?rec a <%(rtype)s> .'
+                          + ' <%(uri)s> <%(reln)s> ?rec .'
+                          + ' <%(uri)s> a  <%(type)s> .'
+                          + ' <%(uri)s> ?p ?o }',
+                             { 'uri': str(uri),
+                              'type': str(BSML.Signal),
+                              'reln': str(BSML.recording),
+                             'rtype': str(BSML.Recording),
+                             })
     return Signal.create_from_graph(uri, graph, bsml_mapping())
 
 #  def signal(self, sig, properties):              # In context of signal's recording...
