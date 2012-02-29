@@ -177,7 +177,12 @@ class BSMLRepository(Repository):
     :rtype: list[Signal]
     '''
     rec = self.get_recording(uri)
-    if rec: rec.load_signals_from_store(self, bsml_mapping())
+    if rec is not None:
+      for sig in self.get_subjects(BSML.recording, rec.uri):
+        graph = self.make_graph('<%(uri)s> ?p ?o',
+                                'graph <%(rec)s> { <%(uri)s> ?p ?o }',
+                                { 'rec': str(rec.uri), 'uri': str(sig) })
+        rec.add_signal(Signal.create_from_graph(str(sig), graph, bsml_mapping()))
     return rec
 
 #  def signal_recording(self, uri):
