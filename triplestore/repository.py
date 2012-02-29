@@ -166,7 +166,12 @@ class BSMLRepository(Repository):
     #logging.debug('Getting: %s', uri)
     if self.get_type(uri) != BSML.Recording: uri = self.get_object(uri, BSML.recording)
     #logging.debug('Recording: %s', uri)
-    return Recording.create_from_repository(str(uri), self, bsml_mapping()) if uri else None
+    if uri:
+      graph = self.make_graph('<%(uri)s> ?p ?o',
+                              '{ <%(uri)s> ?p ?o }', { 'uri': str(uri) })
+      return Recording.create_from_graph(str(uri), graph, bsml_mapping())
+    else:
+      return None
 
   def get_recording_signals(self, uri):
   #------------------------------------
@@ -196,7 +201,10 @@ class BSMLRepository(Repository):
 
     :param uri: The URI of a Signal.
     '''
-    return Signal.create_from_repository(uri, self, bsml_mapping())
+    graph = self.make_graph('<%(uri)s> ?p ?o',
+                            '<%(uri)s> a  <%(type)s> . <%(uri)s> ?p ?o',
+                             { 'uri': str(uri), 'type': str(BSML.Signal) })
+    return Signal.create_from_graph(uri, graph, bsml_mapping())
 
 #  def signal(self, sig, properties):              # In context of signal's recording...
 #  #---------------------------------
