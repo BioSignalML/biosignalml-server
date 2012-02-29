@@ -46,14 +46,15 @@ def property_details(obj, properties, table, **args):
   opn = '<td>'  if table else '<p>'
   cls = '</td>' if table else '</p>'
   r = [ ]
-  for prm, prop, fn in properties:
+  for p in properties:
+    prm, prop = p[0:2]
     v = getattr(obj, prop, None)
     if v is None:
       meta = getattr(obj, 'metadata', None)
       if meta: v = meta.get(prop)
     if v is None: r.append('')
     else:
-      if fn:                    t = fn[0](v, *[ args[a] for a in fn[1] ] if fn[1] else [ ])
+      if len(p) > 2:            t = p[2](v, *[ args[a] for a in p[3] ] if (len(p) > 3) else [ ])
       elif isinstance(v, list): t = '<br/>'.join([ xmlescape(str(s)) for s in v ])
       else:                     t = xmlescape(unicode(v))
       if table: r.append(t)
@@ -69,10 +70,10 @@ def property_details(obj, properties, table, **args):
 
 # Generate list of signals in a recording (as a <table>)
 
-signal_metadata = [ ('Id',    'uri',   (chop, ['n'])),
-                    ('Name',  'label', None),
-                    ('Units', 'units', None),
-                    ('Rate',  'rate',  (trimdecimal, None)),
+signal_metadata = [ ('Id',    'uri',   chop, ['n']),
+                    ('Name',  'label'),
+                    ('Units', 'units', abbreviate),
+                    ('Rate',  'rate',  trimdecimal),
                   ]
 
 def signal_details(recording, selected=None):
@@ -104,14 +105,14 @@ def event_details(recuri, signal=None):
 
 
 
-recording_metadata = [ ('Desc',      'description',     None),
-                       ('Created',   'starttime',       None),
-                       ('Duration',  'duration', (maketime, None)),
-                       ('Format',    'format',          None),
-                       ('Study',     'investigation',   None),
-                       ('Comments',  'comment',         None),
-                       ('Source',    'source',          None),
-                       ('Submitted', 'dateSubmitted',   (lambda d: str(d) + ' UTC', None)),
+recording_metadata = [ ('Desc',      'description'),
+                       ('Created',   'starttime'),
+                       ('Duration',  'duration', maketime),
+                       ('Format',    'format', abbreviate),
+                       ('Study',     'investigation'),
+                       ('Comments',  'comment'),
+                       ('Source',    'source'),
+                       ('Submitted', 'dateSubmitted', lambda d: str(d) + ' UTC'),
                      ]
 
 
