@@ -72,7 +72,7 @@ else:
   session = web.config._session
 
 
-print "SESS:", session._data
+###print "SESS:", session._data
 
 dispatch = [ ('comet/metadata',       'htmlview.metadata',   'json'),   # For tooltip popups
              ('comet/search/setup',   'search.template',     'json'),
@@ -118,12 +118,12 @@ class Index(object):
 
   def _process(self, method, path):
   #--------------------------------
-    logging.debug('Request: %s', path)
+    #logging.debug('Request: %s', path)
     if len(path) and path[0] == '/': path = path[1:]
     i = path.find('?')
     if i >= 0: path = path[0:i]
     path, modname, funname, params, responsetype = get_processor(path)
-    logging.debug('Serving %s in %s', funname, modname)
+    #logging.debug('Serving %s in %s', funname, modname)
 
     if responsetype == 'html':
       if not menu.hasaction(path, session):

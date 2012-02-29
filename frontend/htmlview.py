@@ -27,7 +27,7 @@ _tree_template = templates.Tree()
 
 def xmltree(nodes, base, prefix, select=''):
 #===========================================
-  logging.debug('Selected: %s', select)
+  #logging.debug('Selected: %s', select)
   tree = mktree.maketree(nodes, base)
   if select.startswith('http://') or select.startswith('file://'):
     selectpath = select.rsplit('/', select.count('/') - 2)
@@ -117,7 +117,7 @@ recording_metadata = [ ('Desc',      'description',     None),
 
 def build_metadata(uri):
 #======================
-  logging.debug('Get metadata for: %s', uri)
+  #logging.debug('Get metadata for: %s', uri)
   html = [ '<div class="metadata">' ]
   if uri:
     source = Uri(uri)
