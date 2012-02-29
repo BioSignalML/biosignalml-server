@@ -51,8 +51,8 @@ def _check(data, session):
   menu.setmenu(session)
     
 
-def logout(data, session=None, params={}):
-#=========================================
+def logout(data={}, session=None, params={}):
+#============================================
   logging.debug("Logging out...")
   session.userlevel = 0
   session.loggedin = False
