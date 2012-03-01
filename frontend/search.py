@@ -62,7 +62,7 @@ SEARCH_FIELDS = [ { 'prompt': 'having text',
                     'property': 'bsml:units',
                     'tests':  ['equal', 'not equal'],
                     'sparql': [ '?s %(property)s "%(value)s" .',                   # equal
-                                '?s %(property)s ?o . FILTER (?o != "%(value)s)',  # not equal
+                                '?s %(property)s ?o . FILTER (?o != "%(value)s")',  # not equal
                               ],
                     'values': [ ]
                     },
