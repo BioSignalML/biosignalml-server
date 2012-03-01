@@ -73,13 +73,12 @@ class StreamDataSocket(StreamServer):
       if recclass:
         sig = self._repo.get_signal(uri)
         rec.add_signal(sig)
-        recclass.changeclass(rec, str(rec.source))   ## Assumes signal index is last part of s.uri
+        recclass.initialise_class(rec, str(rec.source))   ## Assumes signal index is last part of s.uri
         self._sigs.append(sig)
 
   def got_block(self, block):
   #--------------------------
     logging.debug('GOT: %s', block)
-
     if block.type == stream.BlockType.DATA_REQ:
       self._repo = web.config.biosignalml['repository']
       uri = block.header.get('uri')
@@ -90,7 +89,7 @@ class StreamDataSocket(StreamServer):
         rec = self._repo.get_recording_with_signals(uri)
         recclass = formats.CLASSES.get(str(rec.format))
         if recclass:
-          recclass.changeclass(rec, str(rec.source))   ## Assumes signal index is last part of s.uri
+          recclass.initialise_class(rec, str(rec.source))   ## Assumes signal index is last part of s.uri
           self._sigs = rec.signals()
       else:
         self._add_signal(uri)
