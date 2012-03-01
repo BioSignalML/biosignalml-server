@@ -21,8 +21,6 @@ from biosignalml.utils import xmlescape
 from biosignalml.model import BSML
 
 import biosignalml.formats as fileformats
-import biosignalml.formats.stream.ssf as stream
-import biosignalml.formats.stream.samplerate as samplerate
 
 import htmlview
 import frontend
