@@ -207,50 +207,6 @@ class ReST(object):
       except Exception, msg:
         raise InternalError("Error serving recording: %s" % msg)
 
-
-    elif ctype not in [None, 'application/x-raw'] and 'application/x-stream' in accept:
-      logging.debug('Opening: %s', ctype)
-
-      if recording.source is None:
-        raise NotFound("Missing recording source: '%s'" % source)
-
-      RecordingClass = ReST._formats.get(ctype, (None, None))[1]
-      try:
-        rec = RecordingClass.open(str(recording.source), uri=recording.uri)
-      except IOError:
-        raise NotFound("Cannot open source: '%s'" % recording.source)
-
-      query = web.ctx.environ['QUERY_STRING']
-      if query: times = [ self._get_interval(t) for t in query.split(';') ]
-      else:     times = [ (0.0, rec.duration) ]
-      logging.debug("Times: %s", times)
-
-##      logging.debug('Session: %s', frontend.session._data) # .get('lastrec', None))
-      #session.lastrec = rec  ## Swig objects can't be pickled...
-      frontend.session.lastrec = 'test...xxx'
-##      logging.debug('Session: %s', frontend.session._data) # .get('lastrec', None))
-      frontend.session._save()         ## Shouldn't be needed??
-                              ## Or does saving depend on how we return??
-
-      if objtype == BSML.Signal:
-        try:
-          newrate = None ############### set by query parameter... ###################
-          sig = rec.get_signal(rec_uri)
-          rs = None if newrate is None else samplerate.RateConvertor(newrate)
-          for t in times:
-            for d in sig.read(rec.interval(*t)):
-              yield stream.DataBlock(d if rs is None else rs.convert(d)).data(stream.CHECKSUM_STRICT)
-            if rs is not None:
-              logging.debug('finish convert')
-              db = stream.DataBlock(rs.finish()).data(stream.CHECKSUM_STRICT)
-              logging.debug('DB=%s', db)
-              yield db
-        except Exception, msg:
-          raise InternalError(msg)
-
-    # elif ctype == 'text/html':
-    #   yield htmlview.recording_html(rec_uri)
-
     else:
       ## Build a new RDF Graph that has { <uri> ?p ?o  } UNION { ?s ?p <uri> }
       ## and serialise this??
