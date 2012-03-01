@@ -4,7 +4,7 @@
 #
 #  Copyright (c) 2010-2011  David Brooks
 #
-#  $ID$
+#  $ID: 51e97a9 on Thu Mar 1 20:34:33 2012 +1300 by Dave Brooks $
 #
 ######################################################
 
@@ -119,7 +119,6 @@ class ReST(object):
     paths[-1] = tail[0]
     return ('/'.join(paths[1:]), tail[0], fragment)
 
-
   @staticmethod
   def _get_interval(t):
   #--------------------
@@ -153,9 +152,8 @@ class ReST(object):
 
     recording = ReST._repo.get_recording(rec_uri)
     if recording is None: raise NotFound("Unknown recording: '%s'" % source)
-    logging.debug("Request '%s' --> '%s'", name, recording.source)
-    logging.debug('ENV: %s', web.ctx.environ)
-
+    #logging.debug("Request '%s' --> '%s'", name, recording.source)
+    #logging.debug('ENV: %s', web.ctx.environ)
 
     objtype = ReST._repo.get_type(rec_uri)
     ctype = (ReST._mimetype.get(str(recording.format), 'application/x-raw')
@@ -230,7 +228,6 @@ class ReST(object):
     source = self._pathname(name)[0]
     if source.startswith('http:'): rec_uri = source
     else: rec_uri = ReST._repo.base + name.split('/', 1)[0] + '/' + source
-
 
     ##file_id   = str(uuid.uuid4()) + '.' + format
     ##file_name = os.path.abspath(os.path.join(ReST._repo.storepath, file_id))
