@@ -223,7 +223,7 @@ class ReST(object):
 
     # Can we also PUT RDF content ???
 
-    RecordingClass = ReST._formats.get(ctype, (None, None))[1]
+    RecordingClass = ReST._class.get(ctype)
     if not RecordingClass:
       raise UnsupportedMediaType("Unknown Content-Type: '%s'" % ctype)
 
@@ -275,7 +275,7 @@ class ReST(object):
                       ' <created',
                       '  class="recording"',
                       '  uri="%s"'      % recording.uri,
-                      '  mimetype="%s"' % ctype,
+                      '  mimetype="%s"' % RecordingClass.MIMETYPE,
                       '  />',
                       '</bsml>', ''])
     # Or do we return HTML? RDF/XML of provenance? And include location in provenance...
