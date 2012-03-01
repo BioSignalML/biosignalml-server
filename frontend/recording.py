@@ -99,41 +99,6 @@ class UnsupportedMediaType(HTTPError):   # Missing from web.py
     HTTPError.__init__(self, status, message)
 
 
-
-class RecConfig(object):
-#=======================
-
-  def __init__(self, format, recording, mtype):
-  #--------------------------------------------
-    self._format = format
-    self._recording = recording
-    self._mimetypes = [ mtype ]
-
-  def add_type(self, mtype):
-  #-------------------------
-    self.mimetypes.append(mtype)
-
-
-"""
-RFC 2396                   URI Generic Syntax                August 1998
-
-
-6. URI Normalization and Equivalence
-
-   In many cases, different URI strings may actually identify the
-   identical resource. For example, the host names used in URL are
-   actually case insensitive, and the URL <http://www.XEROX.com> is
-   equivalent to <http://www.xerox.com>. In general, the rules for
-   equivalence and definition of a normal form, if any, are scheme
-   dependent. When a scheme uses elements of the common syntax, it will
-   also use the common syntax equivalence rules, namely that the scheme
-   and hostname are case insensitive and a URL with an explicit ":port",
-   where the port is the default for the scheme, is equivalent to one
-   where the port is elided.
-"""
-
-
-
 class ReST(object):
 #==================
 
