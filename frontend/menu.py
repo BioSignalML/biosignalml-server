@@ -43,8 +43,8 @@ def setmenu(session):
   logging.debug('LEVEL: %s', str(level))   ##############
   menu = [ ]
   if level >= user.VIEWER:        menu.extend(VIEWERMENU(level))
-  if level >= user.UPDATER:       menu.append(UPDATEMENU)
-  if level >= user.ADMINISTRATOR: menu.append(ADMINMENU)
+##  if level >= user.UPDATER:       menu.append(UPDATEMENU)
+##  if level >= user.ADMINISTRATOR: menu.append(ADMINMENU)
   menu.append(LOGOUTMENU if user.loggedin(session) else LOGINMENU)
   session.menu = menu
   ##logging.debug('SET MENU: %s', menu)  #######
