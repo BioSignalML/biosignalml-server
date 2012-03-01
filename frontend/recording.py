@@ -21,6 +21,7 @@ from biosignalml.utils import xmlescape
 from biosignalml.model import BSML
 
 import biosignalml.formats
+import biosignalml.rdf as rdf
 
 import htmlview
 import frontend
@@ -191,15 +192,15 @@ class ReST(object):
       ## and serialise this??
 
       # check rdf+xml, turtle, n3, html ??
-      format = 'text/turtle' if ('text/turtle' in accept
-                              or 'application/x-turtle' in accept) else 'application/rdf+xml'
+      format = rdf.Format.TURTLE if ('text/turtle' in accept
+                                  or 'application/x-turtle' in accept) else rdf.Format.RDFXML
       web.header('Content-Type', format)
       if recording is not None:
         yield ReST._repo.construct('?s ?p ?o', 'graph <%s> { ?s ?p ?o' % recording.uri
                                              + ' FILTER (?p != <http://4store.org/fulltext#stem>'
                                              + ' && (?s = <%s> || ?o = <%s>)) }' % (rec_uri, rec_uri),
                                     format=format)
-      elif format == 'text/turtle':
+      elif format == rdf.Format.TURTLE:
         yield (ReST._repo.construct('<%s> ?p ?o' % rec_uri,
                                     '<%s> ?p ?o FILTER(?p != <http://4store.org/fulltext#stem>)'
                                      % rec_uri, format=format)
