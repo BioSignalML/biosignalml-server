@@ -15,10 +15,10 @@ import logging
 import RDF as librdf
 import json
 
+import biosignalml.formats
+
 from biosignalml import BSML, Recording, Signal
-
 from biosignalml.utils import xmlescape
-
 from biosignalml.model.mapping import bsml_mapping
 
 from biosignalml.rdf import RDF, DCTERMS
@@ -180,9 +180,10 @@ class BSMLRepository(Repository):
     if self.get_type(uri) != BSML.Recording: uri = self.get_object(uri, BSML.recording)
     #logging.debug('Recording: %s', uri)
     if uri:
+      rclass = biosignalml.formats.CLASSES.get(str(self.get_object(uri, DCTERMS.format)), Recording)
       graph = self.make_graph('<%(uri)s> ?p ?o',
                               'graph <%(uri)s> { <%(uri)s> ?p ?o }', { 'uri': str(uri) })
-      return Recording.create_from_graph(str(uri), graph, bsml_mapping())
+      return rclass.create_from_graph(str(uri), graph, bsml_mapping())
     else:
       return None
 
