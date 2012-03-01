@@ -10,8 +10,8 @@
 
 
 div.formbox {
-  display: inline-block ;  /* So width expands to search box */
-  margin: 0 0 10px 10px ;
+/*  display: inline-block ;   So width expands to search box */
+  margin: 10px ;
   }
 
 div.form span {
@@ -25,12 +25,36 @@ div.form span {
   text-align: center ;
   }
 
-div#searchresults {
-  display: inline-block ;
-  margin: 0 0 10px 10px ;
-  background-color: #69C;
-  border: 2px dotted #036;
+div#resultshead {
+/*  display: inline-block ; */
+  margin: 10px ;
+  margin-bottom: 0 ;
+  background-color: #AAA;  /* #69C; */
   padding: 10px ;
+  padding-top: 4px ;
+  padding-bottom: 4px ;
+  font-weight: bold ;
+  border: 2px dotted #036;
+  border-bottom: 0 ;
+  }
+
+div#searchresults {
+/*  display: inline-block ; */
+  margin: 10px ;
+  margin-top: 0 ;
+  background-color: #fff;  /* #69C; */
+  border: 2px dotted #036;
+  border-top: 0 ;
+  padding: 10px ;
+  padding-top: 0 ;
+  }
+
+div#searchresults div.result {
+  padding: 4px ;
+  }
+
+div#searchresults div.odd {
+  background-color: #EEE;  /* #69C; */
   }
 
 

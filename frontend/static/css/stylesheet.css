@@ -81,8 +81,6 @@ div.formbox {
   border: 2px dotted #063;
   padding: 10px ;
   margin: 10px ;
-  margin-top: 0px ;
-  margin-right: 3em ;
   }
 
 div.form span {
@@ -336,6 +334,8 @@ span.right {
   float: left ;
   width: 250px ;
   margin-right: 10px ;
+  padding: 5px ;
+  padding-right: 0 ;
   }
 
 div#contentbody {
@@ -347,7 +347,7 @@ div#contentbody {
 
 
 div.signal {
-  margin-left: 260px ;      /* tree width + margins */
+  margin-left: 265px ;      /* tree width + padding + margins ?? */
   margin-right: 10px ;
   }
 
@@ -373,4 +373,26 @@ div.signal {
 .selected.jstree-leaf,
 .selected.jstree-last.jstree-leaf {
   background: #7AD ;
+  }
+
+div#sparqlresult {
+  margin: 10px ;
+  border: 2px dotted #036;
+  padding: 2px ;
+  }
+
+/* Better present SPARQL result rows */
+div#sparqlresult th {
+  background: #AAA ;
+  padding-left: 4px ;
+  padding-bottom: 4px ;
+  }
+div#sparqlresult td {
+  padding-left: 4px ;
+  }
+div#sparqlresult tr {
+  background: #EEE ;
+  }
+div#sparqlresult tr.odd {
+  background: #FFF ;
   }

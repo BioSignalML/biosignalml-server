@@ -101,7 +101,7 @@ def signal_details(recording, selected=None):
 #============================================
   lenhdr = len(str(recording.uri)) + 1
   # Above is for abbreviating signal id; should we check str(sig.uri).startswith(str(rec.uri)) ??
-  html = [ '<table class="signal">' ]
+  html = [ '<div><table class="signal">' ]
   html.append('<tr>%s</tr>' % table_header(signal_metadata))
   odd = True
   for sig in recording.signals():
@@ -111,7 +111,7 @@ def signal_details(recording, selected=None):
     html.append(property_details(sig, signal_metadata, True, n=lenhdr))
     html.append('</tr>')
     odd = not odd
-  html.append('</table>')
+  html.append('</table></div>')
   return ''.join(html)
 
 

@@ -242,9 +242,9 @@ def searchquery(data, session, params):
   sigs.sort()
 
   html = [ '<div>' ]
-  for s, h, t in sigs:
-   html.append('<div class="result" id="%s">%s %s</div>'
-              % (s, h, t))
+  for n, s in enumerate(sigs):
+    html.append('<div class="result%s" id="%s">%s %s</div>'
+                             % (' odd' if n%2 else '', s[0], s[1], s[2]))
   html.append('</div>')
   return { 'html': '\n'.join(html) }
 

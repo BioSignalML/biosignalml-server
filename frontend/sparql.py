@@ -36,7 +36,7 @@ def prologue():
 
 def search(sparql):
 #==================
-  body = ['<table class="search">']
+  body = ['<div id="sparqlresult"><table class="search">']
   results = web.config.biosignalml['repository'].query(sparql, header=True, html=True, abbreviate=True)
   for n, r in enumerate(results):
     if n == 0:
@@ -55,7 +55,7 @@ def search(sparql):
       for d in r: body.append('<td>%s</td>' % d['html'])
       body.append('</tr>\n')
       odd = not odd
-  body.append('</table>\n')
+  body.append('</table></div>\n')
   return ''.join(body)
 
 
