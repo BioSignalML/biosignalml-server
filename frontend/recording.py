@@ -20,7 +20,7 @@ from datetime import datetime
 from biosignalml.utils import xmlescape
 from biosignalml.model import BSML
 
-import biosignalml.formats as fileformats
+import biosignalml.formats
 
 import htmlview
 import frontend
@@ -99,31 +99,14 @@ class UnsupportedMediaType(HTTPError):   # Missing from web.py
 
 class ReST(object):
 #==================
-
   _repo = web.config.biosignalml['repository']
   _storepath = web.config.biosignalml['recordings']
-  _formats = { }
   _mimetype = { }
-  _deftype = None
-  for r in _repo.query(
-  ## Use repo.base to get configuration...   ##############
-    """PREFIX cfg: <http://www.biosignalml.org/ontologies/2011/06/configuration#>
+  _class = { }
 
-       select ?fmt ?cls ?def
-         from <http://biosignalml/configuration>
-         where {
-           ?fmt cfg:mimetype       ?def .
-           ?fmt cfg:recordingClass ?cls .
-           }
-         order by ?fmt desc(?def)"""):
-    if r[2].get('value'):
-      try:
-        cls = getattr(fileformats, r[1]['value'])
-        _formats[r[2]['value']] = (r[0]['value'], cls)
-        _mimetype[r[0]['value']] = r[2]['value']
-      except AttributeError:
-        logging.error("Unknown importer: fileformats.%s", r[1]['value'])
-
+  for name, cls in biosignalml.formats.CLASSES.iteritems():
+    _mimetype[name] = cls.MIMETYPE
+    _class[cls.MIMETYPE] = cls
 
   @staticmethod
   def _pathname(name):
