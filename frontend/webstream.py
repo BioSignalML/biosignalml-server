@@ -11,7 +11,7 @@
 import logging
 
 import web
-from ws4py.websocket import WebSocket
+from tornado.websocket import WebSocketHandler
 
 import biosignalml.transports.stream as stream
 
@@ -21,24 +21,31 @@ from biosignalml.data import UniformTimeSeries
 import biosignalml.formats as formats
 
 
-class StreamServer(WebSocket):
-#=============================
+class StreamServer(WebSocketHandler):
+#====================================
 
   protocol = 'biosignalml-ssf'
 
   def __init__(self, *args, **kwds):
   #---------------------------------
-    WebSocket.__init__(self, *args, **kwds)
+    WebSocketHandler.__init__(self, *args, **kwds)
     self._parser = stream.BlockParser(self.got_block, check=stream.Checksum.CHECK)
+
+  def select_subprotocol(self, protocols):
+  #---------------------------------------
+    if StreamServer.protocol in protocols:
+      return StreamServer.protocol
+    else:
+      self.close()
 
   def got_block(self, block):
   #--------------------------
     pass
 
-  def received_message(self, msg):
-  #-------------------------------
-    self._parser.process(msg.data)
-    self.close()
+  def on_message(self, msg):
+  #-------------------------
+    self._parser.process(bytearray(msg))
+    self.close()           ### Is there where we should be keeping stream open???
 
   def send_block(self, block, check=stream.Checksum.STRICT):
   #---------------------------------------------------------
@@ -49,7 +56,7 @@ class StreamServer(WebSocket):
     :param check: Set to :attr:`~biosignalml.transports.stream.Checksum.STRICT`
       to append a MD5 checksum to the block.
     '''
-    self.send(block.bytes(), True)
+    self.write_message(str(block.bytes()), True)
 
 
 class StreamEchoSocket(StreamServer):
