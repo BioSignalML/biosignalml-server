@@ -87,10 +87,11 @@ A menu is defined by a list of tuples, each tuple being (prompt, action)
   #end for
  </head>
  <body
-   #if $alert# onload='alert("$alert")' #end if
+## #if $alert# onload='alert("$alert")' #end if
    #if $keypress# onkeydown=$keypress(event) #end if
    >
   <noscript>These pages use Javascript - please enable it in your browser</noscript>
+  #if $alert#<div id="alert">$alert</div>#end if
   <div id="header">
    <div class="spacer"></div>
    <div id="menubar">$menubar($MAINMENU($session))</div>
@@ -104,6 +105,7 @@ A menu is defined by a list of tuples, each tuple being (prompt, action)
     $content
    </div>
   </div>
+## #if $alert#<div id="alert">$alert</div>#end if
   <div id="footer">
   </div>
  </body>
