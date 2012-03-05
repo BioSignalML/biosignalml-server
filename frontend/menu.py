@@ -38,9 +38,9 @@ LOGOUTMENU = ("Logout", "logout")
 def setmenu(session):
 #====================
   level = user.level(session)
-  logging.debug('Menu SES:: %s', session)
+  ##logging.debug('Menu SES:: %s', session)
   ##level = 1   ##############################
-  logging.debug('LEVEL: %s', str(level))   ##############
+  ##logging.debug('LEVEL: %s', str(level))   ##############
   menu = [ ]
   if level >= user.VIEWER:        menu.extend(VIEWERMENU(level))
 ##  if level >= user.UPDATER:       menu.append(UPDATEMENU)
@@ -53,7 +53,7 @@ def setmenu(session):
 def MAINMENU(session):
 #=====================
   menu = session.get('menu', None)
-  ###logging.debug('GOT MENU: %s', menu)  #######
+  ##logging.debug('GOT MENU: %s', menu)  #######
   if menu == None:
     setmenu(session)
     menu = session.get('menu', None)
