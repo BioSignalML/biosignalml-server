@@ -63,8 +63,8 @@ _page_template   = templates.Page()
 
 _sparql_template = templates.SparqlForm()
 
-def sparqlform(data, session, param=''):
-#=======================================
+def sparqlquery(data, session, param=''):
+#========================================
 ##  logging.debug('DATA: %s', data)
 
   query = data.get('query', '')

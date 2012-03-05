@@ -81,7 +81,7 @@ dispatch = [ ('comet/metadata',       'htmlview.metadata',   'json'),   # For to
 
              ('repository',           'htmlview.repository', 'html'),
              ('searchform',           'search.searchform',   'html'),
-             ('sparqlquery',          'sparql.sparqlform',   'html'),
+             ('sparqlquery',          'sparql.sparqlquery',  'html'),
 
              ('logout',               'user.logout',         'html'),
              ('login',                'user.login',          'html'),
