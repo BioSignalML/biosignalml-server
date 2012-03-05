@@ -45,6 +45,8 @@ def wsgifunc():
 
 SESSION_TIMEOUT = 1800 # seconds  ## num(config.config['idletime'])
 web.config.session_parameters['timeout'] = SESSION_TIMEOUT
+web.config.session_parameters['ignore_expiry'] = False
+web.config.session_parameters['ignore_change_ip'] = False
 
 
 class Session(web.session.Session):
@@ -54,8 +56,8 @@ class Session(web.session.Session):
   #-----------------
     self._killed = True
     self._save()
-    user.logout()
-    raise web.seeother('/login?expired')
+    if web.ctx.env['PATH_INFO'] in ['/login', '/logout']: self.session_id = None
+    else:                                                 raise web.seeother('/login?expired')
 
   def get(self, key, default=None):
   #--------------------------------
@@ -129,11 +131,6 @@ class Index(object):
         logging.debug("Function '%s' not in menu", funname)
         raise web.seeother('/login?unauthorised')
         ##raise web.unauthorized
-      now = time()
-      if now > session.get('timeout', now) and not funname in ['login', 'logout']: 
-        logging.debug("Session expired: %s > %s", str(now), str(session.get('timeout', now)))
-        session.expired()
-      session['timeout'] = now + SESSION_TIMEOUT
 
     try:
       webfolder = __import__(WEB_MODULE, globals(), locals(), [modname])
@@ -172,8 +169,6 @@ class Index(object):
   def POST(self, name):
   #--------------------
     return self._process('POST', name)
-
-
 
 
 if __name__ == "__main__":
