@@ -18,6 +18,7 @@ import tornado.httpserver
 import tornado.websocket
 import tornado.wsgi
 import tornado.web
+import tornado.options
 
 import tornado.auth
 
@@ -29,12 +30,14 @@ import frontend.repository
 
 
 application = tornado.web.Application([
-  ])
     (r'/stream/data/',  frontend.webstream.StreamDataSocket),
     (r'/stream/echo/',  frontend.webstream.StreamEchoSocket),
     (r"/static/(.*)" ,  tornado.web.StaticFileHandler, {"path": "frontend/static"}),
     (r'/metadata/(.*)', frontend.repository.metadata),
     (r".*",             tornado.web.FallbackHandler,   {'fallback': tornado.wsgi.WSGIContainer(frontend_app) }),
+    ],
+  debug = tornado.options.options.debug,
+  )
 
 address = web.net.validip(server.options.repository['bind'])
 
