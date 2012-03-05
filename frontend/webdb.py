@@ -25,6 +25,7 @@ class Database(object):
   def __init__(self):
   #------------------
     self._db = web.database(dbn='sqlite', db=Database._database)
+    self._db.printing = False      ## Otherwise set to web.config.debug
 
   def close(self):
   #---------------
