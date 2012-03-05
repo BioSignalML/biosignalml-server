@@ -107,55 +107,7 @@ def init_server(wsgi = False):
   import frontend      # Needs to access 'sessions' directory and have both
                        # web.config.biosignalml and repository initialised...
 
-  if wsgi:
-    return frontend.wsgifunc()
-  else:
-    import threading
-    from time import sleep
-    from web.wsgiserver import CherryPyWSGIServer
-
-    class WebServer(threading.Thread):
-    #=================================
-
-      def __init__(self, address, **kwds):
-      #-----------------------------------
-        version = CherryPyWSGIServer.version[9:].split('.')
-        if version[0] < '3' or version[0] == '3' and version[1] < '2':
-          raise Exception("Require CherryPy/3.2.0 or greater")
-        # svn co http://svn.cherrypy.org/tags/cherrypy-3.2.0/cherrypy/wsgiserver
-        threading.Thread.__init__(self, **kwds)
-        self._address = web.net.validip(address)
-        self._server = None
-
-      def run(self):
-      #-------------
-        wsgifunc = frontend.wsgifunc()
-        ## wsgifunc = web.httpserver.LogMiddleware(wsgifunc)
-        self._server = CherryPyWSGIServer(self._address, wsgifunc, numthreads=50)
-        logging.debug('Starting http://%s:%d/', self._address[0], self._address[1])
-        self._server.start()
-
-      def stop(self):
-      #--------------
-        logging.debug('Stopping http://%s:%d/', self._address[0], self._address[1])
-        if self._server: self._server.stop()
-
-    def interrupt(signum, frame):
-    #============================
-      raise KeyboardInterrupt
-
-    web_server = WebServer(options.repository['bind'])
-    signal.signal(signal.SIGHUP, interrupt)
-    signal.signal(signal.SIGTERM, interrupt)
-    web_server.start()  # start threads...
-    try:
-      while True: sleep(0.1)
-    except KeyboardInterrupt:
-      pass
-    web_server.stop()   # notify threads we are shutting down
-    web_server.join()   # wait for threads to finish...
-
-  logging.info('Shutdown BioSignalML repository server...')
+  return frontend.wsgifunc()
 
 
 if __name__ == '__main__':
