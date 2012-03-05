@@ -15,6 +15,7 @@ import ConfigParser
 import signal
 import logging
 import web
+import tornado.options
 
 ##import rpdb2; rpdb2.start_embedded_debugger('test')
 
@@ -88,6 +89,7 @@ def init_server(wsgi = False):
 ###
   logging.info('Starting BioSignalML repository server...')
 
+
   web.config.biosignalml = { }
   web.config.biosignalml['server_base'] = server_base
   web.config.biosignalml['recordings']  = os.path.join(server_base,
@@ -96,7 +98,11 @@ def init_server(wsgi = False):
                                                        options.repository['database'])
   web.config.biosignalml['repository']  = repository.BSMLRepository(options.repository['uri'],
                                                                     options.repository['triplestore'])
-  web.config.debug = (options.logging['log_level'] == 'DEBUG')
+  tornado.options.define('repository', default = web.config.biosignalml['repository'])
+
+
+  tornado.options.define('debug', default = (options.logging['log_level'] == 'DEBUG'))
+
 
   import frontend      # Needs to access 'sessions' directory and have both
                        # web.config.biosignalml and repository initialised...
