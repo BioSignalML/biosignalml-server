@@ -10,49 +10,35 @@
 
 
 import logging
-import web
+import tornado.web
+from tornado.options import options
 
 from biosignalml.rdf.formats import Format
 
 
-class metadata(object):
-#======================
 
-  _repo = web.config.biosignalml['repository']
+class metadata(tornado.web.RequestHandler):
+#==========================================
 
-  def GET(self, name):
-  #-------------------
-    #logging.debug('GET: %s', web.ctx.environ)
-    rec_uri = metadata._repo.get_recording_uri(name)
-
-    accept = { k[0].strip(): k[1].strip() if len(k) > 1 else ''
-                for k in [ a.split(';', 1)
-                  for a in web.ctx.environ.get('HTTP_ACCEPT', '*/*').split(',') ] }
-    # check rdf+xml, turtle, n3, html ??
-    format = Format.TURTLE if ('text/turtle' in accept
-                            or 'application/x-turtle' in accept) else Format.RDFXML
-
+  def get(self, name, **kwds):
+  #---------------------------
+    #logging.debug('GET: %s', self.request.headers)
     ## Build a new RDF Graph that has { <uri> ?p ?o  } UNION { ?s ?p <uri> }
     ## and serialise this??
 
-    if rec_uri is not None:
-      rdf = metadata._repo.construct('?s ?p ?o', 'graph <%s> { ?s ?p ?o' % rec_uri
-                                               + ' FILTER (?p != <http://4store.org/fulltext#stem>'
-                                               + ' && (?s = <%s> || ?o = <%s>)) }' % (name, name),
-                                     format=format)
-
-#    elif format == 'text/turtle':
-#      rdf = (metadata._repo.construct('<%s> ?p ?o' % name,
-#                                  '<%s> ?p ?o FILTER(?p != <http://4store.org/fulltext#stem>)'
-#                                   % name, format=format)
-#           + metadata._repo.construct('?s ?p <%s>' % name,
-#                                  '?s ?p <%s> FILTER(?p != <http://4store.org/fulltext#stem>)'
-#                                   % name, format=format) )
+    graph_uri = options.repository.get_recording_graph_uri(name)
+    if graph_uri is not None:
+      accept = { k[0].strip(): k[1].strip() if len(k) > 1 else ''
+                   for k in [ a.split(';', 1)
+                    for a in self.request.headers.get('Accept', '*/*').split(',') ] }
+      # check rdf+xml, turtle, n3, html ??
+      format = rdf.Format.TURTLE if ('text/turtle' in accept
+                                  or 'application/x-turtle' in accept) else rdf.Format.RDFXML
+      self.set_header('Content-Type', rdf.Format.mimetype(format))
+      self.write(options.repository.construct(
+                   '?s ?p ?o', 'graph <%s> { ?s ?p ?o' % graph_uri
+                 + ' FILTER (?p != <http://4store.org/fulltext#stem>'
+                 + ' && (?s = <%s> || ?o = <%s>)) }' % (name, name), format))
     else:
-      rdf = metadata._repo.construct('<%s> ?p ?o' % name,
-       'graph <%s> { <%s> ?p ?o FILTER(?p != <http://4store.org/fulltext#stem>) }'
-         % (name, name), format=format)
+      self.send_error(404)
 
-    if rdf:
-      web.header('Content-Type', format)
-      yield rdf

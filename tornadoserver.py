@@ -25,14 +25,16 @@ import server
 frontend_app = server.init_server(True)  # Setup globals
 
 import frontend.webstream
+import frontend.repository
 
 
 application = tornado.web.Application([
-    (r'/stream/data/', frontend.webstream.StreamDataSocket),
-    (r'/stream/echo/', frontend.webstream.StreamEchoSocket),
-    (r"/static/(.*)" , tornado.web.StaticFileHandler, {"path": "frontend/static"}),
-    (r".*",            tornado.web.FallbackHandler,   {'fallback': tornado.wsgi.WSGIContainer(frontend_app) }),
   ])
+    (r'/stream/data/',  frontend.webstream.StreamDataSocket),
+    (r'/stream/echo/',  frontend.webstream.StreamEchoSocket),
+    (r"/static/(.*)" ,  tornado.web.StaticFileHandler, {"path": "frontend/static"}),
+    (r'/metadata/(.*)', frontend.repository.metadata),
+    (r".*",             tornado.web.FallbackHandler,   {'fallback': tornado.wsgi.WSGIContainer(frontend_app) }),
 
 address = web.net.validip(server.options.repository['bind'])
 

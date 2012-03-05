@@ -30,7 +30,6 @@ WEB_MODULE = 'frontend'  # We do a "import webpages from frontend"
 
 urls = ( '/(recording)',    '%s.recording.ReST' % WEB_MODULE,
          '/(recording/.*)', '%s.recording.ReST' % WEB_MODULE,
-         '/metadata/(.*)',  '%s.repository.metadata' % WEB_MODULE,
          '/(.*)',           'Index',
        )
 
