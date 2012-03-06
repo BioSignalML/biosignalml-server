@@ -176,7 +176,7 @@ def repository(data, session, record=''):
 #========================================
   #logging.debug('SES: %s', session)
   repo = web.config.biosignalml['repository']
-  prefix = repo.base + 'recording'     ## MUST match path of ReST recording server ####
+  prefix = repo.uri + 'recording'     ## MUST match path of ReST recording server ####
   if record:
     recuri = (record if record.startswith('http://') or record.startswith('file://')
              else '%s/%s' % (prefix, record))
