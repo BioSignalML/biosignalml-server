@@ -43,8 +43,8 @@ class TripleStore(object):
   #--------------------------------
     pass
 
-  def extend_graph(self, graph, rdfdata, format=Format.RDFXML):
-  #------------------------------------------------------------
+  def extend_graph(self, graph, rdf, format=Format.RDFXML):
+  #--------------------------------------------------------
     pass
 
   def replace_graph(self, graph, rdf, format=Format.RDFXML):
