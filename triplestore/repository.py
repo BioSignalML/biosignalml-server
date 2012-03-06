@@ -179,14 +179,14 @@ class BSMLRepository(Repository):
     return [ Recording(r['r']['value'])
                for r in self._triplestore.select('?r', 'graph ?r { ?r a <%s> }' % BSML.Recording) ]
 
-  def get_recording_uri(self, uri):
-  #--------------------------------
-    '''
-    Get the URI of the Recording in the graph that the object is in.
+  def get_recording_graph_uri(self, uri):
+  #--------------------------------------
+    """
+    Get the URI of the recording's Graph that the object is in.
 
     :param uri: The URI of some object.
     :rtype: :class:`~biosignalml.rdf.Uri`
-    '''
+    """
     for r in self._triplestore.select('?g', 'graph ?g { ?g a <%s> . <%s> a ?t }' % (BSML.Recording, uri)):
       return Uri(r['g']['value'])
     return None
