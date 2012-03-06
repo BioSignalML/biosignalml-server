@@ -97,6 +97,9 @@ class Repository(object):
   #---------------------------------------------
     return self._triplestore.describe(uri, format)
 
+  def ask(self, query):
+  #--------------------
+    return self._triplestore.ask(query)
 
   def get_subjects(self, prop, obj):
   #---------------------------------
@@ -133,7 +136,7 @@ class Repository(object):
 
   def check_type(self, uri, type):
   #-------------------------------
-    return self.triplestore.ask('<%s> a <%s>' % (str(uri), str(type)))
+    return self.ask('<%s> a <%s>' % (str(uri), str(type)))
 
 
 class BSMLRepository(Repository):
