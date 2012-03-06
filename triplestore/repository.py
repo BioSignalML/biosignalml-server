@@ -37,26 +37,26 @@ class Repository(object):
   :param base_uri:
   :param store_uri:
   '''
-
-## First param is a base URI, used when generating Turtle and to check that
-## results belong to us. Better to drop it, and pass it directly to the methods
-## that require a base.
   def __init__(self, base_uri, store_uri):
   #---------------------------------------
-    self.base = base_uri
-    if self.base[-1] not in '#/': self.base += '/'
-    self.triplestore = TripleStore(store_uri)
-    self.provenance = Provenance(self.triplestore, self.base + 'provenance')
+    self.uri = base_uri
+    if self.uri[-1] not in '#/': self.uri += '/'
+    self._triplestore = TripleStore(store_uri)
+    self._provenance = Provenance(self._triplestore, self.uri + 'provenance')
 
   def __del__(self):
   #-----------------
     logging.debug('Repository shutdown')
-    del self.provenance
-    del self.triplestore
+    del self._provenance
+    del self._triplestore
 
-  def add_graph(self, graph):
-  #--------------------------
-    #### graph.append(Statement(graph.uri, DCTERMS.provenance, self.provenance.add(graph.uri)))
+  def update(self, uri, triples):
+  #------------------------------
+    self._triplestore.update(uri, triples)
+
+  def replace_graph(self, uri, rdf, format=Format.RDFXML):
+  #-------------------------------------------------------
+    #### graph.append(Statement(graph.uri, DCTERMS._provenance, self._provenance.add(graph.uri)))
 
     # If graph already present then rename (to new uuid()) and add
     # provenance...
@@ -64,16 +64,22 @@ class Repository(object):
     # add version statement to graph ??
     # What about actual recording file(s)? They should also be renamed...
 
-    self.triplestore.replace_graph(graph, graph.serialise('turtle'), format=Format.TURTLE)
+    self._triplestore.replace_graph(uri, rdf, format=Format.TURTLE)
 
     #for k, v in provenance.iter_items():
-    #  self.provenance.add(self.uri, content-type, hexdigest, ...)
-    #self.triplestore.insert(self.provenace, triples...)
+    #  self._provenance.add(self.uri, content-type, hexdigest, ...)
+    #self._triplestore.insert(self._provenace, triples...)
 
-  def remove_graph(self, uri):
+
+  def extend_graph(self, uri, rdf, format=Format.RDFXML):
+  #---------------------------------------------------
+    self._triplestore.extend_graph(uri, rdf, format=Format.TURTLE)
+
+
+  def delete_graph(self, uri):
   #---------------------------
-    self.triplestore.remove_graph(str(uri))
-    self.provenance.remove(str(uri))
+    self._triplestore.delete_graph(uri)
+    #self._provenance.delete_graph(uri)
     ## Should this set provenance...
 
 
@@ -84,12 +90,12 @@ class Repository(object):
 
   def construct(self, template, where, params = { }, format=Format.RDFXML):
   #------------------------------------------------------------------------
-    return self.triplestore.construct(template, where, params, format)
+    return self._triplestore.construct(template, where, params, format)
 
 
   def describe(self, uri, format=Format.RDFXML):
   #---------------------------------------------
-    return self.triplestore.describe(uri, format)
+    return self._triplestore.describe(uri, format)
 
 
   def get_subjects(self, prop, obj):
@@ -99,11 +105,11 @@ class Repository(object):
     elif not isinstance(obj, Node):
       obj = '"%s"' % obj
     return [ r['s']['value'] for r in
-                  self.triplestore.select('?s', '?s <%s> %s' % (str(prop), obj)) ]
+                  self._triplestore.select('?s', '?s <%s> %s' % (str(prop), obj)) ]
 
   def get_object(self, subj, prop):
   #--------------------------------
-    for r in self.triplestore.select('?o', '<%s> <%s> ?o' % (str(subj), str(prop))):
+    for r in self._triplestore.select('?o', '<%s> <%s> ?o' % (str(subj), str(prop))):
       if   r['o']['type'] == 'uri':           return Resource(Uri(r['o']['value']))
       elif r['o']['type'] == 'bnode':         return BlankNode(r['o']['value'])
       elif r['o']['type'] == 'literal':       return r['o']['value']
@@ -119,7 +125,7 @@ class Repository(object):
     '''
     ttl = self.construct(template, where, params, Format.TURTLE)
     #logging.debug("Statements: %s", ttl)  ###
-    return Graph.create_from_string(ttl, Format.TURTLE, Uri(self.base))
+    return Graph.create_from_string(ttl, Format.TURTLE, Uri(self.uri))
 
   def get_type(self, uri):
   #-----------------------
@@ -154,7 +160,7 @@ class BSMLRepository(Repository):
     :rtype: list[:class:`~biosignalml.Recording`]
     '''
     return [ Recording(r['r']['value'])
-               for r in self.triplestore.select('?r', 'graph ?r { ?r a <%s> }' % BSML.Recording) ]
+               for r in self._triplestore.select('?r', 'graph ?r { ?r a <%s> }' % BSML.Recording) ]
 
   def get_recording_uri(self, uri):
   #--------------------------------
@@ -164,7 +170,7 @@ class BSMLRepository(Repository):
     :param uri: The URI of some object.
     :rtype: :class:`~biosignalml.rdf.Uri`
     '''
-    for r in self.triplestore.select('?g', 'graph ?g { ?g a <%s> . <%s> a ?t }' % (BSML.Recording, uri)):
+    for r in self._triplestore.select('?g', 'graph ?g { ?g a <%s> . <%s> a ?t }' % (BSML.Recording, uri)):
       return Uri(r['g']['value'])
     return None
 
@@ -279,14 +285,14 @@ class QueryResults(object):
 
   def __init__(self, repo, sparql, header=False, html=False, abbreviate=False):
   #----------------------------------------------------------------------------
-    self._repobase = repo.base
+    self._repobase = repo.uri
     self._set_prefixes(sparql)
     self._header = header
     self._html = html
     self._abbreviate = abbreviate
     #logging.debug('SPARQL: %s', sparql)
     try:
-      self._results = json.loads(repo.triplestore.query(sparql, Format.JSON))
+      self._results = json.loads(repo._triplestore.query(sparql, Format.JSON))
     except Exception, msg:
       self._results = { 'error': str(msg) }
 

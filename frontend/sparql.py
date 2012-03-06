@@ -28,7 +28,7 @@ namespaces.update(NAMESPACES)
 
 def prologue():
 #==============
-  p = [ 'BASE <%s>' % web.config.biosignalml['repository'].base ]
+  p = [ 'BASE <%s>' % web.config.biosignalml['repository'].uri ]
   for prefix, uri in namespaces.iteritems():
     p.append('PREFIX %s: <%s>' % (prefix, uri))
   return '\n'.join(p)
