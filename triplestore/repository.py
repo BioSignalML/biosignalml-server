@@ -145,15 +145,29 @@ class BSMLRepository(Repository):
   An RDF repository containing BioSignalML metadata.
   '''
 
-  def is_recording(self, uri):
-  #---------------------------
+  def has_recording(self, uri):
+  #----------------------------
     ''' Check a URI refers to a Recording. '''
-    return self.check_type(uri, BSML.Recording)
+    ##return self.check_type(uri, BSML.Recording)
+    return self.ask('graph <%(uri)s> { <%(uri)s> a <%(class)s> }'
+      % { 'uri': uri, 'class': BSML.Recording })
 
-  def is_signal(self, uri):
-  #------------------------
+  def has_signal(self, uri):
+  #-------------------------
     ''' Check a URI refers to a Signal. '''
-    return self.check_type(uri, BSML.Signal)
+    ##return self.check_type(uri, BSML.Signal)
+    return self.ask('graph ?g { ?g a <%(rclass)s> . <%(uri)s> a <%(class)s> }'
+      % { 'rclass': BSML.Recording, 'uri': uri, 'class': BSML.Signal })
+
+  def has_signal_in_recording(self, sig, rec):
+  #-------------------------------------------
+    ''' Check a URI refers to a Signal in a given Recording. '''
+    return self.ask('''graph <%(rec)s> { <%(rec)s> a <%(rclass)s> .
+                                         <%(sig)s> a <%(class)s> .
+                                         <%(sig)s> <%(prop)s> <%(rec)s> }'''
+      % { 'rec': rec, 'rclass': BSML.Recording,
+          'sig': sig, 'class':  BSML.Signal,
+          'prop': BSML.recording })
 
   def recordings(self):
   #--------------------
