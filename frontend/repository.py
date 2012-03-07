@@ -22,11 +22,11 @@ class metadata(tornado.web.RequestHandler):
 
   def get(self, name, **kwds):
   #---------------------------
-    #logging.debug('GET: %s', self.request.headers)
+    ##logging.debug('GET: "%s" %s', name, self.request.headers)
     ## Build a new RDF Graph that has { <uri> ?p ?o  } UNION { ?s ?p <uri> }
     ## and serialise this??
-
-    graph_uri = options.repository.get_recording_graph_uri(name)
+    if name == '': graph_uri = options.repository.uri
+    else:          graph_uri = options.repository.get_recording_graph_uri(name)
     if graph_uri is not None:
       accept = { k[0].strip(): k[1].strip() if len(k) > 1 else ''
                    for k in [ a.split(';', 1)
@@ -35,10 +35,12 @@ class metadata(tornado.web.RequestHandler):
       format = rdf.Format.TURTLE if ('text/turtle' in accept
                                   or 'application/x-turtle' in accept) else rdf.Format.RDFXML
       self.set_header('Content-Type', rdf.Format.mimetype(format))
-      self.write(options.repository.construct(
-                   '?s ?p ?o', 'graph <%s> { ?s ?p ?o' % graph_uri
-                 + ' FILTER (?p != <http://4store.org/fulltext#stem>'
-                 + ' && (?s = <%s> || ?o = <%s>)) }' % (name, name), format))
+      self.write(options.repository.construct('?s ?p ?o',
+                                              'graph <%(graph)s> { ?s ?p ?o'
+                                            + ' FILTER (?p != <http://4store.org/fulltext#stem>'
+                                            + ' && (?s = <%(name)s> || ?o = <%(name)s>)) }',
+                                              { 'graph': graph_uri, 'name': name},
+                                              format))
     else:
       self.send_error(404)
 
