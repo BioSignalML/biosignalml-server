@@ -149,7 +149,7 @@ class ReST(object):
     source, filename, fragment = self._pathname(name)
     #logging.debug('%s, %s, %s', source, filename, fragment)
     if source.startswith('http:'): rec_uri = source
-    else: rec_uri = ReST._repo.base + name.split('/', 1)[0] + '/' + source
+    else: rec_uri = ReST._repo.uri + name.split('/', 1)[0] + '/' + source
 
     recording = ReST._repo.get_recording(rec_uri)
     if recording is None: raise NotFound("Unknown recording: '%s'" % source)
@@ -228,7 +228,7 @@ class ReST(object):
 
     source = self._pathname(name)[0]
     if source.startswith('http:'): rec_uri = source
-    else: rec_uri = ReST._repo.base + name.split('/', 1)[0] + '/' + source
+    else: rec_uri = ReST._repo.uri + name.split('/', 1)[0] + '/' + source
 
     ##file_id   = str(uuid.uuid4()) + '.' + format
     ##file_name = os.path.abspath(os.path.join(ReST._repo.storepath, file_id))
@@ -297,7 +297,7 @@ class ReST(object):
   #----------------------
     ###print name, web.ctx.environ
     source, filename, fragment = self._pathname(name)
-    rec_uri = ReST._repo.base + source
+    rec_uri = ReST._repo.uri + source
     recording = ReST._repo.get_recording(rec_uri)
     if recording.source is None:
       raise NotFound("Recording '%s' is not in repository" % rec_uri)
