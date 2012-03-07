@@ -112,9 +112,13 @@ class FourStore(TripleStore):
 
   def insert(self, graph, triples):
   #--------------------------------
-    sparql = 'insert data { graph %(graph)s { %(triples)s } }' % { 'graph': graph,
-                                                                   'triples': ' . '.join(triples) }
-    #logging.debug('Insert: %s', sparql)
+    '''
+    INSERT a list of triples from a graph.
+    '''
+    sparql = ('insert data { graph <%(graph)s> { %(triples)s } }'
+                % { 'graph': graph,
+                    'triples': ' . '.join([' '.join(list(s)) for s in triples ]) })
+    ##logging.debug('Insert: %s', sparql)
     content = self._request('/update/', 'POST',
                             body=urllib.urlencode({'update': sparql}),
                             headers={'Content-type': 'application/x-www-form-urlencoded'})
