@@ -89,28 +89,28 @@ class StreamDataSocket(StreamServer):
   #--------------------------
     logging.debug('GOT: %s', block)
     if   block.type == stream.BlockType.DATA_REQ:
-      uri = block.header.get('uri')
-      self._sigs = [ ]
-      if isinstance(uri, list):
-        for s in uri: self._add_signal(s)
-      elif self._repo.has_recording(uri):
-        rec = self._repo.get_recording_with_signals(uri)
-        recclass = formats.CLASSES.get(str(rec.format))
-        if recclass:
-          recclass.initialise_class(rec, str(rec.source))   ## Assumes signal index is last part of s.uri
-          self._sigs = rec.signals()
-      else:
-        self._add_signal(uri)
-      start = block.header.get('start')
-      duration = block.header.get('duration')
-      if start is None and duration is None: interval = None
-      else:                                  interval = (start, duration)
-      offset = block.header.get('offset')
-      count = block.header.get('count')
-      if offset is None and count is None: segment = None
-      else:                                segment = (offset, count)
-      for sig in self._sigs:
-        try:
+      try:
+        uri = block.header.get('uri')
+        self._sigs = [ ]
+        if isinstance(uri, list):
+          for s in uri: self._add_signal(s)
+        elif self._repo.has_recording(uri):
+          rec = self._repo.get_recording_with_signals(uri)
+          recclass = formats.CLASSES.get(str(rec.format))
+          if recclass:
+            recclass.initialise_class(rec, str(rec.source))
+            self._sigs = rec.signals()
+        else:
+          self._add_signal(uri)
+        start = block.header.get('start')
+        duration = block.header.get('duration')
+        if start is None and duration is None: interval = None
+        else:                                  interval = (start, duration)
+        offset = block.header.get('offset')
+        count = block.header.get('count')
+        if offset is None and count is None: segment = None
+        else:                                segment = (offset, count)
+        for sig in self._sigs:
           for d in sig.read(interval=sig.recording.interval(*interval) if interval else None,
                             segment=segment,
                             points=block.header.get('maxsize', 0)):
