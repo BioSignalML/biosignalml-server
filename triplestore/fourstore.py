@@ -124,10 +124,38 @@ class FourStore(TripleStore):
                             headers={'Content-type': 'application/x-www-form-urlencoded'})
     if 'error' in content: raise Exception(content)
 
+  def delete(self, graph, triples):
+  #--------------------------------
+    '''
+    DELETE a list of triples from a graph.
+    '''
+    sparql = ('delete data { graph <%(graph)s> { %(triples)s } }'
+                % { 'graph': graph,
+                    'triples': ' . '.join([' '.join(list(s)) for s in triples ]) })
+    content = self._request('/update/', 'POST',
+                            body=urllib.urlencode({'update': sparql}),
+                            headers={'Content-type': 'application/x-www-form-urlencoded'})
+    if 'error' in content: raise Exception(content)
 
   def extend_graph(self, graph, rdfdata, format=Format.RDFXML):
   #--------------------------------------------------------------
     #logging.debug('Extend <%s>: %s', graph, rdfdata)
+  def update(self, graph, triples):
+  #--------------------------------
+    last = (None, None)
+    ##logging.debug('UPDATE: %s', triples)
+    for s, p, o in sorted(triples):
+      if (s, p) != last:
+        sparql = ('delete { graph <%(g)s> { %(s)s %(p)s ?o } } where { %(s)s %(p)s ?o }'
+                    % {'g': graph, 's': s, 'p': p} )
+        content = self._request('/update/', 'POST',
+                                body=urllib.urlencode({'update': sparql}),
+                                headers={'Content-type': 'application/x-www-form-urlencoded'})
+        if 'error' in content: raise Exception(content)
+        last = (s, p)
+    self.insert(graph, triples)  ###### DUPLICATES BECAUSE OF 4STORE BUG...
+
+
     self._request('/data/', 'POST',
                   body=urllib.urlencode({'data': rdfdata,
                                          'graph': str(graph),
