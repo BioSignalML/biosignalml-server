@@ -137,6 +137,13 @@ class StreamDataSocket(StreamServer):
         if rec is None or not self._repo.has_signal_in_recording(sd.uri, rec):
           raise stream.StreamException("Unknown signal '%s'" % sd.uri)
 
+
+        recclass = formats.CLASSES.get(str(rec.format))
+        if recclass != formats.BSMLRecording:
+          raise stream.StreamException("Signal can not be appended to -- wrong format")
+
+        recclass.initialise_class(rec, str(rec.source))
+
         '''
         rec format BSML.BioSignalML
         rec source
