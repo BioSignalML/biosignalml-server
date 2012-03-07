@@ -137,9 +137,6 @@ class FourStore(TripleStore):
                             headers={'Content-type': 'application/x-www-form-urlencoded'})
     if 'error' in content: raise Exception(content)
 
-  def extend_graph(self, graph, rdfdata, format=Format.RDFXML):
-  #--------------------------------------------------------------
-    #logging.debug('Extend <%s>: %s', graph, rdfdata)
   def update(self, graph, triples):
   #--------------------------------
     last = (None, None)
@@ -156,8 +153,14 @@ class FourStore(TripleStore):
     self.insert(graph, triples)  ###### DUPLICATES BECAUSE OF 4STORE BUG...
 
 
+  def extend_graph(self, graph, rdf, format=Format.RDFXML):
+  #--------------------------------------------------------
+    '''
+    Extend an existing graph, creating one if not present.
+    '''
+    #logging.debug('Extend <%s>: %s', graph, rdf)
     self._request('/data/', 'POST',
-                  body=urllib.urlencode({'data': rdfdata,
+                  body=urllib.urlencode({'data': rdf,
                                          'graph': str(graph),
                                          'mime-type': Format.mimetype(format),
                                         }),
@@ -165,6 +168,9 @@ class FourStore(TripleStore):
 
   def replace_graph(self, graph, rdf, format=Format.RDFXML):
   #-----------------------------------------------------------
+    '''
+    Replace an existing graph, creating one if not present.
+    '''
     #logging.debug('Replace <%s>: %s', graph, rdf)
     self._request('/data/' + str(graph), 'PUT', body=rdf, headers={'Content-type': Format.mimetype(format)})
 
