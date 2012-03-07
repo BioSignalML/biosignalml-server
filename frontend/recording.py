@@ -256,7 +256,7 @@ class ReST(object):
       output.close()
 
       recording = RecordingClass.open(file_name, uri=rec_uri) ####, metadata={'digest': sha.hexdigest()})
-      ReST._repo.add_graph(recording.save_to_graph())
+      ReST._repo.replace_graph(recording.uri, recording.metadata_as_graph().serialise())
       recording.close()
     except Exception, msg:
       raise  ###########
