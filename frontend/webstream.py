@@ -45,8 +45,8 @@ class StreamServer(WebSocketHandler):
 
   def on_message(self, msg):
   #-------------------------
+    # self.request.headers ### will get headers sent with request, incl. cookies...
     self._parser.process(bytearray(msg))
-    self.close()           ### Is there where we should be keeping stream open???
 
   def send_block(self, block, check=stream.Checksum.STRICT):
   #---------------------------------------------------------
@@ -121,6 +121,7 @@ class StreamDataSocket(StreamServer):
         except Exception, msg:
           self.send_block(stream.ErrorBlock(0, block, str(msg)))
           if options.debug: raise
+      self.close()     ## All done with data request
 
 
 if __name__ == '__main__':
