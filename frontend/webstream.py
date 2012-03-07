@@ -10,7 +10,7 @@
 
 import logging
 
-import web
+from tornado.options import options
 from tornado.websocket import WebSocketHandler
 
 import biosignalml.transports.stream as stream
@@ -30,6 +30,7 @@ class StreamServer(WebSocketHandler):
   #---------------------------------
     WebSocketHandler.__init__(self, *args, **kwds)
     self._parser = stream.BlockParser(self.got_block, check=stream.Checksum.CHECK)
+    self._repo = options.repository
 
   def select_subprotocol(self, protocols):
   #---------------------------------------
@@ -87,7 +88,6 @@ class StreamDataSocket(StreamServer):
   #--------------------------
     logging.debug('GOT: %s', block)
     if block.type == stream.BlockType.DATA_REQ:
-      self._repo = web.config.biosignalml['repository']
       uri = block.header.get('uri')
       self._sigs = [ ]
       if isinstance(uri, list):
@@ -120,7 +120,7 @@ class StreamDataSocket(StreamServer):
             self.send_block(stream.SignalData(str(sig.uri), d.starttime, d.dataseries.data, **timing).streamblock())
         except Exception, msg:
           self.send_block(stream.ErrorBlock(0, block, str(msg)))
-          if web.config.debug: raise
+          if options.debug: raise
 
 
 if __name__ == '__main__':
