@@ -119,10 +119,11 @@ class StreamDataSocket(StreamServer):
             else:
               timing = { 'clock': d.dataseries.times }
             self.send_block(stream.SignalData(str(sig.uri), d.starttime, d.dataseries.data, **timing).streamblock())
-        except Exception, msg:
-          self.send_block(stream.ErrorBlock(0, block, str(msg)))
-          if options.debug: raise
-      self.close()     ## All done with data request
+      except Exception, msg:
+        self.send_block(stream.ErrorBlock(0, block, str(msg)))
+        if options.debug: raise
+      finally:
+        self.close()     ## All done with data request
 
     elif block.type == stream.BlockType.DATA:
       # Got 'D' segment(s), uri is that of signal, that should have a recording link
