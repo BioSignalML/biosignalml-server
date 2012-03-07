@@ -28,7 +28,7 @@ namespaces.update(NAMESPACES)
 
 def prologue():
 #==============
-  p = [ 'BASE <%s>' % web.config.biosignalml['repository'].base ]
+  p = [ 'BASE <%s>' % web.config.biosignalml['repository'].uri ]
   for prefix, uri in namespaces.iteritems():
     p.append('PREFIX %s: <%s>' % (prefix, uri))
   return '\n'.join(p)
@@ -63,8 +63,8 @@ _page_template   = templates.Page()
 
 _sparql_template = templates.SparqlForm()
 
-def sparqlform(data, session, param=''):
-#=======================================
+def sparqlquery(data, session, param=''):
+#========================================
 ##  logging.debug('DATA: %s', data)
 
   query = data.get('query', '')

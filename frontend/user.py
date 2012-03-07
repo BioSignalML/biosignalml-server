@@ -54,9 +54,10 @@ def _check(data, session):
 def logout(data={}, session=None, params={}):
 #============================================
   logging.debug("Logging out...")
-  session.userlevel = 0
-  session.loggedin = False
-  menu.setmenu(session)
+  if session:
+    session.userlevel = 0
+    session.loggedin = False
+    menu.setmenu(session)
   raise web.seeother('/login')
 
 

@@ -112,20 +112,55 @@ class FourStore(TripleStore):
 
   def insert(self, graph, triples):
   #--------------------------------
-    sparql = 'insert data { graph %(graph)s { %(triples)s } }' % { 'graph': graph,
-                                                                   'triples': ' . '.join(triples) }
-    #logging.debug('Insert: %s', sparql)
+    '''
+    INSERT a list of triples from a graph.
+    '''
+    sparql = ('insert data { graph <%(graph)s> { %(triples)s } }'
+                % { 'graph': graph,
+                    'triples': ' . '.join([' '.join(list(s)) for s in triples ]) })
+    ##logging.debug('Insert: %s', sparql)
     content = self._request('/update/', 'POST',
                             body=urllib.urlencode({'update': sparql}),
                             headers={'Content-type': 'application/x-www-form-urlencoded'})
     if 'error' in content: raise Exception(content)
 
+  def delete(self, graph, triples):
+  #--------------------------------
+    '''
+    DELETE a list of triples from a graph.
+    '''
+    sparql = ('delete data { graph <%(graph)s> { %(triples)s } }'
+                % { 'graph': graph,
+                    'triples': ' . '.join([' '.join(list(s)) for s in triples ]) })
+    content = self._request('/update/', 'POST',
+                            body=urllib.urlencode({'update': sparql}),
+                            headers={'Content-type': 'application/x-www-form-urlencoded'})
+    if 'error' in content: raise Exception(content)
 
-  def extend_graph(self, graph, rdfdata, format=Format.RDFXML):
-  #--------------------------------------------------------------
-    #logging.debug('Extend <%s>: %s', graph, rdfdata)
+  def update(self, graph, triples):
+  #--------------------------------
+    last = (None, None)
+    ##logging.debug('UPDATE: %s', triples)
+    for s, p, o in sorted(triples):
+      if (s, p) != last:
+        sparql = ('delete { graph <%(g)s> { %(s)s %(p)s ?o } } where { %(s)s %(p)s ?o }'
+                    % {'g': graph, 's': s, 'p': p} )
+        content = self._request('/update/', 'POST',
+                                body=urllib.urlencode({'update': sparql}),
+                                headers={'Content-type': 'application/x-www-form-urlencoded'})
+        if 'error' in content: raise Exception(content)
+        last = (s, p)
+    self.insert(graph, triples)  ###### DUPLICATES BECAUSE OF 4STORE BUG...
+
+
+  def extend_graph(self, graph, rdf, format=Format.RDFXML):
+  #--------------------------------------------------------
+    '''
+    Extend an existing graph, creating one if not present.
+    '''
+    #logging.debug('Extend <%s>: %s', graph, rdf)
     self._request('/data/', 'POST',
-                  body=urllib.urlencode({'data': rdfdata,
+                  body=urllib.urlencode({'data': rdf,
                                          'graph': str(graph),
                                          'mime-type': Format.mimetype(format),
                                         }),
@@ -133,6 +168,9 @@ class FourStore(TripleStore):
 
   def replace_graph(self, graph, rdf, format=Format.RDFXML):
   #-----------------------------------------------------------
+    '''
+    Replace an existing graph, creating one if not present.
+    '''
     #logging.debug('Replace <%s>: %s', graph, rdf)
     self._request('/data/' + str(graph), 'PUT', body=rdf, headers={'Content-type': Format.mimetype(format)})
 

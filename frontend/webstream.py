@@ -10,7 +10,7 @@
 
 import logging
 
-import web
+from tornado.options import options
 from tornado.websocket import WebSocketHandler
 
 import biosignalml.transports.stream as stream
@@ -30,6 +30,7 @@ class StreamServer(WebSocketHandler):
   #---------------------------------
     WebSocketHandler.__init__(self, *args, **kwds)
     self._parser = stream.BlockParser(self.got_block, check=stream.Checksum.CHECK)
+    self._repo = options.repository
 
   def select_subprotocol(self, protocols):
   #---------------------------------------
@@ -44,8 +45,8 @@ class StreamServer(WebSocketHandler):
 
   def on_message(self, msg):
   #-------------------------
+    # self.request.headers ### will get headers sent with request, incl. cookies...
     self._parser.process(bytearray(msg))
-    self.close()           ### Is there where we should be keeping stream open???
 
   def send_block(self, block, check=stream.Checksum.STRICT):
   #---------------------------------------------------------
@@ -86,8 +87,7 @@ class StreamDataSocket(StreamServer):
   def got_block(self, block):
   #--------------------------
     logging.debug('GOT: %s', block)
-    if block.type == stream.BlockType.DATA_REQ:
-      self._repo = web.config.biosignalml['repository']
+    if   block.type == stream.BlockType.DATA_REQ:
       uri = block.header.get('uri')
       self._sigs = [ ]
       if isinstance(uri, list):
@@ -120,7 +120,36 @@ class StreamDataSocket(StreamServer):
             self.send_block(stream.SignalData(str(sig.uri), d.starttime, d.dataseries.data, **timing).streamblock())
         except Exception, msg:
           self.send_block(stream.ErrorBlock(0, block, str(msg)))
-          if web.config.debug: raise
+          if options.debug: raise
+      self.close()     ## All done with data request
+
+    elif block.type == stream.BlockType.DATA:
+      # Got 'D' segment(s), uri is that of signal, that should have a recording link
+      # look signal's uri up to get its Recording and hence format/source
+      pass  # append to HDF5 BioSignalML file
+
+      try:
+        sd = block.signaldata()
+        rec = self._repo.get_recording_graph_uri(sd.uri)
+
+        if rec is None or not self._repo.has_signal_in_recording(sd.uri, rec):
+          raise stream.StreamException("Unknown signal '%s'" % sd.uri)
+
+        '''
+        rec format BSML.BioSignalML
+        rec source
+
+        Need to open HDF5 (BSML) Recording and then append data...
+
+
+        '''
+
+      except Exception, msg:
+        self.send_block(stream.ErrorBlock(0, block, str(msg)))
+        if options.debug: raise
+
+
+
 
 
 if __name__ == '__main__':
