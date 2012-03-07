@@ -230,7 +230,7 @@ class BSMLRepository(Repository):
         graph = self.make_graph('<%(uri)s> ?p ?o',
                                 'graph <%(rec)s> { <%(uri)s> ?p ?o }',
                                 { 'rec': str(rec.uri), 'uri': str(sig) })
-        rec.add_signal(Signal.create_from_graph(str(sig), graph, bsml_mapping()))
+        rec.set_signal(Signal.create_from_graph(str(sig), graph, bsml_mapping()))
     return rec
 
 #  def signal_recording(self, uri):
