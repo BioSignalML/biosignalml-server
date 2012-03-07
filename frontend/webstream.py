@@ -75,7 +75,7 @@ class StreamDataSocket(StreamServer):
 
   def _add_signal(self, uri):
   #--------------------------
-    if self._repo.is_signal(uri):
+    if self._repo.has_signal(uri):
       rec = self._repo.get_recording(uri)
       recclass = formats.CLASSES.get(str(rec.format))
       if recclass:
@@ -92,7 +92,7 @@ class StreamDataSocket(StreamServer):
       self._sigs = [ ]
       if isinstance(uri, list):
         for s in uri: self._add_signal(s)
-      elif self._repo.is_recording(uri):
+      elif self._repo.has_recording(uri):
         rec = self._repo.get_recording_with_signals(uri)
         recclass = formats.CLASSES.get(str(rec.format))
         if recclass:
