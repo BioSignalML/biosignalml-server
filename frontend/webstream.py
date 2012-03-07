@@ -81,7 +81,8 @@ class StreamDataSocket(StreamServer):
       if recclass:
         sig = self._repo.get_signal(uri)
         rec.add_signal(sig)
-        recclass.initialise_class(rec, str(rec.source))   ## Assumes signal index is last part of s.uri
+        #print sig.graph.serialise()
+        recclass.initialise_class(rec, str(rec.source))
         self._sigs.append(sig)
 
   def got_block(self, block):
