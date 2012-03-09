@@ -33,8 +33,8 @@ application = tornado.web.Application([
     (r'/stream/data/',  frontend.webstream.StreamDataSocket),
     (r'/stream/echo/',  frontend.webstream.StreamEchoSocket),
     (r"/static/(.*)" ,  tornado.web.StaticFileHandler, {"path": "frontend/static"}),
-    (r'/metadata/(.*)', frontend.repository.metadata),
     (r".*",             tornado.web.FallbackHandler,   {'fallback': tornado.wsgi.WSGIContainer(frontend_app) }),
+    (r'/metadata/(.*)',  frontend.metadata.metadata),
     ],
   debug = tornado.options.options.debug,
   )
