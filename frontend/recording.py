@@ -194,7 +194,7 @@ class ReST(object):
       # check rdf+xml, turtle, n3, html ??
       format = rdf.Format.TURTLE if ('text/turtle' in accept
                                   or 'application/x-turtle' in accept) else rdf.Format.RDFXML
-      web.header('Content-Type', format)
+      web.header('Content-Type', rdf.Format.mimetype(format))
       if recording is not None:
         yield ReST._repo.construct('?s ?p ?o', 'graph <%s> { ?s ?p ?o' % recording.uri
                                              + ' FILTER (?p != <http://4store.org/fulltext#stem>'
