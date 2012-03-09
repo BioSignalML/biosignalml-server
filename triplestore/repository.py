@@ -64,7 +64,7 @@ class Repository(object):
     # add version statement to graph ??
     # What about actual recording file(s)? They should also be renamed...
 
-    self._triplestore.replace_graph(uri, rdf, format=Format.TURTLE)
+    self._triplestore.replace_graph(uri, rdf, format=format)
 
     #for k, v in provenance.iter_items():
     #  self._provenance.add(self.uri, content-type, hexdigest, ...)
