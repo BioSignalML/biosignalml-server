@@ -27,22 +27,20 @@ class metadata(tornado.web.RequestHandler):
     ## and serialise this??
     if name == '': graph_uri = options.repository.uri
     else:          graph_uri = options.repository.get_recording_graph_uri(name)
+    accept = { k[0].strip(): k[1].strip() if len(k) > 1 else ''
+                 for k in [ a.split(';', 1)
+                  for a in self.request.headers.get('Accept', '*/*').split(',') ] }
+    # check rdf+xml, turtle, n3, html ??
+    format = rdf.Format.TURTLE if ('text/turtle' in accept
+                                or 'application/x-turtle' in accept) else rdf.Format.RDFXML
+    self.set_header('Content-Type', rdf.Format.mimetype(format))
     if graph_uri is not None:
-      accept = { k[0].strip(): k[1].strip() if len(k) > 1 else ''
-                   for k in [ a.split(';', 1)
-                    for a in self.request.headers.get('Accept', '*/*').split(',') ] }
-      # check rdf+xml, turtle, n3, html ??
-      format = rdf.Format.TURTLE if ('text/turtle' in accept
-                                  or 'application/x-turtle' in accept) else rdf.Format.RDFXML
-      self.set_header('Content-Type', rdf.Format.mimetype(format))
       self.write(options.repository.construct('?s ?p ?o',
                                               'graph <%(graph)s> { ?s ?p ?o'
                                             + ' FILTER (?p != <http://4store.org/fulltext#stem>'
                                             + ' && (?s = <%(name)s> || ?o = <%(name)s>)) }',
                                               { 'graph': graph_uri, 'name': name},
                                               format))
-    else:
-      self.send_error(404)
 
   @property
   def _format(self):
@@ -81,7 +79,7 @@ class metadata(tornado.web.RequestHandler):
 
   def put(self, name, **kwds):
   #----------------------------
-    ##logging.debug('PUT: %s\n%s', name, self.request.body)
+    ##logging.debug('PUT: %s %s\n%s', name, self._format, self.request.body)
     if (rdf.Graph.create_from_string(self.request.body, self._format, name)
           .contains(rdf.Statement(name, rdf.RDF.type, BSML.Recording))):
       # ask ??
