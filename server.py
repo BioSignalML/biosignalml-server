@@ -98,10 +98,10 @@ def init_server(wsgi = False):
                                                        options.repository['database'])
   web.config.biosignalml['repository']  = repository.BSMLRepository(options.repository['uri'],
                                                                     options.repository['triplestore'])
+
+  tornado.options.define('recordings', default = web.config.biosignalml['recordings'])
   tornado.options.define('repository', default = web.config.biosignalml['repository'])
-
-
-  tornado.options.define('debug', default = (options.logging['log_level'] == 'DEBUG'))
+  tornado.options.define('debug',      default = (options.logging['log_level'] == 'DEBUG'))
 
   tornado.options.host = options.repository['host']
   tornado.options.port = int(options.repository['port'])
