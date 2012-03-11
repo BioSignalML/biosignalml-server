@@ -35,14 +35,19 @@ class metadata(tornado.web.RequestHandler):
     ##logging.debug('GET: "%s" %s', name, self.request.headers)
     ## Build a new RDF Graph that has { <uri> ?p ?o  } UNION { ?s ?p <uri> }
     ## and serialise this??
-    if name == '': graph_uri = options.repository.uri
-    else:          graph_uri = options.repository.get_recording_graph_uri(name)
 
     accept = acceptheaders(self.request)
     format = rdf.Format.TURTLE if ('text/turtle' in accept
                                 or 'application/x-turtle' in accept) else rdf.Format.RDFXML
+    # check rdf+xml, turtle, n3, html ??
+    self.set_header('Vary', 'Accept')      # Let caches know we've used Accept header
+
     self.set_header('Content-Type', rdf.Format.mimetype(format))
-    if graph_uri is not None:
+    if name == '': graph_uri = options.repository.uri
+    else:          graph_uri = options.repository.get_recording_graph_uri(name)
+    if graph_uri is None:
+      self.set_status(404)
+    else:
       self.write(options.repository.construct('?s ?p ?o',
                                               'graph <%(graph)s> { ?s ?p ?o'
                                             + ' FILTER (?p != <http://4store.org/fulltext#stem>'
