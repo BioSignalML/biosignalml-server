@@ -16,6 +16,16 @@ from tornado.options import options
 from biosignalml import BSML
 import biosignalml.rdf as rdf
 
+def acceptheaders(request):
+#==========================
+  """
+  Parse a HTTP request's Accept header and return a dictionary with
+  mime-type as an item key and its parameters as the value.
+  """
+  return { k[0].strip(): k[1].strip() if len(k) > 1 else ''
+             for k in [ a.split(';', 1)
+              for a in request.headers.get('Accept', '*/*').split(',') ] }
+
 
 class metadata(tornado.web.RequestHandler):
 #==========================================
@@ -27,10 +37,8 @@ class metadata(tornado.web.RequestHandler):
     ## and serialise this??
     if name == '': graph_uri = options.repository.uri
     else:          graph_uri = options.repository.get_recording_graph_uri(name)
-    accept = { k[0].strip(): k[1].strip() if len(k) > 1 else ''
-                 for k in [ a.split(';', 1)
-                  for a in self.request.headers.get('Accept', '*/*').split(',') ] }
-    # check rdf+xml, turtle, n3, html ??
+
+    accept = acceptheaders(self.request)
     format = rdf.Format.TURTLE if ('text/turtle' in accept
                                 or 'application/x-turtle' in accept) else rdf.Format.RDFXML
     self.set_header('Content-Type', rdf.Format.mimetype(format))
