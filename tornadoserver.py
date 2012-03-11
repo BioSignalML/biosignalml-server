@@ -18,21 +18,24 @@ import tornado.wsgi
 import tornado.web
 import tornado.options as options
 
-import tornado.auth
+## import tornado.auth     ## FUTURE
 
 import server
 frontend_app = server.init_server(True)  # Setup globals
 
 import frontend.webstream
-import frontend.repository
-
+import frontend.metadata
+import frontend.recording
 
 application = tornado.web.Application([
-    (r'/stream/data/',  frontend.webstream.StreamDataSocket),
-    (r'/stream/echo/',  frontend.webstream.StreamEchoSocket),
-    (r"/static/(.*)" ,  tornado.web.StaticFileHandler, {"path": "frontend/static"}),
-    (r".*",             tornado.web.FallbackHandler,   {'fallback': tornado.wsgi.WSGIContainer(frontend_app) }),
-    (r'/metadata/(.*)',  frontend.metadata.metadata),
+    ( server.STREAMDATA_ENDPOINT,         frontend.webstream.StreamDataSocket),
+    ( '/stream/echo/',                    frontend.webstream.StreamEchoSocket),
+    ( server.METADATA_ENDPOINT + '(.*)',  frontend.metadata.metadata),
+    ( server.RECORDING_ENDPOINT + '(.*)', frontend.recording.ReST),
+    ( "/static/(.*)" ,                    tornado.web.StaticFileHandler,
+                                            {"path": "frontend/static"}),
+    ( ".*",                               tornado.web.FallbackHandler,
+                                            {'fallback': tornado.wsgi.WSGIContainer(frontend_app) }),
     ],
   gzip = True,
   debug = options.options.debug,

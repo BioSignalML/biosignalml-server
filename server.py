@@ -21,6 +21,10 @@ import tornado.options
 
 import triplestore.repository as repository
 
+RECORDING_ENDPOINT  = '/recording/'    #: Import and export complete recording files
+METADATA_ENDPOINT   = '/metadata/'     #: Get and put RDF metadata
+STREAMDATA_ENDPOINT = '/stream/data/'  #: Stream signal data in and out
+
 LOGFORMAT = '%(asctime)s %(levelname)8s %(threadName)s: %(message)s'
 
 DEFAULTS  = { 'repository':
