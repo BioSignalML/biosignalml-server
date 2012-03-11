@@ -34,6 +34,7 @@ application = tornado.web.Application([
     (r".*",             tornado.web.FallbackHandler,   {'fallback': tornado.wsgi.WSGIContainer(frontend_app) }),
     (r'/metadata/(.*)',  frontend.metadata.metadata),
     ],
+  gzip = True,
   debug = options.options.debug,
   )
 
