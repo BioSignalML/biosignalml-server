@@ -77,16 +77,15 @@ def init_server(wsgi = False):
   server_base = options.repository['path']
 
   if options.logging['log_file']:
-    logging.basicConfig(format=LOGFORMAT,
-                        filename=os.path.join(server_base, options.logging['log_file']),
-                        filemode='a')
+    filename = os.path.join(server_base, options.logging['log_file'])
+    try:            os.makedirs(os.path.dirname(filename))
+    except OSError: pass
+    logging.basicConfig(format=LOGFORMAT, filename=filename, filemode='a')
   if options.logging['log_level']:
     logging.getLogger().setLevel(options.logging['log_level'])
-###  if not wsgi:
   console = logging.StreamHandler()
   console.setFormatter(logging.Formatter(LOGFORMAT))
   logging.getLogger().addHandler(console)
-###
   logging.info('Starting BioSignalML repository server...')
 
 
