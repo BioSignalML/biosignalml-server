@@ -12,13 +12,11 @@
 
 import logging
 
-import web  # Used for web.net.validip()
-
 import tornado.httpserver
 import tornado.websocket
 import tornado.wsgi
 import tornado.web
-import tornado.options
+import tornado.options as options
 
 import tornado.auth
 
@@ -36,14 +34,11 @@ application = tornado.web.Application([
     (r".*",             tornado.web.FallbackHandler,   {'fallback': tornado.wsgi.WSGIContainer(frontend_app) }),
     (r'/metadata/(.*)',  frontend.metadata.metadata),
     ],
-  debug = tornado.options.options.debug,
+  debug = options.options.debug,
   )
 
-address = web.net.validip(server.options.repository['bind'])
-
-application.listen(address[1], address[0])
-
-logging.info('Starting http://%s:%d/', address[0], address[1])
+application.listen(options.port, options.host)
+logging.info('Starting http://%s:%d/', options.host, options.port)
 
 try:
   tornado.ioloop.IOLoop.instance().start()

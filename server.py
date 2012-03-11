@@ -25,7 +25,8 @@ LOGFORMAT = '%(asctime)s %(levelname)8s %(threadName)s: %(message)s'
 
 DEFAULTS  = { 'repository':
                 { 'uri': 'http://devel.biosignalml.org',
-                  'bind': 'localhost:8082',
+                  'host': 'localhost',
+                  'port':  8088,
                   'path': '.',
                   'database': './database/repository.db',
                   'recordings': './recordings/',
@@ -102,6 +103,8 @@ def init_server(wsgi = False):
 
   tornado.options.define('debug', default = (options.logging['log_level'] == 'DEBUG'))
 
+  tornado.options.host = options.repository['host']
+  tornado.options.port = int(options.repository['port'])
 
   import frontend      # Needs to access 'sessions' directory and have both
                        # web.config.biosignalml and repository initialised...
