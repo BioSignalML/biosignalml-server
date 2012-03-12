@@ -7,15 +7,24 @@
 #  $ID: 51e97a9 on Thu Mar 1 20:34:33 2012 +1300 by Dave Brooks $
 #
 ######################################################
+"""
+Import and export recordings.
 
+Recording files are transferred as the body of HTTP messages, with the `Content-Type`
+header giving the recording's format. Chunked transfers are used if supprted (i.e. the
+transport is HTTP/1.1).
+
+"""
 
 import logging
 import uuid
-import web
 import os
 import urllib
 import hashlib
 from datetime import datetime
+
+from tornado.options import options
+import httpchunked
 
 from biosignalml.utils import xmlescape
 from biosignalml.model import BSML
@@ -23,85 +32,42 @@ from biosignalml.model import BSML
 import biosignalml.formats
 import biosignalml.rdf as rdf
 
-import htmlview
-import frontend
-
-"""
-/recording/label/...
-/recording/uuid/...
-/recording/uuid/metadata/...
-
-stream v's native (raw)
-"""
-
-# Raising web.errors in web.py sets Content-type to text/html.
-# If we are returning <bsml> then we should raise web.HTTPError
-# directly, setting Content-type.
+import metadata
 
 
-MIMETYPE_BSML = 'application/x-bsml+xml'
+def raise_error(handler, code, msg=None):
+#========================================
+  handler.set_status(code)
+  handler.set_header('Content-Type', 'text/xml')
+  handler.write(('<bsml>\n <error>%s</error>\n</bsml>\n' % xmlescape(msg)) if msg else '')
+  handler.finish()
 
 
-class HTTPError(web.HTTPError):
-#==============================
+class FileWriter(object):
+#========================
 
-  def __init__(self, status, message=None):
-  #----------------------------------------
-    if message is None: message = status.split(" ", 1)[1].lower()
-    logging.error(message)
-    web.HTTPError.__init__(self, status, {'Content-Type': MIMETYPE_BSML},
-                          '<bsml>\n <error>%s</error>\n</bsml>\n' % xmlescape(message))
+  def __init__(self, fname, uri, source, cls):
+  #-------------------------------------------
+    self._fname = fname
+    self._output = open(fname, 'wb')
+    self._sha = hashlib.sha512()
+    self._uri = uri
+    self._source = source
+    self.Recording = cls
 
-
-class NotFound(HTTPError):
-#=========================
-
-  def __init__(self, message=None):
-  #--------------------------------
-    status = '404 Not Found'
-    HTTPError.__init__(self, status, message)
-
-
-class InternalError(HTTPError):
-#==============================
-
-  def __init__(self, message=None):
-  #--------------------------------
-    status = '500 Internal Server Error'
-    HTTPError.__init__(self, status, message)
+  def write(self, data):
+  #---------------------
+    logging.debug('Writing %d bytes', len(data))
+    self._sha.update(data)
+    try:
+      self._output.write(data)
+    except IOError, msg:
+      raise_error(400, msg="%s: %s -> %s" % (msg, name, self._fname))
 
 
-class BadRequest(HTTPError):             # Missing from web.py
-#===========================
+class ReST(httpchunked.ChunkedHandler):
+#======================================
 
-  def __init__(self, message=None):
-  #--------------------------------
-    status = '400 Bad Request'
-    HTTPError.__init__(self, status, message)
-
-
-class Conflict(HTTPError):               # Missing from web.py
-#=========================
-
-  def __init__(self, message=None):
-  #--------------------------------
-    status = '409 Conflict'
-    HTTPError.__init__(self, status, message)
-
-
-class UnsupportedMediaType(HTTPError):   # Missing from web.py
-#=====================================
-
-  def __init__(self, message=None):
-  #--------------------------------
-    status = '415 Unsupported Media Type'
-    HTTPError.__init__(self, status, message)
-
-
-class ReST(object):
-#==================
-  _repo = web.config.biosignalml['repository']
-  _storepath = web.config.biosignalml['recordings']
   _mimetype = { }
   _class = { }
 
@@ -109,20 +75,19 @@ class ReST(object):
     _mimetype[name] = cls.MIMETYPE
     _class[cls.MIMETYPE] = cls
 
-  @staticmethod
-  def _pathname(name):
-  #------------------
+  def _pathname(self, name):
+  #-------------------------
     paths = name.split('/')
     if len(paths) < 2 or not paths[1]:
-      raise NotFound("Cannot find '%s'" % name)
+      self.write_error(404, msg="Cannot find '%s'" % name)
+      return (None, None, None)
     tail = paths[-1].split('#', 1)
     fragment = tail[1] if len(tail) > 1 else ''
     paths[-1] = tail[0]
     return ('/'.join(paths[1:]), tail[0], fragment)
 
-  @staticmethod
-  def _get_interval(t):
-  #--------------------
+  def _get_interval(self, t):
+  #--------------------------
     try:
       if '-' in t:
          (start, end) = tuple([ float(x) for x in t.split('-') ])
@@ -132,31 +97,37 @@ class ReST(object):
         (start, length) = (interval[0], interval[1])
       else:
         raise Exception
-      if length <= 0.0: raise Exception
-      return (start, length)
+      if length > 0.0: return (start, length)
     except Exception:
       pass
-    raise InternalError('Invalid time interval')
+    self.write_error(500, msg='Invalid time interval')
+    return (None, None)
+
+  def write_error(self, status, msg=None):
+  #---------------------------------------
+    raise_error(self, status, msg)
 
 
-  def GET(self, name):
-  #-------------------
-    accept = { k[0].strip(): k[1].strip() if len(k) > 1 else ''
-                for k in [ a.split(';', 1)
-                  for a in web.ctx.environ.get('HTTP_ACCEPT', '*/*').split(',') ] }
-    #logging.debug('ACCEPT: %s -> %s', web.ctx.environ['HTTP_ACCEPT'], accept)
+  def get(self, name, **kwds):
+  #----------------------------
+    accept = metadata.acceptheaders(self.request)
 
     source, filename, fragment = self._pathname(name)
-    #logging.debug('%s, %s, %s', source, filename, fragment)
+    if source is None: return
+    logging.debug('GET: %s, %s', name, self.request.uri)
+    logging.debug('%s, %s, %s', source, filename, fragment)
+
     if source.startswith('http:'): rec_uri = source
-    else: rec_uri = ReST._repo.uri + name.split('/', 1)[0] + '/' + source
+    else: rec_uri = options.repository.uri + name.split('/', 1)[0] + '/' + source
 
-    recording = ReST._repo.get_recording(rec_uri)
-    if recording is None: raise NotFound("Unknown recording: '%s'" % source)
-    #logging.debug("Request '%s' --> '%s'", name, recording.source)
-    #logging.debug('ENV: %s', web.ctx.environ)
+    recording = options.repository.get_recording(rec_uri)
+    logging.debug("Request '%s' --> '%s'", rec_uri, recording.source if recording else None)
 
-    objtype = ReST._repo.get_type(rec_uri)
+    if recording is None:
+      self.write_error(404, msg="Unknown recording: '%s'" % source)
+      return
+
+    objtype = options.repository.get_type(rec_uri)
     ctype = (ReST._mimetype.get(str(recording.format), 'application/x-raw')
                if objtype in [BSML.Recording, BSML.Signal]
              else None)
@@ -165,144 +136,146 @@ class ReST(object):
 ## Should we set 'Content-Location' header as well?
 ## (to actual URL of representation returned).
 
-    web.header('Vary', 'Accept')      # Let caches know we've used Accept header
+    self.set_header('Vary', 'Accept')      # Let caches know we've used Accept header
     if ctype in accept: # send file
       # Also we may be GETting a signal, not a recording
       # - check rdf:type. If Signal then find/open bsml:recording
 
       if recording.source is None:
-        raise NotFound("Missing recording source: '%s'" % source)
+        self.write_error(404, msg="Missing recording source: '%s'" % source)
+        return
       logging.debug("Streaming '%s'", recording.source)
 
       try:
         rfile = urllib.urlopen(str(recording.source)).fp
-        web.header('Content-Type', ctype)
-        ### web.header('Transfer-Encoding','chunked')
-        web.header('Content-Disposition', 'attachment; filename=%s' % filename)
+        self.set_header('Content-Type', ctype)
+        self.set_header('Content-Disposition', 'attachment; filename=%s' % filename)
         while True:
           data = rfile.read(32768)
           if not data: break
-          yield data
+          self.write(data)
+          self.flush()             ## This will chunk output
         rfile.close()
+        self.finish()
       except Exception, msg:
-        raise InternalError("Error serving recording: %s" % msg)
-
+        self.write_error(500, msg="Error serving recording: %s" % msg)
+        return
     else:
-      ## Build a new RDF Graph that has { <uri> ?p ?o  } UNION { ?s ?p <uri> }
-      ## and serialise this??
-
-      # check rdf+xml, turtle, n3, html ??
       format = rdf.Format.TURTLE if ('text/turtle' in accept
                                   or 'application/x-turtle' in accept) else rdf.Format.RDFXML
-      web.header('Content-Type', rdf.Format.mimetype(format))
-      if recording is not None:
-        yield ReST._repo.construct('?s ?p ?o', 'graph <%s> { ?s ?p ?o' % recording.uri
-                                             + ' FILTER (?p != <http://4store.org/fulltext#stem>'
-                                             + ' && (?s = <%s> || ?o = <%s>)) }' % (rec_uri, rec_uri),
-                                    format=format)
-      elif format == rdf.Format.TURTLE:
-        yield (ReST._repo.construct('<%s> ?p ?o' % rec_uri,
-                                    '<%s> ?p ?o FILTER(?p != <http://4store.org/fulltext#stem>)'
-                                     % rec_uri, format=format)
-             + ReST._repo.construct('?s ?p <%s>' % rec_uri,
-                                    '?s ?p <%s> FILTER(?p != <http://4store.org/fulltext#stem>)'
-                                     % rec_uri, format=format) )
+      # check rdf+xml, turtle, n3, html ??
+      self.set_header('Content-Type', rdf.Format.mimetype(format))
+      graph_uri = options.repository.get_recording_graph_uri(self.request.uri)
+      if graph_uri is None:
+        self.set_status(404)
       else:
-        yield ReST._repo.construct('<%s> ?p ?o' % rec_uri,
-         '<%s> ?p ?o FILTER(?p != <http://4store.org/fulltext#stem>)'
-           % rec_uri, format=format)
+        self.write(options.repository.construct('?s ?p ?o',
+                                                'graph <%(graph)s> { ?s ?p ?o'
+                                              + ' FILTER (?p != <http://4store.org/fulltext#stem>'
+                                              + ' && (?s = <%(name)s> || ?o = <%(name)s>)) }',
+                                                { 'graph': graph_uri, 'name': name},
+                                                format))
 
 
-  def PUT(self, name):
-  #-------------------
-    logging.debug("NM: %s", name)  ##
-    ctype = web.ctx.environ.get('CONTENT_TYPE', 'application/x-raw')
+  def put(self, name, **kwds):
+  #---------------------------
+    """
+    Import a recording into the repository.
+
+    """
+    logging.debug("URI, NM: %s, %s", self.request.uri, name)  #############
+    logging.debug("HDRS: %s", self.request.headers)
+    ctype = self.request.headers.get('Content-Type', 'application/x-raw')
     if not ctype.startswith('application/x-'):
-      raise UnsupportedMediaType("Invalid Content-Type: '%s'" % ctype)
-
-    # Can we also PUT RDF content ???
+      self.write_error(415, msg="Invalid Content-Type: '%s'" % ctype)
+      return
 
     RecordingClass = ReST._class.get(ctype)
     if not RecordingClass:
-      raise UnsupportedMediaType("Unknown Content-Type: '%s'" % ctype)
+      self.write_error(415, msg="Unknown Content-Type: '%s'" % ctype)
+      return
 
-    source = self._pathname(name)[0]
-    if source.startswith('http:'): rec_uri = source
-    else: rec_uri = ReST._repo.uri + name.split('/', 1)[0] + '/' + source
+    if name.startswith('http:'):
+      rec_uri = name
+      fname = name.replace('/', '_')
+    else:
+      source = self._pathname(name)[0]
+      if source is None: return
+      rec_uri = options.repository.uri + name.split('/', 1)[0] + '/' + source
+      fname = source
 
     ##file_id   = str(uuid.uuid4()) + '.' + format
-    ##file_name = os.path.abspath(os.path.join(ReST._repo.storepath, file_id))
+    ##file_name = os.path.abspath(os.path.join(options.repository.storepath, file_id))
 
-    file_name = os.path.abspath(os.path.join(ReST._storepath, source))
-    if getattr(RecordingClass, 'normalise_name', None):
-      file_name = RecordingClass.normalise_name(file_name)
+    file_name = os.path.abspath(os.path.join(options.recordings, fname))
 
     #if container: file_uri = os.path.split(file_uri)[0]
 
-    if ReST._repo.check_type(rec_uri, BSML.Recording):
-      raise Conflict("Recording '%s' is already in repository" % rec_uri)
+    logging.debug('URI: %s, FILE: %s', rec_uri, file_name)
+
+    if options.repository.check_type(rec_uri, BSML.Recording):
+      self.write_error(409, msg="Recording '%s' is already in repository" % rec_uri)
+      return
 
     try:            os.makedirs(os.path.dirname(file_name))
     except OSError: pass
-    try:
-      output = open(file_name, 'wb')
-      rfile = web.ctx.env['wsgi.input']
-      sha = hashlib.sha512()
-      while True:
-        data = rfile.read(32768)       ##
-        if not data: break             ## Can we detect broken stream and raise error ???
-        sha.update(data)
-        output.write(data)
-      output.close()
 
-      recording = RecordingClass.open(file_name, uri=rec_uri) ####, metadata={'digest': sha.hexdigest()})
-      ReST._repo.replace_graph(recording.uri, recording.metadata_as_graph().serialise())
-      recording.close()
-    except Exception, msg:
-      raise  ###########
-      ### Log traceback if debugging...
-      raise BadRequest("%s: %s -> %s" % (msg, source, file_name), )
+    writer = FileWriter(file_name, rec_uri, name, RecordingClass)
+    if not self.have_chunked(writer, self.finished_put):
+      writer.write(self.request.body)
+      self.finished_put(writer)
 
-    logging.debug("Imported %s -> %s", source, file_name)
 
-    location = '%s://%s/%s' % (web.ctx.environ['wsgi.url_scheme'],
-                               web.ctx.environ['HTTP_HOST'],
-                               name)
-    # Does web.ctx give us the original URL ???
-    body = '\n'.join(['<bsml>',
-                      ' <created',
-                      '  class="recording"',
-                      '  uri="%s"'      % recording.uri,
-                      '  mimetype="%s"' % RecordingClass.MIMETYPE,
-                      '  />',
-                      '</bsml>', ''])
+  def finished_put(self, writer):
+  #------------------------------
+    writer._output.close()
+    recording = writer.Recording.open(writer._fname, uri=writer._uri, digest=writer._sha.hexdigest())
+    options.repository.replace_graph(recording.uri, recording.metadata_as_graph().serialise())
+    recording.close()
+
+
+    logging.debug("Imported %s -> %s (%s)", writer._source, writer._fname, writer._uri)
+
     # Or do we return HTML? RDF/XML of provenance? And include location in provenance...
     # OR a <status>Added...</status> message ???
     # OR <added>...</added>  ??
     # Content-type: XML? application/x-bsml+xml ???
     ## Return 200 OK since we are providing content
     ## Otherwise return Created()
-    raise web.OK(body, {'Location': recording.uri,
-                        'Content-Type': MIMETYPE_BSML})
+
+    self.set_header('Content-Type', 'text/xml')
+    self.set_status(200)
+    location = '%s://%s/%s' % (self.request.protocol, self.request.host, writer._source)
+    self.set_header('Location', location)
+    #self.set_header('Location', str(recording.uri))
+    self.write('\n'.join(['<bsml>',
+                          ' <created',
+                          '  class="recording"',
+                          '  uri="%s"'      % location, ## recording.uri
+                          '  mimetype="%s"' % writer.Recording.MIMETYPE,
+                          '  />',
+                          '</bsml>', '']))
 
 
-  def POST(self, name):
-  #--------------------
-    logging.debug('POST: %s', web.ctx.environ)
+  def post(self, name, **kwds):
+  #-----------------------------
+    logging.debug('POST: %s', self.request.headers)
     source = self._pathname(name)[0]
-    return "<html><body><p>POST: %s</p></body></html>" % source
+    if source: self.write("<html><body><p>POST: %s</p></body></html>" % source)
 
 
-  def DELETE(self, name):
-  #----------------------
-    ###print name, web.ctx.environ
+  def delete(self, name, **kwds):
+  #------------------------------
     source, filename, fragment = self._pathname(name)
-    rec_uri = ReST._repo.uri + source
-    recording = ReST._repo.get_recording(rec_uri)
+    if source is None: return
+    rec_uri = options.repository.uri + source
+    recording = options.repository.get_recording(rec_uri)
     if recording.source is None:
-      raise NotFound("Recording '%s' is not in repository" % rec_uri)
+      self.write_error(404, msg="Recording '%s' is not in repository" % rec_uri)
+      return
     if fragment:
-      raise NotFound("Cannot delete fragment of '%s'" % rec_uri)
+      self.write_error(404, msg="Cannot delete fragment of '%s'" % rec_uri)
+      return
 
     try:
       file_name = urllib.urlopen(str(recording.source)).fp.name
@@ -311,13 +284,16 @@ class ReST(object):
       pass
     ## But if multiple files in the recording?? eg. SDF, WFDB, ...
 
-    ReST._repo.remove_graph(rec_uri)
+    options.repository.remove_graph(rec_uri)
     logging.debug("Deleted '%s' (%s)", rec_uri, recording.source)
-    raise web.OK('\n'.join(['<bsml>',
-                            ' <deleted uri="%s"/>' % rec_uri,
-                            '</bsml>', '']), {'Content-Type': MIMETYPE_BSML})
+
+    self.set_header('Content-Type', 'text/xml')
+    sel.set_status(200)
+    self.write('\n'.join(['<bsml>',
+                          ' <deleted uri="%s"/>' % rec_uri,
+                          '</bsml>', '']))
 
 
-  def HEAD(self, name):
-  #--------------------
-    return "<html><body><p>HEAD: %s</p></body></html>" % name
+  def head(self, name, **kwds):
+  #----------------------------
+    self.write("<html><body><p>HEAD: %s</p></body></html>" % name)
