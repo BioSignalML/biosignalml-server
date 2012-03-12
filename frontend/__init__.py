@@ -28,10 +28,7 @@ import user, menu
 
 WEB_MODULE = 'frontend'  # We do a "import webpages from frontend"
 
-urls = ( '/(recording)',    '%s.recording.ReST' % WEB_MODULE,
-         '/(recording/.*)', '%s.recording.ReST' % WEB_MODULE,
-         '/(.*)',           'Index',
-       )
+urls = ( '/(.*)', 'Index' )
 
 
 if web.config.debug: web.webapi.internalerror = web.debugerror
