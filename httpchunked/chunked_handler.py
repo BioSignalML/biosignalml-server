@@ -1,3 +1,7 @@
+"""
+Tornado chunked data handler from https://gist.github.com/753992
+"""
+
 from tornado import web
 
 from iostream_callback import (

@@ -1,4 +1,6 @@
 """
+Tornado I/O stream callback from https://gist.github.com/753987.
+
 See this post for the motivation behind this gist:
 
   http://rctay.tuletech.com/2010/12/tornado-presenting-a-new-paradigm-for-IOStream-read-callbacks
