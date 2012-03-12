@@ -23,15 +23,15 @@ import tornado.options as options
 import server
 frontend_app = server.init_server(True)  # Setup globals
 
-import frontend.webstream
-import frontend.metadata
-import frontend.recording
+import endpoints.webstream as webstream
+import endpoints.metadata  as metadata 
+import endpoints.recording as recording
 
 application = tornado.web.Application([
-    ( server.STREAMDATA_ENDPOINT,         frontend.webstream.StreamDataSocket),
-    ( '/stream/echo/',                    frontend.webstream.StreamEchoSocket),
-    ( server.METADATA_ENDPOINT + '(.*)',  frontend.metadata.metadata),
-    ( server.RECORDING_ENDPOINT + '(.*)', frontend.recording.ReST),
+    ( server.STREAMDATA_ENDPOINT,         webstream.StreamDataSocket),
+    ( '/stream/echo/',                    webstream.StreamEchoSocket),
+    ( server.METADATA_ENDPOINT + '(.*)',  metadata.metadata),
+    ( server.RECORDING_ENDPOINT + '(.*)', recording.ReST),
     ( "/static/(.*)" ,                    tornado.web.StaticFileHandler,
                                             {"path": "frontend/static"}),
     ( ".*",                               tornado.web.FallbackHandler,
