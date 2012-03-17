@@ -40,9 +40,8 @@ class Repository(object):
   def __init__(self, base_uri, store_uri):
   #---------------------------------------
     self.uri = base_uri
-    if self.uri[-1] not in '#/': self.uri += '/'
     self._triplestore = TripleStore(store_uri)
-    self._provenance = Provenance(self._triplestore, self.uri + 'provenance')
+    self._provenance = Provenance(self._triplestore, self.uri + '/provenance')
 
   def __del__(self):
   #-----------------
