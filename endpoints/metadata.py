@@ -79,10 +79,6 @@ class metadata(tornado.web.RequestHandler):
     ##logging.debug('POST: %s\n%s', name, self.request.body)
     graph = rdf.Graph.create_from_string(self.request.body, self._format, name)
     graph_uri = options.repository.get_recording_graph_uri(name)
-    if graph_uri is None:
-      rec = graph.get_object(name, BSML.recording)
-      if rec is not None:
-        graph_uri = options.repository.get_recording_graph_uri(rec.uri)
     if graph_uri is not None:
       options.repository.update(graph_uri,
         [ (self._node(s.subject), self._node(s.predicate), self._node(s.object)) for s in graph ] )
