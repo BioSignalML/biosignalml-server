@@ -88,55 +88,55 @@ class Repository(object):
     return QueryResults(self, sparql, header, html, abbreviate)
 
 
-  def construct(self, template, where, params = { }, format=Format.RDFXML):
-  #------------------------------------------------------------------------
-    return self._triplestore.construct(template, where, params, format)
+  def construct(self, template, where, graph=None, params={ }, format=Format.RDFXML):
+  #----------------------------------------------------------------------------------
+    return self._triplestore.construct(template, where, graph, params, format)
 
 
   def describe(self, uri, format=Format.RDFXML):
   #---------------------------------------------
     return self._triplestore.describe(uri, format)
 
-  def ask(self, query):
-  #--------------------
-    return self._triplestore.ask(query)
+  def ask(self, query, graph=None):
+  #--------------------------------
+    return self._triplestore.ask(query, graph)
 
-  def get_subjects(self, prop, obj):
-  #---------------------------------
+  def get_subjects(self, prop, obj, graph=None):
+  #---------------------------------------------
     if isinstance(obj, Resource) or isinstance(obj, Uri):
       obj = '<%s>' % obj
     elif not isinstance(obj, Node):
       obj = '"%s"' % obj
     return [ r['s']['value'] for r in
-                  self._triplestore.select('?s', '?s <%s> %s' % (str(prop), obj)) ]
+                  self._triplestore.select('?s', '?s <%s> %s' % (str(prop), obj), graph) ]
 
-  def get_object(self, subj, prop):
-  #--------------------------------
-    for r in self._triplestore.select('?o', '<%s> <%s> ?o' % (str(subj), str(prop))):
+  def get_object(self, subj, prop, graph_uri=None):
+  #------------------------------------------------
+    for r in self._triplestore.select('?o', '<%s> <%s> ?o' % (str(subj), str(prop)), graph_uri):
       if   r['o']['type'] == 'uri':           return Resource(Uri(r['o']['value']))
       elif r['o']['type'] == 'bnode':         return BlankNode(r['o']['value'])
       elif r['o']['type'] == 'literal':       return r['o']['value']
       elif r['o']['type'] == 'typed-literal': return r['o']['value'] ## check datatype and convert...
     return None
 
-  def make_graph(self, template, where, params = { }):
-  #---------------------------------------------------
+  def make_graph(self, template, where, graph_uri=None, params = { }):
+  #-------------------------------------------------------------------
     '''
     Construct a RDF graph from a query againt the repository/
 
     :rtype: :class:`~biosignalml.rdf.Graph`
     '''
-    ttl = self.construct(template, where, params, Format.TURTLE)
+    ttl = self.construct(template, where, graph_uri, params, Format.TURTLE)
     #logging.debug("Statements: %s", ttl)  ###
     return Graph.create_from_string(ttl, Format.TURTLE, Uri(self.uri))
 
-  def get_type(self, uri):
-  #-----------------------
-    return self.get_object(uri, RDF.type)
+  def get_type(self, uri, graph=None):
+  #-----------------------------------
+    return self.get_object(uri, RDF.type, graph)
 
-  def check_type(self, uri, type):
-  #-------------------------------
-    return self.ask('<%s> a <%s>' % (str(uri), str(type)))
+  def check_type(self, uri, type, graph=None):
+  #-------------------------------------------
+    return self.ask('<%s> a <%s>' % (str(uri), str(type)), graph)
 
 
 class BSMLRepository(Repository):
@@ -148,9 +148,7 @@ class BSMLRepository(Repository):
   def has_recording(self, uri):
   #----------------------------
     ''' Check a URI refers to a Recording. '''
-    ##return self.check_type(uri, BSML.Recording)
-    return self.ask('graph <%(uri)s> { <%(uri)s> a <%(class)s> }'
-      % { 'uri': uri, 'class': BSML.Recording })
+    return self.check_type(uri, BSML.Recording, uri)
 
   def has_signal(self, uri):
   #-------------------------
@@ -162,12 +160,12 @@ class BSMLRepository(Repository):
   def has_signal_in_recording(self, sig, rec):
   #-------------------------------------------
     ''' Check a URI refers to a Signal in a given Recording. '''
-    return self.ask('''graph <%(rec)s> { <%(rec)s> a <%(rclass)s> .
-                                         <%(sig)s> a <%(class)s> .
-                                         <%(sig)s> <%(prop)s> <%(rec)s> }'''
+    return self.ask('''<%(rec)s> a <%(rclass)s> .
+                       <%(sig)s> a <%(class)s> .
+                       <%(sig)s> <%(prop)s> <%(rec)s>'''
       % { 'rec': rec, 'rclass': BSML.Recording,
           'sig': sig, 'class':  BSML.Signal,
-          'prop': BSML.recording })
+          'prop': BSML.recording }, rec)
 
   def recordings(self):
   #--------------------
@@ -191,45 +189,43 @@ class BSMLRepository(Repository):
       return Uri(r['g']['value'])
     return None
 
-  def get_recording(self, uri):
-  #----------------------------
+  def get_recording(self, uri, graph_uri=None):
+  #--------------------------------------------
     '''
-    Get the Recording in the graph that the object is in.
+    Get the Recording from the graph that an object is in.
 
     :param uri: The URI of some object.
+    :param graph_uri: The URI of a named graph containing statements
+      about the object.
     :rtype: :class:`~biosignalml.Recording`
     '''
     #logging.debug('Getting: %s', uri)
-    if self.get_type(uri) != BSML.Recording: uri = self.get_object(uri, BSML.recording)
-    #logging.debug('Recording: %s', uri)
-    if uri:
-      rclass = biosignalml.formats.CLASSES.get(str(self.get_object(uri, DCTERMS.format)), Recording)
-      graph = self.make_graph('<%(uri)s> ?p ?o',
-                              'graph <%(uri)s> { <%(uri)s> ?p ?o }', { 'uri': str(uri) })
-      return rclass.create_from_graph(str(uri), graph, bsml_mapping())
+    if graph_uri is None:
+      graph_uri = self.get_recording_graph_uri(uri)
+    #logging.debug('Recording: %s', graph_uri)
+    if graph_uri is not None:
+      rclass = biosignalml.formats.CLASSES.get(str(self.get_object(uri, DCTERMS.format, graph_uri)),
+                                               Recording)
+      graph = self.make_graph('<%(uri)s> ?p ?o', '<%(uri)s> ?p ?o', graph_uri, { 'uri': str(graph_uri) })
+      return rclass.create_from_graph(str(graph_uri), graph, bsml_mapping())
     else:
       return None
 
-  def get_recording_with_signals(self, uri):
-  #-----------------------------------------
+  def get_recording_with_signals(self, uri, graph_uri=None):
+  #---------------------------------------------------------
     '''
-    Get the Recording that the URI is part of.
+    Get the Recording with its Signals from the graph
+      that an object is in.
 
-    :param uri: The URI of the Recording.
+    :param uri: The URI of some object.
+    :param graph_uri: The URI of a named graph containing statements
+      about the object.
     :rtype: :class:`~biosignalml.Recording`
     '''
-    '''
-    Get a list of all Signals in a Recording.
-
-    :param uri: The URI of a Recording.
-    :rtype: list[:class:`~biosignalml.Signal`]
-    '''
-    rec = self.get_recording(uri)
+    rec = self.get_recording(uri, graph_uri)
     if rec is not None:
-      for sig in self.get_subjects(BSML.recording, rec.uri):
-        graph = self.make_graph('<%(uri)s> ?p ?o',
-                                'graph <%(rec)s> { <%(uri)s> ?p ?o }',
-                                { 'rec': str(rec.uri), 'uri': str(sig) })
+      for sig in self.get_subjects(BSML.recording, rec.uri, rec.uri):
+        graph = self.make_graph('<%(uri)s> ?p ?o', '<%(uri)s> ?p ?o', rec.uri, { 'uri': str(sig) })
         rec.add_signal(Signal.create_from_graph(str(sig), graph, bsml_mapping()))
     return rec
 

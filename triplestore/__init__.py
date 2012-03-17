@@ -23,16 +23,16 @@ class TripleStore(object):
   #---------------------------------------------
     pass
 
-  def ask(self, where):
-  #--------------------
+  def ask(self, where, graph=None):
+  #--------------------------------
     pass
 
-  def select(self, fields, where, distinct=False, limit=None):
-  #-----------------------------------------------------------
+  def select(self, fields, where, graph=None, distinct=False, limit=None):
+  #-----------------------------------------------------------------------
     pass
 
-  def construct(self, template, where, params = { }, format=Format.RDFXML):
-  #------------------------------------------------------------------------
+  def construct(self, template, where, graph=None, params = { }, format=Format.RDFXML):
+  #------------------------------------------------------------------------------------
     pass
 
   def describe(self, uri, format=Format.RDFXML):

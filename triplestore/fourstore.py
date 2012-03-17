@@ -48,15 +48,20 @@ class FourStore(TripleStore):
       logging.error('4store: %s, %s', msg, sparql)
       raise
 
-  def ask(self, where):
-  #--------------------
-    return json.loads(self.query('ask where { %(where)s }' % { 'where': where }, Format.JSON))['boolean']
+  def ask(self, where, graph=None):
+  #--------------------------------
+    return json.loads(self.query('ask where { %(graph)s { %(where)s } }'
+                                  % { 'graph': ('graph <%s>' % str(graph)) if graph else '',
+                                      'where': where,
+                                    }, Format.JSON)
+                                )['boolean']
 
-  def select(self, fields, where, distinct=False, limit=None):
-  #-----------------------------------------------------------
-    return json.loads(self.query('select%(distinct)s %(fields)s where { %(where)s }%(limit)s'
+  def select(self, fields, where, graph=None, distinct=False, limit=None):
+  #-----------------------------------------------------------------------
+    return json.loads(self.query('select%(distinct)s %(fields)s where { %(graph)s { %(where)s } }%(limit)s'
                                   % { 'distinct': ' distinct' if distinct else '',
                                       'fields': fields,
+                                      'graph': ('graph <%s>' % str(graph)) if graph else '',
                                       'where': where,
                                       'limit': (' limit %s' % limit) if limit else '',
                                     }, Format.JSON
@@ -99,11 +104,15 @@ class FourStore(TripleStore):
      ]"""
 
 
-  def construct(self, template, where, params = { }, format=Format.RDFXML):
-  #------------------------------------------------------------------------
-    return self.query('construct { %(tplate)s } where { %(where)s }'
-                        % { 'tplate': template % params, 'where': where % params, },
-                      format)
+
+  def construct(self, template, where, graph=None, params = { }, format=Format.RDFXML):
+  #------------------------------------------------------------------------------------
+    return self.query('construct { %(tplate)s } where { %(graph)s { %(where)s } }'
+                       % { 'tplate': template % params,
+                           'graph': ('graph <%s>' % str(graph)) if graph else '',
+                           'where': where % params,
+                         }, format
+                     )
 
   def describe(self, uri, format=Format.RDFXML):
   #-----------------------------------------------
