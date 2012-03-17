@@ -38,7 +38,7 @@ class FourStore(TripleStore):
 
   def query(self, sparql, format=Format.RDFXML):
   #---------------------------------------------
-    #logging.debug('4s %s: %s', format, sparql)
+    ##logging.debug('4s %s: %s', format, sparql)
     try:
       return self._request('/sparql/', 'POST',
                            body=urllib.urlencode({'query': sparql}),
@@ -67,43 +67,6 @@ class FourStore(TripleStore):
                                     }, Format.JSON
                                 )
                      ).get('results', {}).get('bindings', [])
-    """
-    for result in results['results']['bindings']:
-      for f in fields:
-        result[f] is a dict()
-           ['type']
-           ['value']
-           ['datatype']
-           ['lang']
-           ['variable']
-           #types are 'uri', 'bnode', 'literal', 'typed-literal'
-
-     [{u'p': {u'type': u'uri', u'value': u'http://www.example.org/test#prop'},
-       u's': {u'type': u'uri', u'value': u'http://www.example.org/test#bnode'},
-       u'o': {u'type': u'uri', u'value': u'http://www.example.org/test#obj'} },
-
-      {u'p': {u'type': u'uri', u'value': u'http://www.example.org/test#prop'},
-       u's': {u'type': u'bnode', u'value': u'b2'},
-       u'o': {u'type': u'uri', u'value': u'http://www.example.org/test#obj'} },
-
-      {u'p': {u'type': u'uri', u'value': u'http://www.example.org/test#property'},
-       u's': {u'type': u'uri', u'value': u'http://www.example.org/test#subject'},
-       u'o': {u'type': u'uri', u'value': u'http://www.example.org/test#bnode'} },
-
-      {u'p': {u'type': u'uri', u'value': u'http://www.example.org/test#property'},
-       u's': {u'type': u'uri', u'value': u'http://www.example.org/test#subject'},
-       u'o': {u'type': u'bnode', u'value': u'b2'} },
-
-      {u'p': {u'type': u'uri', u'value': u'http://www.example.org/test#property'},
-       u's': {u'type': u'uri', u'value': u'http://www.example.org/test#subject'},
-       u'o': {u'type': u'bnode', u'value': u'b1'} },
-
-      {u'p': {u'type': u'uri', u'value': u'http://www.example.org/test#prop'},
-       u's': {u'type': u'bnode', u'value': u'b1'},
-       u'o': {u'type': u'uri', u'value': u'http://www.example.org/test#obj'} }
-     ]"""
-
-
 
   def construct(self, template, where, graph=None, params = { }, format=Format.RDFXML):
   #------------------------------------------------------------------------------------
@@ -122,7 +85,7 @@ class FourStore(TripleStore):
   def insert(self, graph, triples):
   #--------------------------------
     sparql = ('insert data { graph <%(graph)s> { %(triples)s } }'
-                % { 'graph': graph,
+                % { 'graph': str(graph),
                     'triples': ' . '.join([' '.join(list(s)) for s in triples ]) })
     ##logging.debug('Insert: %s', sparql)
     content = self._request('/update/', 'POST',
@@ -147,7 +110,7 @@ class FourStore(TripleStore):
     for s, p, o in sorted(triples):
       if (s, p) != last:
         sparql = ('delete { graph <%(g)s> { %(s)s %(p)s ?o } } where { %(s)s %(p)s ?o }'
-                    % {'g': graph, 's': s, 'p': p} )
+                    % {'g': str(graph), 's': s, 'p': p} )
         content = self._request('/update/', 'POST',
                                 body=urllib.urlencode({'update': sparql}),
                                 headers={'Content-type': 'application/x-www-form-urlencoded'})
@@ -179,6 +142,10 @@ class FourStore(TripleStore):
 
   def fulltext(self):
   #------------------
+    '''
+    Enable stemming of rdfs:label, rdfs:comment, and dc:description text
+    in 4store. See http://4store.org/trac/wiki/TextIndexing.
+    '''
     self.extend_graph('system:config',
      """@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
         @prefix dc:   <http://purl.org/dc/elements/1.1/> .
