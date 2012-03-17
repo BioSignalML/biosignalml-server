@@ -121,9 +121,6 @@ class FourStore(TripleStore):
 
   def insert(self, graph, triples):
   #--------------------------------
-    '''
-    INSERT a list of triples from a graph.
-    '''
     sparql = ('insert data { graph <%(graph)s> { %(triples)s } }'
                 % { 'graph': graph,
                     'triples': ' . '.join([' '.join(list(s)) for s in triples ]) })
@@ -135,9 +132,6 @@ class FourStore(TripleStore):
 
   def delete(self, graph, triples):
   #--------------------------------
-    '''
-    DELETE a list of triples from a graph.
-    '''
     sparql = ('delete data { graph <%(graph)s> { %(triples)s } }'
                 % { 'graph': graph,
                     'triples': ' . '.join([' '.join(list(s)) for s in triples ]) })
@@ -164,9 +158,6 @@ class FourStore(TripleStore):
 
   def extend_graph(self, graph, rdf, format=Format.RDFXML):
   #--------------------------------------------------------
-    '''
-    Extend an existing graph, creating one if not present.
-    '''
     #logging.debug('Extend <%s>: %s', graph, rdf)
     self._request('/data/', 'POST',
                   body=urllib.urlencode({'data': rdf,
@@ -177,9 +168,6 @@ class FourStore(TripleStore):
 
   def replace_graph(self, graph, rdf, format=Format.RDFXML):
   #-----------------------------------------------------------
-    '''
-    Replace an existing graph, creating one if not present.
-    '''
     #logging.debug('Replace <%s>: %s', graph, rdf)
     self._request('/data/' + str(graph), 'PUT', body=rdf, headers={'Content-type': Format.mimetype(format)})
 

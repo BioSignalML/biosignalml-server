@@ -36,21 +36,48 @@ class TripleStore(object):
     pass
 
   def describe(self, uri, format=Format.RDFXML):
-  #-----------------------------------------------
+  #---------------------------------------------
     pass
 
   def insert(self, graph, triples):
   #--------------------------------
+    '''
+    Insert a list of triples into a graph.
+    '''
+    pass
+
+  def delete(self, graph, triples):
+  #--------------------------------
+    '''
+    Delete a list of triples from a graph.
+    '''
+    pass
+
+  def update(self, graph, triples):
+  #--------------------------------
+    '''
+    Remove all statements about the (subject, predicate) pairs in a list
+    of triples from the graph then insert the triples.
+    '''
     pass
 
   def extend_graph(self, graph, rdf, format=Format.RDFXML):
   #--------------------------------------------------------
+    '''
+    Extend an existing graph, creating one if not present.
+    '''
     pass
 
   def replace_graph(self, graph, rdf, format=Format.RDFXML):
   #---------------------------------------------------------
+    '''
+    Replace an existing graph, creating one if not present.
+    '''
     pass
 
   def delete_graph(self, graph):
   #-----------------------------
+    '''
+    Delete an existing graph from the store.
+    '''
     pass
