@@ -27,19 +27,17 @@ STREAMDATA_ENDPOINT = '/stream/data/'  #: Stream signal data in and out
 
 LOGFORMAT = '%(asctime)s %(levelname)8s %(threadName)s: %(message)s'
 
-DEFAULTS  = { 'repository':
-                { 'uri': 'http://devel.biosignalml.org',
-                  'host': 'localhost',
-                  'port':  8088,
-                  'path': '.',
-                  'database': './database/repository.db',
-                  'recordings': './recordings/',
-                  'triplestore': 'http://localhost:8083'
-                },
-              'logging':
-                { 'log_file': './log/biosignalml.log',
-                  'log_level': 'DEBUG', # 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
-                },
+DEFAULTS  = { 'uri': 'http://devel.biosignalml.org',
+              'host': 'localhost',
+              'port':  8088,
+              'path': '.',
+              'database': './database/repository.db',
+              'recordings': './recordings/',
+              'triplestore': 'http://localhost:8083',
+              'recording_prefix': RECORDING_ENDPOINT,
+
+              'log_file': './log/biosignalml.log',
+              'log_level': 'DEBUG', # 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
             }
 
 if hasattr(sys, "frozen"): module_path = os.path.dirname(sys.executable)
@@ -53,10 +51,10 @@ class Options(object):
 
   def __init__(self, file, defaults = { } ):
   #-----------------------------------------
-    cfg = ConfigParser.SafeConfigParser()
+    cfg = ConfigParser.SafeConfigParser(defaults, dict)
     cfg.optionxform = str   # Preserve case (default method translates to lowercase)
     cfg.read(file)
-    for s in cfg.sections(): setattr(self, s, dict(cfg.items(s, defaults.get(s, None))) )
+    for s in cfg.sections(): setattr(self, s, dict(cfg.items(s, True)))
 
 
 def parse_args():
@@ -93,7 +91,6 @@ def init_server(wsgi = False):
   logging.getLogger().addHandler(console)
   logging.info('Starting BioSignalML repository server...')
 
-
   web.config.biosignalml = { }
   web.config.biosignalml['server_base'] = server_base
   web.config.biosignalml['recordings']  = os.path.join(server_base,
@@ -105,6 +102,8 @@ def init_server(wsgi = False):
 
   tornado.options.define('recordings', default = web.config.biosignalml['recordings'])
   tornado.options.define('repository', default = web.config.biosignalml['repository'])
+  tornado.options.define('recording_prefix', default = options.repository['uri']
+                                                     + options.repository['recording_prefix'])
   tornado.options.define('debug',      default = (options.logging['log_level'] == 'DEBUG'))
 
   tornado.options.host = options.repository['host']
