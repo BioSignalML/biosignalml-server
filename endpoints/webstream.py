@@ -128,31 +128,17 @@ class StreamDataSocket(StreamServer):
     elif block.type == stream.BlockType.DATA:
       # Got 'D' segment(s), uri is that of signal, that should have a recording link
       # look signal's uri up to get its Recording and hence format/source
-      pass  # append to HDF5 BioSignalML file
-
       try:
         sd = block.signaldata()
-        rec = self._repo.get_recording_graph_uri(sd.uri)
-
-        if rec is None or not self._repo.has_signal_in_recording(sd.uri, rec):
+        rec_uri = self._repo.get_recording_graph_uri(sd.uri)
+        if rec_uri is None or not self._repo.has_signal_in_recording(sd.uri, rec_uri):
           raise stream.StreamException("Unknown signal '%s'" % sd.uri)
-
-
-        recclass = formats.CLASSES.get(str(rec.format))
-        if recclass != formats.BSMLRecording:
+        rec = self._repo.get_recording_with_signals(rec_uri)
+        if str(rec.format) != str(BSML.BSML_HDF5):
           raise stream.StreamException("Signal can not be appended to -- wrong format")
-
+        recclass = formats.CLASSES.get(str(rec.format))
         recclass.initialise_class(rec, str(rec.source))
-
-        '''
-        rec format BSML.BioSignalML
-        rec source
-
-        Need to open HDF5 (BSML) Recording and then append data...
-
-
-        '''
-
+        rec.get_signal(sd.uri).append(sd.data)
       except Exception, msg:
         self.send_block(stream.ErrorBlock(0, block, str(msg)))
         if options.debug: raise
