@@ -75,106 +75,69 @@ class ReST(httpchunked.ChunkedHandler):
     _mimetype[name] = cls.MIMETYPE
     _class[cls.MIMETYPE] = cls
 
-  def _pathname(self, name):
-  #-------------------------
-    paths = name.split('/')
-    if len(paths) < 2 or not paths[1]:
-      self.write_error(404, msg="Cannot find '%s'" % name)
-      return (None, None, None)
-    tail = paths[-1].split('#', 1)
-    fragment = tail[1] if len(tail) > 1 else ''
-    paths[-1] = tail[0]
-    return ('/'.join(paths[1:]), tail[0], fragment)
-
-  def _get_interval(self, t):
+  def _get_names(self, name):
   #--------------------------
-    try:
-      if '-' in t:
-         (start, end) = tuple([ float(x) for x in t.split('-') ])
-         length = end - start
-      elif ':' in t:
-        interval = [ float(x) for x in t.split(':') ]
-        (start, length) = (interval[0], interval[1])
-      else:
-        raise Exception
-      if length > 0.0: return (start, length)
-    except Exception:
-      pass
-    self.write_error(500, msg='Invalid time interval')
-    return (None, None)
+    tail = name.rsplit('#', 1)
+    fragment = tail[1] if len(tail) > 1 else ''
+    head = tail[0]
+    if head.startswith('http:'):
+      return (head, head.replace('/', '_'), fragment)
+    else:
+      return (options.recording_prefix + head, head, fragment)
 
-  def write_error(self, status, msg=None):
-  #---------------------------------------
+  def _write_error(self, status, msg=None):
+  #----------------------------------------
     raise_error(self, status, msg)
 
 
   def get(self, name, **kwds):
   #----------------------------
-    accept = metadata.acceptheaders(self.request)
 
-    source, filename, fragment = self._pathname(name)
-    if source is None: return
     logging.debug('GET: %s, %s', name, self.request.uri)
-    logging.debug('%s, %s, %s', source, filename, fragment)
 
-    if source.startswith('http:'): rec_uri = source
-    else: rec_uri = options.repository.uri + name.split('/', 1)[0] + '/' + source
-
-    recording = options.repository.get_recording(rec_uri)
-    logging.debug("Request '%s' --> '%s'", rec_uri, recording.source if recording else None)
-
-    if recording is None:
-      self.write_error(404, msg="Unknown recording: '%s'" % source)
+    uri, filename, fragment = self._get_names(name)
+    rec_uri = options.repository.get_recording_graph_uri(uri)
+    if rec_uri is None:
+      self._write_error(404, msg="Recording unknown for '%s'" % uri)
       return
 
-    objtype = options.repository.get_type(rec_uri)
-    ctype = (ReST._mimetype.get(str(recording.format), 'application/x-raw')
-               if objtype in [BSML.Recording, BSML.Signal]
-             else None)
-    logging.debug('OBJ=%s, FMT=%s, CT=%s, AC=%s', objtype, recording.format, ctype, accept)
-
+    accept = metadata.acceptheaders(self.request)
+    self.set_header('Vary', 'Accept')      # Let caches know we've used Accept header
+    objtype = options.repository.get_type(uri, rec_uri)
+    if objtype == BSML.Recording:
+      recording = options.repository.get_recording(uri, rec_uri)
+      ctype = ReST._mimetype.get(str(recording.format), 'application/x-raw')
 ## Should we set 'Content-Location' header as well?
 ## (to actual URL of representation returned).
-
-    self.set_header('Vary', 'Accept')      # Let caches know we've used Accept header
-    if ctype in accept: # send file
-      # Also we may be GETting a signal, not a recording
-      # - check rdf:type. If Signal then find/open bsml:recording
-
-      if recording.source is None:
-        self.write_error(404, msg="Missing recording source: '%s'" % source)
+      if ctype in accept: # send file
+        if recording.source is None:
+          self._write_error(404, msg="Missing recording source: '%s'" % source)
+          return
+        filename = str(recording.source)
+        logging.debug("Streaming '%s'", filename)
+        try:
+          rfile = urllib.urlopen(filename).fp
+          self.set_header('Content-Type', ctype)
+          self.set_header('Content-Disposition', 'attachment; filename=%s' % filename)
+          while True:
+            data = rfile.read(32768)
+            if not data: break
+            self.write(data)
+            self.flush()             ## This will chunk output
+          rfile.close()
+          self.finish()
+        except Exception, msg:
+          self._write_error(500, msg="Error serving recording: %s" % msg)
         return
-      logging.debug("Streaming '%s'", recording.source)
-
-      try:
-        rfile = urllib.urlopen(str(recording.source)).fp
-        self.set_header('Content-Type', ctype)
-        self.set_header('Content-Disposition', 'attachment; filename=%s' % filename)
-        while True:
-          data = rfile.read(32768)
-          if not data: break
-          self.write(data)
-          self.flush()             ## This will chunk output
-        rfile.close()
-        self.finish()
-      except Exception, msg:
-        self.write_error(500, msg="Error serving recording: %s" % msg)
-        return
-    else:
-      format = rdf.Format.TURTLE if ('text/turtle' in accept
-                                  or 'application/x-turtle' in accept) else rdf.Format.RDFXML
-      # check rdf+xml, turtle, n3, html ??
-      self.set_header('Content-Type', rdf.Format.mimetype(format))
-      graph_uri = options.repository.get_recording_graph_uri(self.request.uri)
-      if graph_uri is None:
-        self.set_status(404)
-      else:
-        self.write(options.repository.construct('?s ?p ?o',
-                                                'graph <%(graph)s> { ?s ?p ?o'
-                                              + ' FILTER (?p != <http://4store.org/fulltext#stem>'
-                                              + ' && (?s = <%(name)s> || ?o = <%(name)s>)) }',
-                                                { 'graph': graph_uri, 'name': name},
-                                                format))
+    # Either not a Recording or ctype not in accept header, so send RDF
+    format = rdf.Format.TURTLE if ('text/turtle' in accept
+                                or 'application/x-turtle' in accept) else rdf.Format.RDFXML
+    # check rdf+xml, turtle, n3, html ??
+    self.set_header('Content-Type', rdf.Format.mimetype(format))
+    self.write(options.repository.construct('?s ?p ?o',
+                                            '?s ?p ?o FILTER (?p != <http://4store.org/fulltext#stem>'
+                                                      + ' && (?s = <%(uri)s> || ?o = <%(uri)s>))',
+                                            rec_uri, { 'uri': uri }, format))
 
 
   def put(self, name, **kwds):
@@ -187,22 +150,15 @@ class ReST(httpchunked.ChunkedHandler):
     logging.debug("HDRS: %s", self.request.headers)
     ctype = self.request.headers.get('Content-Type', 'application/x-raw')
     if not ctype.startswith('application/x-'):
-      self.write_error(415, msg="Invalid Content-Type: '%s'" % ctype)
+      self._write_error(415, msg="Invalid Content-Type: '%s'" % ctype)
       return
 
     RecordingClass = ReST._class.get(ctype)
     if not RecordingClass:
-      self.write_error(415, msg="Unknown Content-Type: '%s'" % ctype)
+      self._write_error(415, msg="Unknown Content-Type: '%s'" % ctype)
       return
 
-    if name.startswith('http:'):
-      rec_uri = name
-      fname = name.replace('/', '_')
-    else:
-      source = self._pathname(name)[0]
-      if source is None: return
-      rec_uri = options.repository.uri + name.split('/', 1)[0] + '/' + source
-      fname = source
+    rec_uri, fname, fragment = self._getnames(name)
 
     ##file_id   = str(uuid.uuid4()) + '.' + format
     ##file_name = os.path.abspath(os.path.join(options.repository.storepath, file_id))
@@ -214,7 +170,7 @@ class ReST(httpchunked.ChunkedHandler):
     logging.debug('URI: %s, FILE: %s', rec_uri, file_name)
 
     if options.repository.check_type(rec_uri, BSML.Recording):
-      self.write_error(409, msg="Recording '%s' is already in repository" % rec_uri)
+      self._write_error(409, msg="Recording '%s' is already in repository" % rec_uri)
       return
 
     try:            os.makedirs(os.path.dirname(file_name))
@@ -260,21 +216,20 @@ class ReST(httpchunked.ChunkedHandler):
   def post(self, name, **kwds):
   #-----------------------------
     logging.debug('POST: %s', self.request.headers)
-    source = self._pathname(name)[0]
-    if source: self.write("<html><body><p>POST: %s</p></body></html>" % source)
+    rec_uri = self._getnames(name)[0]
+    if source: self.write("<html><body><p>POST: %s</p></body></html>" % rec_uri)
 
 
   def delete(self, name, **kwds):
   #------------------------------
-    source, filename, fragment = self._pathname(name)
-    if source is None: return
-    rec_uri = options.repository.uri + source
+    rec_uri, fname, fragment = self._getnames(name)
+    if rec_uri is None: return
     recording = options.repository.get_recording(rec_uri)
     if recording.source is None:
-      self.write_error(404, msg="Recording '%s' is not in repository" % rec_uri)
+      self._write_error(404, msg="Recording '%s' is not in repository" % rec_uri)
       return
     if fragment:
-      self.write_error(404, msg="Cannot delete fragment of '%s'" % rec_uri)
+      self._write_error(404, msg="Cannot delete fragment of '%s'" % rec_uri)
       return
 
     try:
