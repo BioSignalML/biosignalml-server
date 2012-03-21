@@ -76,10 +76,11 @@ class metadata(tornado.web.RequestHandler):
 
   def post(self, name, **kwds):
   #----------------------------
-    ##logging.debug('POST: %s\n%s', name, self.request.body)
-    graph = rdf.Graph.create_from_string(self.request.body, self._format, name)
-    graph_uri = options.repository.get_recording_graph_uri(name)
+    if name == '': graph_uri = options.repository.uri
+    else:          graph_uri = options.repository.get_recording_graph_uri(name)
+    ##logging.debug('POST: %s (%s)\n%s', name, graph_uri, self.request.body)
     if graph_uri is not None:
+      graph = rdf.Graph.create_from_string(self.request.body, self._format, graph_uri)
       options.repository.update(graph_uri,
         [ (self._node(s.subject), self._node(s.predicate), self._node(s.object)) for s in graph ] )
       # return...  ???
@@ -89,7 +90,8 @@ class metadata(tornado.web.RequestHandler):
   def put(self, name, **kwds):
   #----------------------------
     ##logging.debug('PUT: %s %s\n%s', name, self._format, self.request.body)
-    if (rdf.Graph.create_from_string(self.request.body, self._format, name)
+    if name == '': self.send_error(401)  # Unauthorised
+    elif (rdf.Graph.create_from_string(self.request.body, self._format, name)
           .contains(rdf.Statement(name, rdf.RDF.type, BSML.Recording))):
       # ask ??
       # and (name BSML.format BSML.BioSignalML)
