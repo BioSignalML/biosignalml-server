@@ -225,7 +225,7 @@ class BSMLRepository(Repository):
     if rec is not None:
       for sig in self.get_subjects(BSML.recording, rec.uri, rec.uri):
         graph = self.make_graph('<%(uri)s> ?p ?o', '<%(uri)s> ?p ?o', rec.uri, { 'uri': str(sig) })
-        rec.add_signal(Signal.create_from_graph(str(sig), graph, bsml_mapping()))
+        rec.add_signal(Signal.create_from_graph(str(sig), graph, bsml_mapping(), units=None))
     return rec
 
 #  def signal_recording(self, uri):
@@ -245,12 +245,12 @@ class BSMLRepository(Repository):
                           + ' <%(uri)s> <%(reln)s> ?rec .'
                           + ' <%(uri)s> a  <%(type)s> .'
                           + ' <%(uri)s> ?p ?o }',
-                             { 'uri': str(uri),
-                              'type': str(BSML.Signal),
-                              'reln': str(BSML.recording),
-                             'rtype': str(BSML.Recording),
-                             })
-    return Signal.create_from_graph(uri, graph, bsml_mapping())
+                            params = { 'uri': str(uri),
+                                       'type': str(BSML.Signal),
+                                       'reln': str(BSML.recording),
+                                       'rtype': str(BSML.Recording),
+                                      })
+    return Signal.create_from_graph(uri, graph, bsml_mapping(), units=None)  # units set from graph...
 
 #  def signal(self, sig, properties):              # In context of signal's recording...
 #  #---------------------------------
