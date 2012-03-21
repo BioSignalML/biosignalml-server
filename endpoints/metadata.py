@@ -52,8 +52,8 @@ class metadata(tornado.web.RequestHandler):
                                               'graph <%(graph)s> { ?s ?p ?o'
                                             + ' FILTER (?p != <http://4store.org/fulltext#stem>'
                                             + ' && (?s = <%(name)s> || ?o = <%(name)s>)) }',
-                                              { 'graph': graph_uri, 'name': name},
-                                              format))
+                                              params={ 'graph': graph_uri, 'name': name},
+                                              format=format))
 
   @property
   def _format(self):
