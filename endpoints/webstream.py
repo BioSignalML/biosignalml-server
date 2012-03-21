@@ -57,7 +57,7 @@ class StreamServer(WebSocketHandler):
     :param check: Set to :attr:`~biosignalml.transports.stream.Checksum.STRICT`
       to append a MD5 checksum to the block.
     '''
-    self.write_message(str(block.bytes()), True)
+    self.write_message(str(block.bytes(check)), True)
 
 
 class StreamEchoSocket(StreamServer):
