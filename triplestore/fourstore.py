@@ -84,6 +84,7 @@ class FourStore(TripleStore):
 
   def insert(self, graph, triples):
   #--------------------------------
+    if len(triples) == 0: return
     sparql = ('insert data { graph <%(graph)s> { %(triples)s } }'
                 % { 'graph': str(graph),
                     'triples': ' . '.join([' '.join(list(s)) for s in triples ]) })
@@ -95,6 +96,7 @@ class FourStore(TripleStore):
 
   def delete(self, graph, triples):
   #--------------------------------
+    if len(triples) == 0: return
     sparql = ('delete data { graph <%(graph)s> { %(triples)s } }'
                 % { 'graph': graph,
                     'triples': ' . '.join([' '.join(list(s)) for s in triples ]) })
@@ -105,6 +107,7 @@ class FourStore(TripleStore):
 
   def update(self, graph, triples):
   #--------------------------------
+    if len(triples) == 0: return
     last = (None, None)
     ##logging.debug('UPDATE: %s', triples)
     for s, p, o in sorted(triples):
