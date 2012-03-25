@@ -19,7 +19,6 @@ import biosignalml.formats
 
 from biosignalml import BSML, Recording, Signal
 from biosignalml.utils import xmlescape
-from biosignalml.model.mapping import bsml_mapping
 
 from biosignalml.rdf import RDF, DCTERMS
 from biosignalml.rdf import Uri, Node, Resource, BlankNode, Graph, Statement
@@ -206,7 +205,7 @@ class BSMLRepository(Repository):
       rclass = biosignalml.formats.CLASSES.get(str(self.get_object(uri, DCTERMS.format, graph_uri)),
                                                Recording)
       graph = self.make_graph('<%(uri)s> ?p ?o', '<%(uri)s> ?p ?o', graph_uri, { 'uri': str(graph_uri) })
-      return rclass.create_from_graph(str(graph_uri), graph, bsml_mapping())
+      return rclass.create_from_graph(str(graph_uri), graph)
     else:
       return None
 
@@ -225,7 +224,7 @@ class BSMLRepository(Repository):
     if rec is not None:
       for sig in self.get_subjects(BSML.recording, rec.uri, rec.uri):
         graph = self.make_graph('<%(uri)s> ?p ?o', '<%(uri)s> ?p ?o', rec.uri, { 'uri': str(sig) })
-        rec.add_signal(Signal.create_from_graph(str(sig), graph, bsml_mapping(), units=None))
+        rec.add_signal(Signal.create_from_graph(str(sig), graph, units=None))
     return rec
 
 #  def signal_recording(self, uri):
@@ -250,7 +249,7 @@ class BSMLRepository(Repository):
                                        'reln': str(BSML.recording),
                                        'rtype': str(BSML.Recording),
                                       })
-    return Signal.create_from_graph(uri, graph, bsml_mapping(), units=None)  # units set from graph...
+    return Signal.create_from_graph(uri, graph, units=None)  # units set from graph...
 
 #  def signal(self, sig, properties):              # In context of signal's recording...
 #  #---------------------------------
