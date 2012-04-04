@@ -9,19 +9,54 @@
  ****************************************************/
 
 
+//function StreamData(uri, start, duration)
+///*=====================================*/
+//{
+//
+//
+//  this.uri = uri ;
+//
+//
+//  this.getData = function(start, duration) {
+//
+//
+//    }
+//
+//
+//  this.got_data = function(hdr, data) { }
+//
+//
+//  }
+
+
+
+//plot(sig, window, interval)
+// var stream = new StreanData(...) ;
+// stream.got_data = function(hdr, data) {
+//   // plot data points
+//   }
+
+
+// Rename to stream.js...
+
 function getSignalStream(uri) {
-  websocket = 'ws://localhost:8088/stream/';
+
+  websocket = 'ws://' + window.document.location.host + '/stream/data/' ;
+
+  protocol = 'biosignalml-ssf';
+
+
   if (window.WebSocket) {
-    ws = new WebSocket(websocket);
+    ws = new WebSocket(websocket, protocol);
     }
   else if (window.MozWebSocket) {
-    ws = MozWebSocket(websocket);
+    ws = MozWebSocket(websocket, protocol);
     }
   else {
     alert('WebSocket Not Supported');
     return;
     }
-  //ws.binaryType = "arraybuffer" ;  // or "blob" (default)
+  ws.binaryType = "arraybuffer" ;  // or "blob" (default)
 
   $(window).unload(function() {
     ws.close();
@@ -30,6 +65,7 @@ function getSignalStream(uri) {
   ws.onerror = function(evt) {
     alert('WebSocket error');
     };
+
   ws.onmessage = function(evt) {
     var reader = new FileReader();
     reader.onloadend = function(evt) {
@@ -38,13 +74,38 @@ function getSignalStream(uri) {
         alert('Read:' + t) ;
         }
       };
-    reader.readAsBinaryString(evt.data);
+
+    var strdata = new Uint8Array(evt.data);
+    var s = toString(strdata) ;
+    reader.readAsBinaryString(strdata);
     };
+
   ws.onopen = function(){
-    ws.send($.toJSON({uri: uri,
-             start: 0.0,
-             end: 10.0
-            })) ;
+    h = $.toJSON({uri: uri, start: 0.0, duration: 10.0, dtype: 'S1'}) ;  // Float32Array
+
+    s = '#d1M' + h.length.toString() + h + '0\n##\n' ;
+
+    if (window.BlobBuilder) {
+      bb = new BlobBuilder() ;
+      }
+    else if (window.MozBlobBuilder) {
+      bb = new MozBlobBuilder() ;     // Replace with Blob in FF 14 ??
+      }
+    else if (window.WebKitBlobBuilder) {
+      bb = new WebKitBlobBuilder() ;
+      }
+    else if (window.MSBlobBuilder) {
+      bb = new MSBlobBuilder() ;
+      }
+    else {
+      alert('BlobBuilder Not Supported');
+      return;
+      }
+    bb.append(s) ;
+    b = bb.getBlob() ;
+    // var b = Blob(s) ;              // FF 14
+    ws.send(b) ;
+    //ws.send(s) ;
     } ;
   }
 
@@ -54,54 +115,18 @@ function getSignalStream(uri) {
 /*******   $(document).ready(cometInit) ;  DISABLE ***/
 
   $(document).ready(function() {
-//    getSignalStream('http://ex.org/sig/1') ;
+//var buf = new ArrayBuffer(2);
+//var i = new Int16Array(buf);
+//i[0] = 1;
+//var b = new Int8Array(buf);
+//var x = b[0];   // Will be 1 on little end systems <
+//var y = b[1];
+
+
+
+
+    getSignalStream('http://example.org/test/xx/sinewave9') ;
     }) ;
 
-  function cometPoll() {
-    $.ajax({ url: '/comet/stream',
-             type: 'POST',
-//             data: { fieldname: fieldvalue, ... },
-             dataType: 'text',
-             complete: cometResponse
-           }) ;
-    }
-
-  function cometResponse(response, status) {
-    if (status == 'success') {
-      var data = response.responseText ;
-      if (data != '') {
-        var json = JSON.parse(data) ;
-        if (json.alert) alert(json.alert) ;
-        $("#message").html(json.message) ;
-        }
-      }
-    else {
-      alert('Error ' + String(response.status) + ': ' + response.responseText) ;
-      }
-    cometInit() ;
-    }
 
   })(jQuery) ;
-
-
-function setSelection(base, selectId) {
-  $.ajax({
-    url: '/comet/select',
-    type: 'POST',
-    data: { 'key': base.name, 'value': base.value },
-    dataType: 'text',
-    complete:
-      function(response, status) {
-        if (status == 'success') {
-          var data = response.responseText ;
-          if (data != '') {
-            var json = JSON.parse(data) ;
-            if (json.alert) alert(json.alert) ;
-            $(selectId).html(json.options) ;
-            }
-          }
-        }
-    }) ;
-  }
- 
-
