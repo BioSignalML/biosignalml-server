@@ -15,21 +15,26 @@ function Point(x, y)
 function Selection()
 //==================
 {
-  this.reset = function() {
+  this.reset() ;
+  }
+
+Selection.prototype =
+/*=================*/
+{
+  reset: function() {
     this.start = -1 ;
     this.end = -1 ;
-    }
-  this.reset() ;
+    },
 
-  this.selected = function() {
+  selected: function() {
     return (this.start >= 0 && this.end >= 0 && this.start != this.end) ;
-    }
+    },
 
-  this.setStart = function(start) {
+  setStart: function(start) {
     this.start = start ;
-    }
+    },
 
-  this.setEnd = function(end) {
+  setEnd: function(end) {
     this.end = end ;
     }
   }
@@ -51,8 +56,15 @@ function TimePlot(canvas, start, end, signals)
   this.signalplot = new SignalPlot(this.context, this.width, 0, 0.85*this.height, signals)
   this.timeline = new SignalPlot(this.context, this.width, 0.9*this.height, 0.1*this.height, signals)
 
-  
-  this.reset = function() {
+  this.reset() ;
+  this.clear() ;
+  this.plot() ;
+  }
+
+TimePlot.prototype =
+/*================*/
+{
+  reset: function() {
     this.timePxStart = 0 ;
     this.timePxEnd = this.width ;
     this.timePxMove = -1 ;
@@ -60,26 +72,25 @@ function TimePlot(canvas, start, end, signals)
     this.signalEnd = this.timeEnd ;
     this.signalScale = this.timeScale ;
     this.selection = new Selection() ;
-    }
-  this.reset() ;
+    },
 
-  this.clear = function() {
+  clear: function() {
     this.canvas.width = this.width ;
     this.canvas.height = this.height ;
     this.signalplot.clear() ;
     this.timeline.clear() ;
-    }
+    },
 
-  this.resize = function(width, height) {
+  resize: function(width, height) {
     this.width = width ;
     this.height = height ;
     this.signalplot.resize(width, 0, 0.85*height) ;
     this.timeline.resize(width, 0.9*height, 0.1*height) ;
     this.clear() ;
     this.plot() ;
-    }
+    },
 
-  this.zoom = function() {
+  zoom: function() {
     if (this.selection.selected()) {
       this.clear() ;
 
@@ -101,10 +112,9 @@ function TimePlot(canvas, start, end, signals)
         this.plot() ;
         }
       }
-    }
+    },
 
-
-  this.showZoom = function(start, end, fill, showTimeline) {   // Show selected/zoomed time on timeline...
+  showZoom: function(start, end, fill, showTimeline) {   // Show selected/zoomed time on timeline...
     this.context.fillStyle = fill ;
     if (this.signalScale != this.timeScale) {
       this.context.beginPath() ;
@@ -132,10 +142,9 @@ function TimePlot(canvas, start, end, signals)
       this.context.fill() ;
       this.context.closePath() ;
       }
-    }
+    },
 
-
-  this.select = function() {
+  select: function() {
     if (this.selection.selected()) {
       this.context.fillStyle   = SELECTCOLOUR ;
 
@@ -150,24 +159,22 @@ function TimePlot(canvas, start, end, signals)
       this.showZoom(this.signalStart + this.selection.start*this.signalScale,
                     this.signalStart + this.selection.end*this.signalScale, SELECTCOLOUR, true) ;
       }
-    }
+    },
 
-
-   this.plotZoom = function() {
+   plotZoom: function() {
      this.clear() ;
      this.showZoom(this.signalStart, this.signalEnd, ZOOMCOLOUR, true) ;
      this.plot() ;
-     }
+     },
 
-
-  this.mouseDown = function(point) {
+  mouseDown: function(point) {
 //    log("Mouse down: (" + point.x ", " + point.y + ")") ;
     if (point.y <= this.signalplot.bottom) {
       this.selection.setStart(point.x) ;
       }
     else if (point.y >= this.timeline.top) {
       if (point.x >= 0 && point.x < this.width) {
-// Either move or expand/change selection 
+// Either move or expand/change selection
 // Is x inside, outside, or on boundary?
 // And change cursor shape if on boundary??
 // also to Hand if inside???
@@ -196,7 +203,7 @@ function TimePlot(canvas, start, end, signals)
         this.timePxEnd = this.width ;
         this.plotZoom() ;
         }
-**/      
+**/
       }
     else {     // In band between plot and timeline
 // Have a Reset button...
@@ -204,9 +211,9 @@ function TimePlot(canvas, start, end, signals)
       this.clear() ;
       this.plot() ;
       } ;
-    }
+    },
 
-  this.mouseMove = function(point) {
+  mouseMove: function(point) {
     if (this.selection.start > -1) {
       this.selection.setEnd(point.x) ;
       this.clear() ;
@@ -228,20 +235,18 @@ function TimePlot(canvas, start, end, signals)
         }
 
       }
-    }
+    },
 
-  this.mouseUp = function(point) {
+  mouseUp: function(point) {
     this.zoom() ;
     this.selection.reset() ;
-    }
+    },
 
-  this.plot = function() {
+  plot: function() {
     this.signalplot.plot(this.signalStart, this.signalEnd) ;
     this.timeline.plot(this.timeStart, this.timeEnd) ;
     }
 
-  this.clear() ;
-  this.plot() ;
   }
 
 
@@ -255,8 +260,12 @@ function SignalPlot(context, width, offset, height, signals)
   this.height = height ;
   this.signals = signals ;
   this.nsignals = signals.length ;
+  }
 
-  this.clear = function() {
+SignalPlot.prototype =
+/*==================*/
+{
+  clear: function() {
     this.context.beginPath() ;
     this.context.rect(0, this.top, this.width, this.height) ;
     this.context.fillStyle = SCREENCOLOUR ;
@@ -265,29 +274,30 @@ function SignalPlot(context, width, offset, height, signals)
     this.context.lineWidth = 1 ;
     this.context.stroke() ;
     this.context.closePath() ;
-    }
+    },
 
-  this.resize = function(width, offset, height) {
+  resize: function(width, offset, height) {
     this.width = width ;
     this.height = height ;
     this.top = offset ;
     this.bottom = offset + height ;
-    }
+    },
 
-  this.plot = function(start, end) {
+  plot: function(start, end) {
     this.context.save() ;
     this.context.translate(0.0, this.top) ;
     this.context.scale(this.width/(end - start), -this.height/2.0) ;
     this.context.translate(-start, -1.0) ;
     for (var signum = 0 ;  signum < this.nsignals ;  ++ signum) {
       this.context.save() ;
-      this.context.translate(0.0, 1.0 - (1.0 + 2.0*signum)/this.nsignals) ; 
+      this.context.translate(0.0, 1.0 - (1.0 + 2.0*signum)/this.nsignals) ;
       this.context.scale(1.0, 1.0/this.nsignals) ;
       this.signals[signum].plot(this.context, start, end) ;
       this.context.restore() ;
       }
     this.context.restore() ;
     }
+
   }
 
 
@@ -300,8 +310,12 @@ function Signal(name, units, scale, offset, colour, segments)
   this.top = offset ;
   this.colour = colour ;
   this.segments = segments ;
+  }
 
-  this.plot = function(context, start, end) {
+Signal.prototype =
+/*==============*/
+{
+  plot: function(context, start, end) {
 //log("Plot: " + this.label) ;
     for (var segnum = 0 ;  segnum < this.segments.length ;  ++segnum) {
 // Safari doesn't like 'for each'
@@ -317,8 +331,12 @@ function SignalSegment(start, period, data)
   this.start = start ;
   this.period = period ;
   this.data = data ;
+  }
 
-  this.plot = function(context, start, end, colour) {
+SignalSegment.prototype =
+/*=====================*/
+{
+  plot: function(context, start, end, colour) {
     var segend = this.start + this.period * this.data.length
     if (start <= segend && this.start <= end) {
       if (start < this.start) start = this.start ;
@@ -334,7 +352,7 @@ function SignalSegment(start, period, data)
       for (var i = firstpoint + 1 ;  i < lastpoint ;  ++i) {
         t += this.period ;
         context.lineTo(t, this.data[i]) ;
-        } 
+        }
       context.save() ;
       context.setTransform(1, 0, 0, 1, 0, 0) ;
       context.strokeStyle = colour ;
