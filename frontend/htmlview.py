@@ -205,7 +205,7 @@ def repository(data, session, record=''):
 #                    + signal_details(recuri, sig)
 #                     ).show(data, session)
   else:
-    return _page_template.page(title   = 'Recordings in repo: %s' % prefix,
+    return _page_template.page(title   = 'Recordings in repository:',
                                content = xmltree(repo.recordings(), prefix, REPOSITORY),
                                session = session,
                               )
