@@ -39,12 +39,38 @@
 
 // Rename to stream.js...
 
-function getSignalStream(uri) {
 
+function makeblob(s)      // Make a Blob from a string
+/*================*/      // FF 14 will implement Blob(s)
+{
+  if (window.BlobBuilder) {
+    bb = new BlobBuilder() ;
+    }
+  else if (window.MozBlobBuilder) {
+    bb = new MozBlobBuilder() ;     // Replace with Blob in FF 14 ??
+    }
+  else if (window.WebKitBlobBuilder) {
+    bb = new WebKitBlobBuilder() ;
+    }
+  else if (window.MSBlobBuilder) {
+    bb = new MSBlobBuilder() ;
+    }
+  else {
+    alert('BlobBuilder Not Supported');
+    return;
+    }
+  bb.append(s) ;
+  return bb.getBlob() ;
+  }
+
+
+function getSignalStream(uri, blockprocess)
+/*========================================*/
+{
   websocket = 'ws://' + window.document.location.host + '/stream/data/' ;
-
   protocol = 'biosignalml-ssf';
-
+  streamparser = new StreamParser() ;
+  sp.receiver = blockprocess ;
 
   if (window.WebSocket) {
     ws = new WebSocket(websocket, protocol);
@@ -56,77 +82,24 @@ function getSignalStream(uri) {
     alert('WebSocket Not Supported');
     return;
     }
-  ws.binaryType = "arraybuffer" ;  // or "blob" (default)
+  ws.binaryType = "arraybuffer" ;
 
   $(window).unload(function() {
     ws.close();
-    });
+    }) ;
 
   ws.onerror = function(evt) {
     alert('WebSocket error');
-    };
+    } ;
 
   ws.onmessage = function(evt) {
-    var reader = new FileReader();
-    reader.onloadend = function(evt) {
-      if (evt.target.readyState == FileReader.DONE) { // DONE == 2
-        var t = evt.target.result ;
-        alert('Read:' + t) ;
-        }
-      };
+    var data = new Uint8Array(evt.data);
+    streamparser.process(data) ;
+    } ;
 
-    var strdata = new Uint8Array(evt.data);
-    var s = toString(strdata) ;
-    reader.readAsBinaryString(strdata);
-    };
-
-  ws.onopen = function(){
-    h = $.toJSON({uri: uri, start: 0.0, duration: 10.0, dtype: 'S1'}) ;  // Float32Array
-
+  ws.onopen = function() {
+    h = $.toJSON({uri: uri, start: 0.0, duration: 10.0, dtype: '<f4'}) ;  // Float32Array
     s = '#d1M' + h.length.toString() + h + '0\n##\n' ;
-
-    if (window.BlobBuilder) {
-      bb = new BlobBuilder() ;
-      }
-    else if (window.MozBlobBuilder) {
-      bb = new MozBlobBuilder() ;     // Replace with Blob in FF 14 ??
-      }
-    else if (window.WebKitBlobBuilder) {
-      bb = new WebKitBlobBuilder() ;
-      }
-    else if (window.MSBlobBuilder) {
-      bb = new MSBlobBuilder() ;
-      }
-    else {
-      alert('BlobBuilder Not Supported');
-      return;
-      }
-    bb.append(s) ;
-    b = bb.getBlob() ;
-    // var b = Blob(s) ;              // FF 14
-    ws.send(b) ;
-    //ws.send(s) ;
+    ws.send(makeblob(s)) ;
     } ;
   }
-
-
-(function($) {
-
-/*******   $(document).ready(cometInit) ;  DISABLE ***/
-
-  $(document).ready(function() {
-//var buf = new ArrayBuffer(2);
-//var i = new Int16Array(buf);
-//i[0] = 1;
-//var b = new Int8Array(buf);
-//var x = b[0];   // Will be 1 on little end systems <
-//var y = b[1];
-
-
-
-
-    getSignalStream('http://example.org/test/xx/sinewave9') ;
-    }) ;
-
-
-  })(jQuery) ;

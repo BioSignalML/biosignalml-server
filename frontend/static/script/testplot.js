@@ -125,21 +125,10 @@ var sigs = [ sig0, sig1 ] ;
 
 $(document).ready(function() {
 
-  timeplot = new TimePlot(canvas[0], 0, 100, signals) ;  // ***
+//  timeplot = new TimePlot(canvas[0], 0, 100, signals) ;  // ***
 
-      $.ajax({url:  "/comet/stream",
-              
-              type: "POST",
+    getSignalStream('http://example.org/test/xx/sinewave9', plotSignal) ;
 
-              data: { signals: [ sig0, sig1],
-                      start:     starttime,
-                      duration:  duration,
-                      rate:      1000,
-                    },
-
-              success: plotSignal,
-              }) ;
-      
 
 //  $(".showsignals").live("click",
 //    function() {
@@ -153,7 +142,8 @@ $(document).ready(function() {
 
 
 
-function plotSignal(data, status, xhr) {
+function plotSignal(block) {
+  var data = new Float32Array(block.buffer) ;
   var signals = [ ]
   signals.length = data.signals.length
   for (var signum = 0 ;  signum < data.signals.length ;  ++signum) {
