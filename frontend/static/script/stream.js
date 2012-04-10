@@ -22,9 +22,6 @@ var STREAM = {
   CHAR_HASH:   0x23,   // '#'
   CHAR_ZERO:   0x30,   // '0'
   CHAR_NINE:   0x39,   // '9'
-
-  CHAR_CLOSE:  0x43,   // 'C'
-  CHAR_MORE:   0x4D    // 'M'
   }
 
 var ERROR = {
@@ -37,15 +34,14 @@ var ERROR = {
   HASH_RESERVED:       6,
   WRITE_EOF:           7,
   VERSION_MISMATCH:    8,
-  INVALID_MORE_FLAG:   9,
-  BAD_JSON_HEADER:    10
+  BAD_JSON_HEADER:     9,
+  BAD_FORMAT:         10
   }
 
 var PARSE = {
   RESET:      0,
   TYPE:       1,
   VERSION:    2,
-  MORE:       3,
   HDRLEN:     4,
   HEADER:     5,
   DATALEN:    6,
@@ -113,22 +109,17 @@ StreamParser.prototype =
           pos += 1 ;
           datalen -= 1 ;
           }
-        if (datalen > 0) this.state = PARSE.MORE ;
-        }
-
-      else if (this.state == PARSE.MORE) {                  // 'C' or 'M'
-        if (this.version != STREAM.VERSION)
-          this.error = ERROR.VERSION_MISMATCH ;
-        else {
-          this.more = data[pos] ;
-          if (this.more == STREAM.CHAR_CLOSE || this.more == STREAM.CHAR_MORE) {
+        if (datalen > 0) {
+          if (data[pos] != 'V')
+            this.error = ERROR.BAD_FORMAT ;
+          else if (this.version != STREAM.VERSION)
+            this.error = ERROR.VERSION_MISMATCH ;
+          else {
             pos += 1 ;
             datalen -= 1 ;
             this.length = 0 ;
             this.state = PARSE.HDRLEN ;
             }
-          else
-            this.error = ERROR.INVALID_MORE_FLAG ;
           }
         }
 
