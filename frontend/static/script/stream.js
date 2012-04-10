@@ -1,17 +1,10 @@
-function makestring(data)
-/*=====================*/
+function StreamBlock(blockno, type, header, data)
+/*=============================================*/
 {
-  s = [ ] ;
-  for (var i=0 ; i < data.length ; i++) s.push(String.fromCharCode(data[i])) ;
-print(s.join('')) ;
-  return s.join('') ;
-  }
-
-
-function StreamBlock()
-/*==================*/
-{
-
+  this.blockno = blockno ;
+  this.type = type ;
+  this.header = header ;
+  this.data = data ;
   }
 
 
@@ -54,6 +47,16 @@ var PARSE = {
   }
 
 
+function makestring(data)
+/*=====================*/
+{
+  s = [ ] ;
+  for (var i=0 ; i < data.length ; i++) s.push(String.fromCharCode(data[i])) ;
+//print(s.join('')) ;
+  return s.join('') ;
+  }
+
+
 function StreamParser()
 /*===================*/
 {
@@ -66,6 +69,8 @@ function StreamParser()
 StreamParser.prototype =
 /*=====================*/
 {
+  receiver: function(block) { },
+
   process: function(data) {
     /**
     Parse data and put stream blocks into the receive queue.
@@ -169,7 +174,8 @@ StreamParser.prototype =
         if (data[pos] == STREAM.CHAR_LFEED) {
           pos += 1 ;
           datalen -= 1 ;
-          this.content = new Uint8Array(this.length) ;
+          this.buffer = new ArrayBuffer(this.length) ;
+          this.content = new Uint8Array(this.buffer) ;
           this.chunkpos = 0 ;
           this.state = PARSE.CONTENT ;
           }
@@ -229,8 +235,7 @@ StreamParser.prototype =
           pos += 1 ;
           datalen -= 1 ;
 print(this.header.uri, this.header.dtype) ;
-          this.receiver(new StreamBlock(this.blockno, this.type, this.more, this.header, this.content)) ;
-
+          this.receiver(new StreamBlock(this.blockno, this.type, this.header, this.buffer)) ;
           this.state = PARSE.RESET ;
           }
         else
@@ -242,7 +247,7 @@ print(this.header.uri, this.header.dtype) ;
         }
 
       if (this.error != ERROR.NONE) {
-print('ERROR:', this.state, this.error) ;
+//print('ERROR:', this.state, this.error) ;
         this.error = ERROR.NONE ;
         this.state = PARSE.RESET ;
         }
@@ -269,4 +274,4 @@ function main()
   }
 
 
-main() ;
+//main() ;
