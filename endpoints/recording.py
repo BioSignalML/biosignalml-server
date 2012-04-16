@@ -158,7 +158,7 @@ class ReST(httpchunked.ChunkedHandler):
       self._write_error(415, msg="Unknown Content-Type: '%s'" % ctype)
       return
 
-    rec_uri, fname, fragment = self._getnames(name)
+    rec_uri, fname, fragment = self._get_names(name)
 
     ##file_id   = str(uuid.uuid4()) + '.' + format
     ##file_name = os.path.abspath(os.path.join(options.repository.storepath, file_id))
@@ -216,13 +216,13 @@ class ReST(httpchunked.ChunkedHandler):
   def post(self, name, **kwds):
   #-----------------------------
     logging.debug('POST: %s', self.request.headers)
-    rec_uri = self._getnames(name)[0]
+    rec_uri = self._get_names(name)[0]
     if source: self.write("<html><body><p>POST: %s</p></body></html>" % rec_uri)
 
 
   def delete(self, name, **kwds):
   #------------------------------
-    rec_uri, fname, fragment = self._getnames(name)
+    rec_uri, fname, fragment = self._get_names(name)
     if rec_uri is None: return
     recording = options.repository.get_recording(rec_uri)
     if recording.source is None:
