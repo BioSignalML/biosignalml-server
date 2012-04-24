@@ -72,19 +72,16 @@ else:
 
 ###print "SESS:", session._data
 
-dispatch = [ ('comet/metadata',       'htmlview.metadata',   'json'),   # For tooltip popups
-             ('comet/search/setup',   'search.template',     'json'),
+dispatch = [ ('comet/search/setup',   'search.template',     'json'),
              ('comet/search/query',   'search.searchquery',  'json'),
              ('comet/search/related', 'search.related',      'json'),
 
-             ('repository',           'htmlview.repository', 'html'),
              ('searchform',           'search.searchform',   'html'),
              ('sparqlquery',          'sparql.sparqlquery',  'html'),
 
              ('logout',               'user.logout',         'html'),
              ('login',                'user.login',          'html'),
              ('explore',              'explore.explore',     'html'),
-             ('',                     'htmlview.repository', 'html'),
            ]
 
 
