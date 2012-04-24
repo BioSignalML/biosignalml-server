@@ -20,6 +20,22 @@ from biosignalml.utils import maketime, trimdecimal, chop
 import mktree
 import menu
 
+
+class BasePage(tornado.web.RequestHandler):
+#==========================================
+  def render(self, template, **kwds):
+    kwargs = { 'title': '', 'content': '',
+               'stylesheets': [ ], 'scripts': [ ],
+               'refresh': 0, 'alert': '', 'message': '',
+               'keypress': None, 'level': int(self.get_cookie('userlevel', 0)),
+             }
+    kwargs.update(kwds)
+    return tornado.web.RequestHandler.render(self, template, **kwargs)
+
+  def get_current_user(self):
+    return int(self.get_cookie('userlevel'))
+
+
 PREFIXES = { 'bsml':  BSML.URI }
 PREFIXES.update(biosignalml.rdf.NAMESPACES)
 
@@ -160,15 +176,6 @@ class SubTree(tornado.web.UIModule):
   def render(self, tree=[], prefix='', depth=0, selected=[]):
     return self.subtree(tree, prefix, depth, selected)
 
-class BasePage(tornado.web.RequestHandler):
-  def render(self, template, **kwds):
-    kwargs = { 'title': '', 'content': '',
-               'stylesheets': [ ], 'scripts': [ ],
-               'refresh': 0, 'alert': '', 'message': '',
-               'keypress': None, 'level': int(self.get_cookie('userlevel', 0)),
-             }
-    kwargs.update(kwds)
-    return tornado.web.RequestHandler.render(self, template, **kwargs)
 
 class MenuModule(tornado.web.UIModule):
   def render(self, level=0):
@@ -208,8 +215,9 @@ class Repository(BasePage):
                                tree=tree, prefix=prefix,
                                selectpath=selectpath)
 
+  @tornado.web.authenticated
   def get(self, name=''):
-    #logging.debug('GET: %s', name)
+    #logging.debug('GET: %s (%s)', name, self.get_current_user())
     repo = options.repository
     prefix = repo.uri + '/recording'  ## MUST match path of ReST recording server ####
     if name:

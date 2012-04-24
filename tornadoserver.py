@@ -42,6 +42,7 @@ application = tornado.web.Application([
                                             {'fallback': tornado.wsgi.WSGIContainer(frontend_app) }),
     ],
   gzip = True,
+  login_url = '/login',
   static_path = os.path.join(os.path.dirname(__file__), 'frontend/static'),
   template_path = 'frontend/templates',
   ui_modules = { 'Menu':    frontend.htmlview.MenuModule,
