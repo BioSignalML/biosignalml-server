@@ -21,7 +21,7 @@ import templates
 
 
 namespaces = {
-  'bsml': str(BSML.uri),
+  'bsml': str(BSML.URI),
   }
 
 namespaces.update(NAMESPACES)
