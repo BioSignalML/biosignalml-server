@@ -8,8 +8,9 @@
 #
 ######################################################
 
-"""A web.py application powered by gevent"""
+"""A web.py application powered by Tornado"""
 
+import os
 import logging
 
 import tornado.httpserver
@@ -34,8 +35,6 @@ application = tornado.web.Application([
     ( '/stream/echo/',                    webstream.StreamEchoSocket),
     ( server.METADATA_ENDPOINT + '(.*)',  metadata.metadata),
     ( server.options.repository['recording_prefix'] + '(.*)', recording.ReST),
-    ( "/static/(.*)" ,                    tornado.web.StaticFileHandler,
-                                            {"path": "frontend/static"}),
     ('/comet/metadata',                   frontend.htmlview.Metadata), # For tooltip popups
     ('/repository/(.*)',                  frontend.htmlview.Repository),
     ('/repository',                       frontend.htmlview.Repository),
@@ -43,6 +42,7 @@ application = tornado.web.Application([
                                             {'fallback': tornado.wsgi.WSGIContainer(frontend_app) }),
     ],
   gzip = True,
+  static_path = os.path.join(os.path.dirname(__file__), 'frontend/static'),
   template_path = 'frontend/templates',
   ui_modules = { 'Menu':    frontend.htmlview.MenuModule,
                  'SubTree': frontend.htmlview.SubTree },
