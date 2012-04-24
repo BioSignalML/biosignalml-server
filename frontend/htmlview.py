@@ -10,218 +10,228 @@
 
 
 import logging
-import web
+import tornado.web
+from tornado.options import options
 
-from biosignalml.utils import xmlescape, maketime, trimdecimal, chop
-
-import templates
-import mktree
-import user
-
-#########
-from biosignalml.rdf import Uri
+import biosignalml.rdf
 from biosignalml.model import BSML
-#########
+from biosignalml.utils import maketime, trimdecimal, chop
 
-_tree_template = templates.Tree()
+import mktree
+import menu
 
-def xmltree(nodes, base, prefix, select=''):
-#===========================================
-  #logging.debug('Selected: %s', select)
-  tree = mktree.maketree(nodes, base)
-  if select.startswith('http://') or select.startswith('file://'):
-    selectpath = select.rsplit('/', select.count('/') - 2)
-  else:
-    selectpath = select.split('/')
-  return _tree_template.htmltree(tree, prefix, selectpath)
-
-
-def table_header(properties):
-#===========================
-  return '<th>' + '</th><th>'.join([ p[0] for p in properties ]) + '</th>'
-  
-
-def property_details(obj, properties, table, **args):
-#===================================================
-  opn = '<td>'  if table else '<p>'
-  cls = '</td>' if table else '</p>'
-  r = [ ]
-  for p in properties:
-    prm, prop = p[0:2]
-    v = getattr(obj, prop, None)
-    if v is None:
-      meta = getattr(obj, 'metadata', None)
-      if meta: v = meta.get(prop)
-    if v is None: r.append('')
-    else:
-      if len(p) > 2:            t = p[2](v, *[ args[a] for a in p[3] ] if (len(p) > 3) else [ ])
-      elif isinstance(v, list): t = '<br/>'.join([ xmlescape(str(s)) for s in v ])
-      else:                     t = xmlescape(unicode(v))
-      if table: r.append(t)
-      elif v:   r.append(prm + ': ' + t) if prm else r.append(t)
-  return opn + (cls + opn).join(r) + cls
-
-
-BSML_NAMESPACE = 'http://www.biosignalml.org/ontologies/2011/04/biosignalml#'
-
-
-PREFIXES = { 'rdf':  'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-             'rdfs': 'http://www.w3.org/2000/01/rdf-schema#',
-             'xsd':  'http://www.w3.org/2001/XMLSchema#',
-             'owl':  'http://www.w3.org/2002/07/owl#',
-             'dc':   'http://purl.org/dc/elements/1.1/',
-             'dcterms': 'http://purl.org/dc/terms/',
-             'time': 'http://www.w3.org/2006/time#',
-             'bsml':  BSML_NAMESPACE,
-           }
-
+PREFIXES = { 'bsml':  BSML.URI }
+PREFIXES.update(biosignalml.rdf.NAMESPACES)
 
 def abbreviate(u):
-#-----------------
   s = str(u) if u else ''
   for p, n in PREFIXES.iteritems():
     if s.startswith(n): return ''.join([p, ':', s[len(n):]])
   return s
 
 
-############## Above should be in separate module ###############
+class Properties(object):
+  def __init__(self, properties):
+    self._properties = properties
+
+  def header(self):
+    return [ p[0] for p in self._properties ]
+
+  def details(self, object, **args):
+    r = [ ]
+    for p in self._properties:
+      prop = p[1]
+      v = getattr(object, prop, None)
+      if v is None:
+        meta = getattr(object, 'metadata', None)
+        if meta: v = meta.get(prop)
+      r.append('' if v is None
+          else (p[2](v, *[ args[a] for a in p[3] ] if (len(p) > 3) else [ ]))
+            if (len(p) > 2)
+          else [ str(s) for s in v ]
+            if isinstance(v, list)
+          else unicode(v)
+          )
+    return r
+
+def property_details(object, properties, **args):
+  r = [ ]
+  prompts = properties.header()
+  for n, d in enumerate(properties.details(object, **args)):
+    if d:
+      t = '<br/>'.join(d) if isinstance(d, list) else d
+      r.append((prompts[n] + ': ' + t) if prompts[n] else t)
+  return '<p>' + '</P><p>'.join(r) + '</p>'
 
 
+signal_properties = Properties([
+                      ('Id',    'uri',   chop, ['n']),
+                      ('Name',  'label'),
+                      ('Units', 'units', abbreviate),
+                      ('Rate',  'rate',  trimdecimal),
+                    ])
 
-
-# Generate list of signals in a recording (as a <table>)
-
-signal_metadata = [ ('Id',    'uri',   chop, ['n']),
-                    ('Name',  'label'),
-                    ('Units', 'units', abbreviate),
-                    ('Rate',  'rate',  trimdecimal),
-                  ]
-
-def signal_details(recording, selected=None):
-#============================================
+def signal_table(handler, recording, selected=None):
   lenhdr = len(str(recording.uri)) + 1
-  # Above is for abbreviating signal id; should we check str(sig.uri).startswith(str(rec.uri)) ??
-  html = [ '<div><table class="signal">' ]
-  html.append('<tr>%s</tr>' % table_header(signal_metadata))
-  odd = True
-  for sig in recording.signals():
-    html.append('<tr class="selected">' if str(sig.uri) == selected
-          else '<tr class="odd">'       if odd
-          else '<tr>')
-    html.append(property_details(sig, signal_metadata, True, n=lenhdr))
-    html.append('</tr>')
-    odd = not odd
-  html.append('</table></div>')
-  return ''.join(html)
+  # Above is for abbreviating signal id;
+  # should we check str(sig.uri).startswith(str(rec.uri)) ??
+  rows = [ ]
+  selectedrow = -1
+  for n, sig in enumerate(recording.signals()):
+    if str(sig.uri) == selected: selectedrow = n
+    rows.append(signal_properties.details(sig, n=lenhdr))
+  return handler.render_string('table.html',
+    header = signal_properties.header(),
+    rows = rows,
+    selected = selectedrow,
+    tableclass = 'signal')
 
 
-
-def event_details(recuri, signal=None):
-#======================================
-  lenhdr = len(recuri) + 1
-  recording = web.config.biosignalml['repository'].get_recording(recuri)
-  html = [ '<table>' ]
-  html.append('</table>')
-  return ''.join(html)
-
-
-
-recording_metadata = [ ('Desc',      'description'),
-                       ('Created',   'starttime'),
-                       ('Duration',  'duration', maketime),
-                       ('Format',    'format', abbreviate),
-                       ('Study',     'investigation'),
-                       ('Comments',  'comment'),
-                       ('Source',    'source'),
-                       ('Submitted', 'dateSubmitted', lambda d: str(d) + ' UTC'),
-                     ]
-
+recording_properties = Properties([
+                         ('Desc',      'description'),
+                         ('Created',   'starttime'),
+                         ('Duration',  'duration', maketime),
+                         ('Format',    'format', abbreviate),
+                         ('Study',     'investigation'),
+                         ('Comments',  'comment'),
+                         ('Source',    'source'),
+                         ('Submitted', 'dateSubmitted', lambda d: str(d) + ' UTC'),
+                       ])
 
 def build_metadata(uri):
-#======================
   #logging.debug('Get metadata for: %s', uri)
   html = [ '<div class="metadata">' ]
   if uri:
-    source = Uri(uri)
-    repo = web.config.biosignalml['repository']
-    objtype = repo.get_type(source)
-    if   objtype == BSML.Recording:
-      rec = repo.get_recording(source)
+    repo = options.repository
+    objtype = repo.get_type(uri)
+    if   objtype == BSML.Recording:    # repo.has_recording(uri)
+      rec = repo.get_recording(uri)
       ## What about a local cache of opened recordings?? (keyed by uri)
       ## in bsml.recordings module ?? in repo ??
-      html.append(property_details(rec, recording_metadata, False))
-    elif objtype == BSML.Signal:
-      sig = repo.get_signal(source)
-      html.append(property_details(sig, signal_metadata, False, n=0))
+      html.append(property_details(rec, recording_properties))
+      # And append info from repo.provenance graph...
+    elif objtype == BSML.Signal:       # repo.has_signal(uri)
+      sig = repo.get_signal(uri)
+      html.append(property_details(sig, signal_properties, n=0))
+    elif objtype == BSML.Event:
+      html.append('event comment, time, etc')
     elif objtype == BSML.Annotation:
       html.append('annotation comment, time, etc')
   html.append('</div>')
   return ''.join(html)
 
 
-# Tooltip pop-up:
-
-def metadata(data, session, params):
-#===================================
-  return { 'html': build_metadata(data.get('uri', '')) }
+class Metadata(tornado.web.RequestHandler):  # Tool-tip popup
+  def post(self):
+    self.write({ 'html': build_metadata(self.get_argument('uri', '')) })
 
 
-# Generate tree of recordings along with details of signals when recording clicked on.
+class SubTree(tornado.web.UIModule):
+  @staticmethod
+  def treeaction(text, action='', uri=''):
+    return(('<a href="%s" class="cluetip" uri="%s">%s</a>'
+                 % (action,                   uri, text)) if action
+      else ('<span>%s</span>' % text))
 
-_page_template = templates.Page()
+  @staticmethod
+  def subtree(tree, prefix, depth, selected):
+    html = [ '<ul>\n' ]
+    last = len(tree) - 1
+    for t in tree:
+      html.append('<li')
+      if isinstance(t[0], tuple):
+        details = t[0]
+        if depth < len(selected) and details[0] == selected[depth]:
+          html.append(' class="selected"')
+        html.append(' id="%s"' % details[1])
+        html.append('>')
+        html.append(SubTree.treeaction(details[0],
+          prefix + details[1].replace(':', '%3A'), details[2].uri))
+      else:
+        if depth < len(selected) and t[0] == selected[depth]:
+          html.append(' class="jstree-open"')
+        html.append('>')
+        html.append(SubTree.treeaction(t[0]))
+        html.append(SubTree.subtree(t[1], prefix, depth+1, selected))
+      html.append('</li>\n')
+    html.append('</ul>')
+    return ''.join(html)
+
+  def render(self, tree=[], prefix='', depth=0, selected=[]):
+    return self.subtree(tree, prefix, depth, selected)
+
+class BasePage(tornado.web.RequestHandler):
+  def render(self, template, **kwds):
+    kwargs = { 'title': '', 'content': '',
+               'stylesheets': [ ], 'scripts': [ ],
+               'refresh': 0, 'alert': '', 'message': '',
+               'keypress': None, 'level': int(self.get_cookie('userlevel', 0)),
+             }
+    kwargs.update(kwds)
+    return tornado.web.RequestHandler.render(self, template, **kwargs)
+
+class MenuModule(tornado.web.UIModule):
+  def render(self, level=0):
+    out = [ '<div id="menubar"><ul class="jd_menu">' ]
+    for item in menu.getmenu(level): out.append(self.menu_entry(item))
+    out.append('</ul></div>')
+    return ''.join(out)
+
+  def menu_entry(self, item):
+    out = [ '<li>' ]
+    if item[1]:
+      out.append('<a href="/%s" title="%s" onClick="return oktoexit(this)">%s</a>' % (item[1], item[0], item[0]))
+    elif item[0]:
+      out.append('<span class="menu">%s</span>' % item[0])
+    if len(item) > 2: out.append(sub_menu(item[2]))
+    out.append('</li>')
+    return ''.join(out)
+
+  def sub_menu(self, menu):
+    out = [ '<ul class="sub_menu">' ]
+    for item in menu: out.append(self.menu_entry(item))
+    out.append('</ul>')
+    return ''.join(out)
 
 REPOSITORY = '/repository/'       #  Prefix to repository objects 
 
-def repository(data, session, record=''):
-#========================================
-  #logging.debug('SES: %s', session)
-  repo = web.config.biosignalml['repository']
-  prefix = repo.uri + 'recording'     ## MUST match path of ReST recording server ####
-  if record:
-    recuri = (record if record.startswith('http://') or record.startswith('file://')
-             else '%s/%s' % (prefix, record))
-    ##logging.debug('RECORDING: %s', recuri)
-    recording = repo.get_recording_with_signals(recuri)
-    if recording is None: raise web.NotFound('Unknown recording...')
-    if str(recording.uri) != recuri:
-      selectedsig = recuri
-      recuri = str(recording.uri)
+class Repository(BasePage):
+
+  def xmltree(self, nodes, base, prefix, select=''):
+    tree = mktree.maketree(nodes, base)
+    #logging.debug('tree: %s', tree)
+    if select.startswith('http://') or select.startswith('file://'):
+      selectpath = select.rsplit('/', select.count('/') - 2)
     else:
-      selectedsig = None
+      selectpath = select.split('/')
+    return self.render_string('ttree.html',
+                               tree=tree, prefix=prefix,
+                               selectpath=selectpath)
 
-    return _page_template.page(title   = recuri,
-                               content = "<span>"
-                                       + xmltree(repo.recordings(), prefix, REPOSITORY, record)
-                                       + "<div class='signal'>"
-                                       + build_metadata(recuri)
-                                       + signal_details(recording, selectedsig)
-                                       + "</div></span>",
-                               session = session,
-                              )
-
-#    return BlankPage(recuri,
-#                      xmltree(repo.recordings(), prefix, REPOSITORY, record)
-#                    + build_metadata(recuri)
-#                    + signal_details(recuri, sig)
-#                     ).show(data, session)
-  else:
-    return _page_template.page(title   = 'Recordings in repository:',
-                               content = xmltree(repo.recordings(), prefix, REPOSITORY),
-                               session = session,
-                              )
-
-
-def recording_html(recuri):
-#==========================
-  return _page_template.page(title   = recuri,
-                             content = build_metadata(recuri)
-                                     + signal_details(recuri, None),
-                            )
-
-
-def index(data, session, params):
-#===============================
-  if user.loggedin(session):
-    return repository(data, session, params)
-  else:
-    return user.login(data, session, params)
+  def get(self, name=''):
+    #logging.debug('GET: %s', name)
+    repo = options.repository
+    prefix = repo.uri + '/recording'  ## MUST match path of ReST recording server ####
+    if name:
+      recuri = (name if name.startswith('http://') or name.startswith('file://')
+               else '%s/%s' % (prefix, name))
+      logging.debug('RECORDING: %s', recuri)
+      recording = repo.get_recording_with_signals(recuri)
+      if recording is None:
+        self.send_error(404) # 'Unknown recording...')
+        return
+      if str(recording.uri) != recuri:
+        selectedsig = recuri
+        recuri = str(recording.uri)
+      else:
+        selectedsig = None
+      self.render('tpage.html',
+        title = recuri,
+        tree = self.xmltree(repo.recordings(), prefix, REPOSITORY, name),
+        style = 'signal',
+        content = build_metadata(recuri) + signal_table(self, recording, selectedsig)
+        )
+    else:
+      self.render('tpage.html',
+        title = 'Recordings in repository:',
+        tree = self.xmltree(repo.recordings(), prefix, REPOSITORY))

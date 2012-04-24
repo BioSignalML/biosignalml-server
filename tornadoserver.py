@@ -28,6 +28,7 @@ import endpoints.webstream as webstream
 import endpoints.metadata  as metadata 
 import endpoints.recording as recording
 
+import frontend.htmlview
 application = tornado.web.Application([
     ( server.STREAMDATA_ENDPOINT,         webstream.StreamDataSocket),
     ( '/stream/echo/',                    webstream.StreamEchoSocket),
@@ -35,10 +36,16 @@ application = tornado.web.Application([
     ( server.options.repository['recording_prefix'] + '(.*)', recording.ReST),
     ( "/static/(.*)" ,                    tornado.web.StaticFileHandler,
                                             {"path": "frontend/static"}),
+    ('/comet/metadata',                   frontend.htmlview.Metadata), # For tooltip popups
+    ('/repository/(.*)',                  frontend.htmlview.Repository),
+    ('/repository',                       frontend.htmlview.Repository),
     ( ".*",                               tornado.web.FallbackHandler,
                                             {'fallback': tornado.wsgi.WSGIContainer(frontend_app) }),
     ],
   gzip = True,
+  template_path = 'frontend/templates',
+  ui_modules = { 'Menu':    frontend.htmlview.MenuModule,
+                 'SubTree': frontend.htmlview.SubTree },
   debug = options.options.debug,
   )
 
