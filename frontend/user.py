@@ -15,7 +15,6 @@ import web
 from webdb import Database
 import menu
 import templates
-import htmlview
 
 
 VIEWER        = 1
@@ -23,41 +22,34 @@ UPDATER       = 5
 ADMINISTRATOR = 9
 
 
-def loggedin(session):
-#=====================
-  return session.get('loggedin', False)
+def level():
+#===========
+  return int(web.cookies().get('userlevel', 0))
 
-def level(session):
-#==================
-  return 0 if not loggedin(session) else session.get('userlevel', 0)
+def loggedin():
+#==============
+  return level() > 0
 
-def _check(data, session):
-#=========================
-  session.userlevel = 0
-  session.loggedin = False
+def _check(data):
+#================
+  level = 0
   db = Database()
   row = db.matchrow('users', {'username': data.get('username'),
                               'password': data.get('password') })
   if row:
     try:
       level = int(db.readrow('users', 'level', where='rowid=%d' % row)['level'])
-##      logging.debug("User level: %d", level)
-      session.userlevel = level
-      session.loggedin = True
+      ## logging.debug("User level: %d", level)
     except Exception:
       raise
       pass
   db.close()        
-  menu.setmenu(session)
-    
+  return level
 
-def logout(data={}, session=None, params={}):
-#============================================
-  logging.debug("Logging out...")
-  if session:
-    session.userlevel = 0
-    session.loggedin = False
-    menu.setmenu(session)
+def logout(data={}, params={}):
+#==============================
+  ## logging.debug("Logging out...")
+  web.setcookie('userlevel', 0)
   raise web.seeother('/login')
 
 
@@ -68,12 +60,17 @@ _form_template = templates.Form()
 from templates import Button, Field
 
 
-def login(data, session, params):
-#===============================
+def login(data, params):
+#=======================
+  import frontend
   btn = data.get('action', '')
+#  web.setcookie('userlevel', 0)
+  level = 0
   if btn:
-    if btn == 'Login': _check(data, session)
-    if level(session): raise web.seeother(htmlview.REPOSITORY)
+    if btn == 'Login': level = _check(data)
+    if level:
+      web.setcookie('userlevel', level, frontend.SESSION_TIMEOUT)
+      raise web.seeother('/repository')
   form = _form_template.form('/login', 4, 0,
            [ Button('Login', 1, 35),
              Button('Cancel', 1, 42) ],
@@ -85,5 +82,4 @@ def login(data, session, params):
                              alert = ('Session expired, please login' if 'expired'      in data
                                  else 'Unauthorised, please login'    if 'unauthorised' in data
                                  else ''),
-                             session = session,
                             )

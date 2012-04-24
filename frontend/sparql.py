@@ -63,8 +63,8 @@ _page_template   = templates.Page()
 
 _sparql_template = templates.SparqlForm()
 
-def sparqlquery(data, session, param=''):
-#========================================
+def sparqlquery(data, param=''):
+#===============================
 ##  logging.debug('DATA: %s', data)
 
   query = data.get('query', '')
@@ -85,5 +85,4 @@ def sparqlquery(data, session, param=''):
   return _page_template.page(title   = 'SPARQL search...',
                              content = _sparql_template.sparqlquery('SPARQL', '/sparqlquery', query)
                                      + result,
-                             session = session,
                             )

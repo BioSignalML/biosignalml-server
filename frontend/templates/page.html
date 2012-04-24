@@ -6,7 +6,6 @@
           $alert       = '',
           $message     = '',
           $keypress    = None,
-          $session     = { },
           )
 #set $headtitle = 'BioSignalML Repository'
 #from frontend.menu import MAINMENU
@@ -67,6 +66,7 @@ A menu is defined by a list of tuples, each tuple being (prompt, action)
                      "jquery.hoverIntent.js",
                      "jquery.cluetip.js",
                      "jquery.json-2.3.js",
+                     "stream.js",
                      "comet.js",
                      "repository.js",
                    ]
@@ -94,7 +94,7 @@ A menu is defined by a list of tuples, each tuple being (prompt, action)
   #if $alert#<div id="alert">$alert</div>#end if
   <div id="header">
    <div class="spacer"></div>
-   <div id="menubar">$menubar($MAINMENU($session))</div>
+   <div id="menubar">$menubar($MAINMENU())</div>
   </div>
   #if $message#<div id="message">$message</div>#end if
   <div id="content">

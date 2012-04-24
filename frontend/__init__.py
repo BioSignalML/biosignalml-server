@@ -16,9 +16,6 @@ import web, json
 
 from biosignalml.utils import num, cp1252, xmlescape, nbspescape, unescape
 
-
-# Needs to be after session declaration otherwise problems with
-# circular imports -- see http://effbot.org/zone/import-confusion.htm
 import user, menu
 
 # Provide access to these modules:
@@ -41,36 +38,7 @@ def wsgifunc():
 
 
 SESSION_TIMEOUT = 1800 # seconds  ## num(config.config['idletime'])
-web.config.session_parameters['timeout'] = SESSION_TIMEOUT
-web.config.session_parameters['ignore_expiry'] = False
-web.config.session_parameters['ignore_change_ip'] = False
 
-
-class Session(web.session.Session):
-#==================================
-
-  def expired(self):
-  #-----------------
-    self._killed = True
-    self._save()
-    if web.ctx.env['PATH_INFO'] in ['/login', '/logout']: self.session_id = None
-    else:                                                 raise web.seeother('/login?expired')
-
-  def get(self, key, default=None):
-  #--------------------------------
-    return getattr(self, key, default)
-
-
-if web.config.get('_session') is None:
-  session_dir = os.path.join(web.config.biosignalml['server_base'], 'sessions')
-  session = Session(_webapp, web.session.DiskStore(session_dir),
-    initializer={'userlevel': 0, 'loggedin': False, 'menu': None})
-  web.config._session = session
-else:
-  session = web.config._session
-
-
-###print "SESS:", session._data
 
 dispatch = [ ('comet/search/setup',   'search.template',     'json'),
              ('comet/search/query',   'search.searchquery',  'json'),
@@ -82,6 +50,7 @@ dispatch = [ ('comet/search/setup',   'search.template',     'json'),
              ('logout',               'user.logout',         'html'),
              ('login',                'user.login',          'html'),
              ('explore',              'explore.explore',     'html'),
+             ('',                     'user.login',          'html'),
            ]
 
 
@@ -98,11 +67,10 @@ class Index(object):
 #===================
 
   @staticmethod
-  def _call(fun, submitted, session, params):
-  #------------------------------------------
-    #logging.debug('Session: %s', session)
+  def _call(fun, submitted, params):
+  #---------------------------------
     try:
-      return (fun(submitted, session, params), '')
+      return (fun(submitted, params), '')
     except web.HTTPError, msg:
       logging.error('Errors loading page: %s', str(msg))
       raise
@@ -121,7 +89,7 @@ class Index(object):
     #logging.debug('Serving %s in %s', funname, modname)
 
     if responsetype == 'html':
-      if not menu.hasaction(path, session):
+      if not menu.hasaction(path):
         logging.debug("Function '%s' not in menu", funname)
         raise web.seeother('/login?unauthorised')
         ##raise web.unauthorized
@@ -136,21 +104,20 @@ class Index(object):
       fun = getattr(mod, funname)
     except Exception:
       logging.error('Can not find %s function in module', funname)
-      session.kill()
       fun = mod.index
 
     submitted = dict([ (k, unescape(v))
                          for k, v in web.input(_method = method, _unicode=True).iteritems() ])
 
     if responsetype == 'html':
-      html, err = self._call(fun, submitted, session, params)
+      html, err = self._call(fun, submitted, params)
       if not html: html = '<page alert="Page can not be loaded... %s"/>' % xmlescape(err)
 #     if not html: raise Exception(err)
       web.header('Content-Type', 'text/html')
       return html
 
     else:    # Return JSON
-      data, err = self._call(fun, submitted, session, params)
+      data, err = self._call(fun, submitted, params)
       if not data: data = {'alert': 'Error: %s' % str(err)}
       web.header('Content-Type', 'application/json')
       return json.dumps(data)

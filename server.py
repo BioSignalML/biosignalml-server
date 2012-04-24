@@ -109,8 +109,7 @@ def init_server(wsgi = False):
   tornado.options.host = options.repository['host']
   tornado.options.port = int(options.repository['port'])
 
-  import frontend      # Needs to access 'sessions' directory and have both
-                       # web.config.biosignalml and repository initialised...
+  import frontend      # Needs to have both web.config.biosignalml and repository initialised...
 
   return frontend.wsgifunc()
 

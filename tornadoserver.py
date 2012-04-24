@@ -46,6 +46,7 @@ application = tornado.web.Application([
   template_path = 'frontend/templates',
   ui_modules = { 'Menu':    frontend.htmlview.MenuModule,
                  'SubTree': frontend.htmlview.SubTree },
+  cookie_secret = 'a2ojhhjqwbn3knk33d3mzd8ynbw/e;l22s=2gDHHaqq9',
   debug = options.options.debug,
   )
 

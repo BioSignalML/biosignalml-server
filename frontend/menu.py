@@ -23,7 +23,6 @@ UPDATEMENU  = ("Settings", None,
                [ ("Namespaces", "namespaces"),
                ] )
 
-
 def VIEWERMENU(level):
 #=====================
   return [ ("View Repository",   "repository"),
@@ -34,31 +33,16 @@ def VIEWERMENU(level):
 LOGINMENU  = ("Login",  "login")
 LOGOUTMENU = ("Logout", "logout")
 
-
-def setmenu(session):
-#====================
-  level = user.level(session)
-  ##logging.debug('Menu SES:: %s', session)
-  ##level = 1   ##############################
-  ##logging.debug('LEVEL: %s', str(level))   ##############
+def getmenu(level):
+#==================
   menu = [ ]
-  if level >= user.VIEWER:        menu.extend(VIEWERMENU(level))
-##  if level >= user.UPDATER:       menu.append(UPDATEMENU)
-##  if level >= user.ADMINISTRATOR: menu.append(ADMINMENU)
-  menu.append(LOGOUTMENU if user.loggedin(session) else LOGINMENU)
-  session.menu = menu
-  ##logging.debug('SET MENU: %s', menu)  #######
-
-
-def MAINMENU(session):
-#=====================
-  menu = session.get('menu', None)
-  ##logging.debug('GOT MENU: %s', menu)  #######
-  if menu == None:
-    setmenu(session)
-    menu = session.get('menu', None)
+  if level >= user.VIEWER: menu.extend(VIEWERMENU(level))
+  menu.append(LOGOUTMENU if (level > 0) else LOGINMENU)
   return menu
 
+def MAINMENU():
+#==============
+  return getmenu(user.level())
 
 def find(action, menu):
 #======================
@@ -67,8 +51,8 @@ def find(action, menu):
     elif len(m) > 2:   return find(action, m[2])
   return False
 
-def hasaction(action, session):
-#==============================
+def hasaction(action):
+#=====================
 ##  return True  ########################
   if action in ['index', 'login', 'logout']: return True
-  return find(action, MAINMENU(session))
+  return find(action, MAINMENU())
