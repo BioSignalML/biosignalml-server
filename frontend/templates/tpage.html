@@ -1,0 +1,46 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+{% set headtitle = 'BioSignalML Repository' %}
+{% set javascript = ["validation.js",
+                     "jquery.js",
+                     "jquery-ui-1.8.9.min.js",
+                     "jquery-ui-datetimepicker.js",
+ 	                 "jquery.jstree.js",
+ 	                 "jquery.jdMenu.js",
+ 	                 "jquery.positionBy.js",
+                     "jquery.hoverIntent.js",
+                     "jquery.cluetip.js",
+                     "jquery.json-2.3.js",
+                     "stream.js",
+                     "comet.js",
+                     "repository.js",
+##                   "json2.js",
+##                   "jquery-1.5.min.js",  
+   ] %}
+{# if $refresh#<meta http-equiv='Refresh' content='$refresh'/> #}
+ <head>
+  <title>{{ headtitle }}</title>
+  <link rel="shortcut icon" href="/static/favicon.ico"/>{%
+  for script in (javascript + scripts) %}
+   <script type="text/javascript" src="/static/script/{{ script }}"></script>{% end %}
+  <link type="text/css" href="/static/css/stylesheet.css" rel="stylesheet"/>
+  {% for css in stylesheets %}
+   <link type="text/css" href="/static/css/{{ css }}" rel="stylesheet"/>{% end %}</head>
+ <body {% if keypress %} onkeydown={{ keypress }}(event) {% end %}>
+  <noscript>These pages use Javascript - please enable it in your browser</noscript>
+  {% if alert %}<div id="alert">{{ alert }}</div>{% end %}
+  <div id="header">
+   <div class="spacer"></div>
+   {% module Menu(level=level) %}
+  </div>  
+  {% if message %}<div id="message">{{ message }}</div>{% end %}
+  <div id="content">
+   <div class="title"><h1>{{ title }}</h1></div>
+   {% if globals().get('tree') %}{% raw tree %}{% end %} 
+   <div id="contentbody">
+     {% if globals().get('content') %}{% raw content %}{% end %}
+   </div>
+  </div>
+  <div id="footer"></div>
+ </body>
+</html>

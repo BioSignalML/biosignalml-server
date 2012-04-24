@@ -1,0 +1,14 @@
+<div class="jstree" id="tree">
+ {% module SubTree(tree, prefix, 0, selectpath) %}
+</div>
+<script type="text/javascript">
+ $(function () {
+   $.jstree._themes = "/static/themes/" ;
+   $("#tree").jstree({
+     core: { animation: 0, initially_open: [ "{{ selectpath }}" ], load_open: true },
+     plugins: [ "themes", "html_data" ],
+     themes: { theme: "default", dots: true, icons: true }
+     }) ;
+   }) ;
+</script>
+
