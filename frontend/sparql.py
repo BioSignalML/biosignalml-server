@@ -37,7 +37,7 @@ def prologue():
 def search(sparql):
 #==================
   if not sparql: return ''
-  body = ['<div id="sparqlresult"><table class="search">']
+  body = ['<div id="sparqlresult"><table class="results">']
   results = options.repository.query(sparql, header=True, html=True, abbreviate=True)
   for n, r in enumerate(results):
     if n == 0:

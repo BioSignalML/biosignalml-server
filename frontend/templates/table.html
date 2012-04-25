@@ -1,6 +1,6 @@
 {% set selected = globals().get('selected', -1) %}
 {% block content %}
-  <div><table {% if globals().get('tableclass') %}class="{{ tableclass }}"{% end %}>
+  <div class="table"><table {% if globals().get('tableclass') %}class="{{ tableclass }}"{% end %}>
    <tr>{% for h in header %}<th>{{ h }}</th>{% end %}</tr>  
    {% set odd = True %}
    {% for n, row in enumerate(rows) %}

@@ -352,14 +352,15 @@ span.right {
   }
 
 div#contentbody {
-  margin-left: 0px ;
+  margin-left: 0px ;      /* Start past tree column */
+  margin-right: 0px ;
   border: 0 ;
 /*  width: 88% ;   */
 /*  width: 100% ;  */	    /* IE 7 needs something to pull out RH margin... */	
   }
 
 
-div.signal {
+div.table {
   margin-left: 265px ;      /* tree width + padding + margins ?? */
   margin-right: 10px ;
   }
@@ -394,20 +395,26 @@ div#sparqlresult {
   border: 2px dotted #036;
   padding: 2px ;
   }
-div#sparqlresult table {
+/* Wrapping ideas from http://www.blakems.com/archives/000077.html */
+table.results {
   width: 100% ;
+  table-layout: fixed ;
+  border-collapse: collapse ;
   }
-div#sparqlresult th {
-  background: #AAA ;
+table.results th {
+  background: #AA0 ;
   padding-left: 4px ;
   padding-bottom: 4px ;
   }
-div#sparqlresult td {
+table.results td {
   padding-left: 4px ;
+  text-overflow: ellipsis ;
+  overflow: hidden ;
+/*  white-space: nowrap ; /* Firefox will correctly wrap */
   }
-div#sparqlresult tr {
+table.results tr {
   background: #EEE ;
   }
-div#sparqlresult tr.odd {
+table.results tr.odd {
   background: #FFF ;
   }
