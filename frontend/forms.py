@@ -1,3 +1,13 @@
+######################################################
+#
+#  BioSignalML Management in Python
+#
+#  Copyright (c) 2010  David Brooks
+#
+#  $Id$
+#
+######################################################
+
 import logging
 
 yscale          = 2.5  # em per row
