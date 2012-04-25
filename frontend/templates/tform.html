@@ -1,0 +1,26 @@
+{% extends 'tpage.html' %}
+
+{% block content %}
+<div {% raw boxsize(cols, rows) %} class="formbox">
+ <div class="form">
+  <form autocomplete="off" id="form" method="post">
+   {% for b in buttons %}
+    <span {% raw position(b.col, b.row) %}>
+     <input class="button" type="submit" name="action" value="{{ b.prompt }}"/>
+    </span>
+   {% end %}
+   {% for f in fields %}
+    {% if f.prompt %}<span {% raw position(f.promptpos[0], f.promptpos[1], 'prompt') %}>
+     {% if f.prompt[-1] in ['?', ':'] %}{{ f.prompt }}{% else %}{{ f.prompt[:-1] }}:{% end %}
+    </span>{% end %}
+    <span {% raw position(f.fieldpos[0], f.fieldpos[1]) %}>
+     <input value="{{ f.data }}" name="{{ f.id }}" id="{{ f.id }}"
+       maxlength="{{ f.length }}" style="width:{% raw fieldwidth(f.length) %}em"
+       {% if f.type %}type="{{ f.type }}"{% end %}
+       onfocus="this.select()" onchange="changed(this)">
+    </span>
+   {% end %}
+  </form>
+ </div>
+</div>
+{% end %}

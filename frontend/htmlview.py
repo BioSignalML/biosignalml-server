@@ -33,8 +33,8 @@ class BasePage(tornado.web.RequestHandler):
     return tornado.web.RequestHandler.render(self, template, **kwargs)
 
   def get_current_user(self):
-    return int(self.get_cookie('userlevel'))
-
+    try: return int(self.get_cookie('userlevel'))
+    except TypeError: return 0
 
 PREFIXES = { 'bsml':  BSML.URI }
 PREFIXES.update(biosignalml.rdf.NAMESPACES)

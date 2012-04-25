@@ -8,19 +8,16 @@
 #
 ######################################################
 
-
 import logging
-import web
+import tornado.web
 
 from webdb import Database
-import menu
-import templates
-
+from forms import Button, Field
+import htmlview
 
 VIEWER        = 1
 UPDATER       = 5
 ADMINISTRATOR = 9
-
 
 def level():
 #===========
@@ -30,12 +27,11 @@ def loggedin():
 #==============
   return level() > 0
 
-def _check(data):
-#================
+def _check(name, passwd):
+#========================
   level = 0
   db = Database()
-  row = db.matchrow('users', {'username': data.get('username'),
-                              'password': data.get('password') })
+  row = db.matchrow('users', {'username': name, 'password': passwd })
   if row:
     try:
       level = int(db.readrow('users', 'level', where='rowid=%d' % row)['level'])
@@ -43,43 +39,39 @@ def _check(data):
     except Exception:
       raise
       pass
-  db.close()        
+  db.close()
   return level
 
-def logout(data={}, params={}):
+class Logout(htmlview.BasePage):
+#===============================
+  def get(self):
+    self.clear_cookie('userlevel')
+    self.redirect('/login')
+
+class Login(htmlview.BasePage):
 #==============================
-  ## logging.debug("Logging out...")
-  web.setcookie('userlevel', 0)
-  raise web.seeother('/login')
+  def get(self):
+    self.render('tform.html',
+                title = 'Please log in:',
+                rows = 4,  cols = 0,
+                buttons = [ Button('Login', 35, 1), Button('Cancel', 42, 1) ],
+                fields  = [ Field('Username', (1, 1), 'username', (11, 1), 20),
+                            Field('Password', (1, 2), 'password', (11, 2), 20, type='password'),
+                            Field.hidden('next', self.get_argument('next', '')) ],
+                alert = ('Session expired, please login' if self.request.query.find('expired') >= 0
+                    else 'Unauthorised, please login'    if self.request.query.find('unauthorised') >= 0
+                    else ''),
+                )
 
-
-_page_template = templates.Page()
-
-_form_template = templates.Form()
-
-from templates import Button, Field
-
-
-def login(data, params):
-#=======================
-  import frontend
-  btn = data.get('action', '')
-#  web.setcookie('userlevel', 0)
-  level = 0
-  if btn:
-    if btn == 'Login': level = _check(data)
+  def post(self):
+    import frontend
+    btn = self.get_argument('action', '')
+    if btn == 'Login': level = _check(self.get_argument('username', ''),
+                                      self.get_argument('password', ''))
+    else:              level = 0
     if level:
-      web.setcookie('userlevel', level, frontend.SESSION_TIMEOUT)
-      raise web.seeother('/repository')
-  form = _form_template.form('/login', 4, 0,
-           [ Button('Login', 1, 35),
-             Button('Cancel', 1, 42) ],
-           [ Field('Username', (1, 1), 'username', (1, 11), 20),
-             Field('Password', (2, 1), 'password', (2, 11), 20, type='password'),
-           ] )
-  return _page_template.page(title   = 'Please log in:',
-                             content = form,
-                             alert = ('Session expired, please login' if 'expired'      in data
-                                 else 'Unauthorised, please login'    if 'unauthorised' in data
-                                 else ''),
-                            )
+      self.set_cookie('userlevel', str(level),
+                      **{'max-age': str(frontend.SESSION_TIMEOUT)})
+      self.redirect(self.get_argument('next', '/'))
+    elif btn == 'Login': self.redirect('/login?unauthorised')
+    else:                self.redirect('/login')
