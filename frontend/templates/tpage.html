@@ -29,9 +29,9 @@
    <link type="text/css" href="{{ static_url("css/%s" % css) }}" rel="stylesheet"/>
   {% end %}
  </head>
- <body {% if keypress %} onkeydown={{ keypress }}(event) {% end %}>
+ <body {% if keypress %}onkeydown={{ keypress }}(event){% end %}
+       {% if alert %}onload="alert('{{ alert }}')"{% end %}>
   <noscript>These pages use Javascript - please enable it in your browser</noscript>
-  {% if globals().get('alert') %}<div id="alert">{{ alert }}</div>{% end %}
   <div id="header">
    <div class="spacer"></div>
    {% module Menu(level=level) %}
