@@ -39,20 +39,3 @@ def getmenu(level):
   if level >= user.VIEWER: menu.extend(VIEWERMENU(level))
   menu.append(LOGOUTMENU if (level > 0) else LOGINMENU)
   return menu
-
-def MAINMENU():
-#==============
-  return getmenu(user.level())
-
-def find(action, menu):
-#======================
-  for m in menu:
-    if action == m[1]: return True
-    elif len(m) > 2:   return find(action, m[2])
-  return False
-
-def hasaction(action):
-#=====================
-##  return True  ########################
-  if action in ['index', 'login', 'logout']: return True
-  return find(action, MAINMENU())

@@ -19,13 +19,6 @@ VIEWER        = 1
 UPDATER       = 5
 ADMINISTRATOR = 9
 
-def level():
-#===========
-  return int(web.cookies().get('userlevel', 0))
-
-def loggedin():
-#==============
-  return level() > 0
 
 def _check(name, passwd):
 #========================
