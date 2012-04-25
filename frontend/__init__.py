@@ -40,17 +40,8 @@ def wsgifunc():
 SESSION_TIMEOUT = 1800 # seconds  ## num(config.config['idletime'])
 
 
-dispatch = [ ('comet/search/setup',   'search.template',     'json'),
-             ('comet/search/query',   'search.searchquery',  'json'),
-             ('comet/search/related', 'search.related',      'json'),
-
-             ('searchform',           'search.searchform',   'html'),
-             ('sparqlquery',          'sparql.sparqlquery',  'html'),
-
-             ('logout',               'user.logout',         'html'),
-             ('login',                'user.login',          'html'),
+dispatch = [ ('sparqlquery',          'sparql.sparqlquery',  'html'),
              ('explore',              'explore.explore',     'html'),
-             ('',                     'user.login',          'html'),
            ]
 
 

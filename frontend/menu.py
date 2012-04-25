@@ -26,7 +26,7 @@ UPDATEMENU  = ("Settings", None,
 def VIEWERMENU(level):
 #=====================
   return [ ("View Repository",   "repository"),
-           ("Search Repository", "searchform"),
+           ("Search Repository", "search"),
            ("SPARQL Query",      "sparqlquery"),
          ]
 

@@ -1,13 +1,14 @@
-#def search($title, $action)
-##==========================
+{% extends 'tpage.html' %}
+
+{% block content %}
  <div id="spinner"></div>
  <div class="formbox">
   <div class="form">
-   <form method="post" action="$action" id="searchform" autocomplete="off">
+   <form method="post" id="searchform" autocomplete="off">
     <div class="search">
      <div class="line">
       <div class="col1">
-       <span class="title">$title</span>
+       <span class="title">Search...</span>
       </div>
       <div class="col2"></div>
       <div class="col3"><button class='del'>-</button></div>
@@ -26,4 +27,4 @@
  </div>
  <script type="text/javascript" src="/static/script/searchform.js"></script>
  <link type="text/css" href="/static/css/searchform.css" rel="stylesheet"/>
-#end def  
+{% end %}

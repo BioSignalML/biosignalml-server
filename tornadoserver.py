@@ -31,6 +31,7 @@ import endpoints.recording as recording
 
 import frontend.user
 import frontend.forms
+import frontend.search
 import frontend.htmlview
 application = tornado.web.Application([
     ( server.STREAMDATA_ENDPOINT,         webstream.StreamDataSocket),
@@ -44,6 +45,10 @@ application = tornado.web.Application([
     ('',                                  frontend.htmlview.Repository),
     ('/logout',                           frontend.user.Logout),
     ('/login',                            frontend.user.Login),
+    ('/search',                           frontend.search.Search),
+    ('/comet/search/query',               frontend.search.Search),
+    ('/comet/search/setup',               frontend.search.Template),
+    ('/comet/search/related',             frontend.search.Related),
     ( ".*",                               tornado.web.FallbackHandler,
                                             {'fallback': tornado.wsgi.WSGIContainer(frontend_app) }),
     ],
