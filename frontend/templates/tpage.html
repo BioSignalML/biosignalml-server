@@ -22,10 +22,13 @@
   <title>{{ headtitle }}</title>
   <link rel="shortcut icon" href="/static/favicon.ico"/>{%
   for script in (javascript + scripts) %}
-   <script type="text/javascript" src="/static/script/{{ script }}"></script>{% end %}
-  <link type="text/css" href="/static/css/stylesheet.css" rel="stylesheet"/>
+   <script type="text/javascript" src="{{ static_url("script/%s" % script) }}"></script>
+  {% end %}
+  <link type="text/css" href="{{ static_url("css/stylesheet.css") }}" rel="stylesheet"/>
   {% for css in stylesheets %}
-   <link type="text/css" href="/static/css/{{ css }}" rel="stylesheet"/>{% end %}</head>
+   <link type="text/css" href="{{ static_url("css/%s" % css) }}" rel="stylesheet"/>
+  {% end %}
+ </head>
  <body {% if keypress %} onkeydown={{ keypress }}(event) {% end %}>
   <noscript>These pages use Javascript - please enable it in your browser</noscript>
   {% if globals().get('alert') %}<div id="alert">{{ alert }}</div>{% end %}
