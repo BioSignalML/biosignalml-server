@@ -29,8 +29,7 @@
    <link type="text/css" href="{{ static_url("css/%s" % css) }}" rel="stylesheet"/>
   {% end %}
  </head>
- <body {% if keypress %}onkeydown={{ keypress }}(event){% end %}
-       {% if alert %}onload="alert('{{ alert }}')"{% end %}>
+ <body {% if keypress %}onkeydown={{ keypress }}(event){% end %}>
   <noscript>These pages use Javascript - please enable it in your browser</noscript>
   <div id="header">
    <div class="spacer"></div>
@@ -47,5 +46,8 @@
    </div>
   </div>
   <div id="footer"></div>
+  {% if alert %}
+   <script type="text/javascript">$(function() { alert('{{ alert }}') ; });</script>
+  {% end %}
  </body>
 </html>
