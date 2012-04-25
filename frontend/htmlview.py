@@ -17,24 +17,10 @@ import biosignalml.rdf
 from biosignalml.model import BSML
 from biosignalml.utils import maketime, trimdecimal, chop
 
+import frontend
 import mktree
 import menu
 
-
-class BasePage(tornado.web.RequestHandler):
-#==========================================
-  def render(self, template, **kwds):
-    kwargs = { 'title': '', 'content': '',
-               'stylesheets': [ ], 'scripts': [ ],
-               'refresh': 0, 'alert': '', 'message': '',
-               'keypress': None, 'level': self.get_current_user(),
-             }
-    kwargs.update(kwds)
-    return tornado.web.RequestHandler.render(self, template, **kwargs)
-
-  def get_current_user(self):
-    try: return int(self.get_secure_cookie('userlevel'))
-    except TypeError: return 0
 
 PREFIXES = { 'bsml':  BSML.URI }
 PREFIXES.update(biosignalml.rdf.NAMESPACES)
@@ -203,9 +189,9 @@ class MenuModule(tornado.web.UIModule):
     out.append('</ul>')
     return ''.join(out)
 
-REPOSITORY = '/repository/'       #  Prefix to repository objects 
 
-class Repository(BasePage):
+class Repository(frontend.BasePage):
+#===================================
 
   def xmltree(self, nodes, base, prefix, select=''):
     tree = mktree.maketree(nodes, base)
@@ -238,11 +224,11 @@ class Repository(BasePage):
         selectedsig = None
       self.render('tpage.html',
         title = recuri,
-        tree = self.xmltree(repo.recordings(), prefix, REPOSITORY, name),
+        tree = self.xmltree(repo.recordings(), prefix, frontend.REPOSITORY, name),
         style = 'signal',
         content = build_metadata(recuri) + signal_table(self, recording, selectedsig)
         )
     else:
       self.render('tpage.html',
         title = 'Recordings in repository:',
-        tree = self.xmltree(repo.recordings(), prefix, REPOSITORY))
+        tree = self.xmltree(repo.recordings(), prefix, frontend.REPOSITORY))

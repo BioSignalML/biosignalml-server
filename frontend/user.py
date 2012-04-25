@@ -13,7 +13,7 @@ import tornado.web
 
 from webdb import Database
 from forms import Button, Field
-import htmlview
+import frontend
 
 VIEWER        = 1
 UPDATER       = 5
@@ -34,13 +34,13 @@ def _check(name, passwd):
       pass
   return level
 
-class Logout(htmlview.BasePage):
+class Logout(frontend.BasePage):
 #===============================
   def get(self):
-    self.clear_cookie('userlevel')
+    self.set_secure_cookie('userlevel', '0')
     self.redirect('/login')
 
-class Login(htmlview.BasePage):
+class Login(frontend.BasePage):
 #==============================
   def get(self):
     self.render('tform.html',
@@ -50,7 +50,7 @@ class Login(htmlview.BasePage):
                 fields  = [ Field('Username', (1, 1), 'username', (11, 1), 20),
                             Field('Password', (1, 2), 'password', (11, 2), 20, type='password'),
                             Field.hidden('next', self.get_argument('next', '')) ],
-                alert = ('Session expired, please login' if self.request.query.find('expired') >= 0
+                alert = ('Session expired, please login' if self.get_argument('next', '')
                     else 'Unauthorised, please login'    if self.request.query.find('unauthorised') >= 0
                     else ''),
                 )

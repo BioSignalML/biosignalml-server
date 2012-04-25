@@ -18,7 +18,7 @@ from biosignalml.utils import xmlescape
 from biosignalml.model import BSML
 
 from forms import Button, Field
-import htmlview
+import frontend
 
 namespaces = {
   'bsml': str(BSML.URI),
@@ -60,12 +60,12 @@ def search(sparql):
   return ''.join(body)
 
 
-class Query(htmlview.BasePage):
+class Query(frontend.BasePage):
 #==============================
 ##  logging.debug('DATA: %s', data)
 
   def render(self, query, results=''):
-    htmlview.BasePage.render(self, 'tform.html',
+    frontend.BasePage.render(self, 'tform.html',
       title = 'SPARQL search...',
       rows = 16,  cols = 0,
       buttons = [ Button('Search', 1, 13) ],

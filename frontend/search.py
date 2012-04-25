@@ -18,7 +18,7 @@ import tornado.escape
 from tornado.options import options
 
 import sparql
-import htmlview
+import frontend
 
 
 PREFIXES = sparql.prologue()
@@ -182,7 +182,7 @@ class Related(tornado.web.RequestHandler):
     self.write( { 'ids': related } )
 
 
-class Search(htmlview.BasePage):
+class Search(frontend.BasePage):
 #===============================
 
   @tornado.web.authenticated
