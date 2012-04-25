@@ -47,6 +47,7 @@ def abbreviate(u):
 
 
 class Properties(object):
+#========================
   def __init__(self, properties):
     self._properties = properties
 
@@ -138,11 +139,13 @@ def build_metadata(uri):
 
 
 class Metadata(tornado.web.RequestHandler):  # Tool-tip popup
+#==========================================
   def post(self):
     self.write({ 'html': build_metadata(self.get_argument('uri', '')) })
 
 
 class SubTree(tornado.web.UIModule):
+#===================================
   @staticmethod
   def treeaction(text, action='', uri=''):
     return(('<a href="%s" class="cluetip" uri="%s">%s</a>'

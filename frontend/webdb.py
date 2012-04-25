@@ -8,41 +8,38 @@
 #
 ######################################################
 
-
-import web
-
-
-def initialise(options):
-#=======================
-  web.config._dboptions = options
+import apsw
+from tornado.options import options
 
 
 class Database(object):
 #======================
 
-  _database = web.config.biosignalml['database']
-
   def __init__(self):
   #------------------
-    self._db = web.database(dbn='sqlite', db=Database._database)
-    self._db.printing = False      ## Otherwise set to web.config.debug
+    self._db = apsw.Connection(options.database)
+    self._cursor = self._db.cursor()
 
-  def close(self):
-  #---------------
-    del self._db
+  def execute(self, sql, bindings=None):
+  #-------------------------------------
+    return self._cursor.execute(sql, bindings)
 
-  def execute(self, sql):
-  #----------------------
-    return self._db.query(sql)
-
-  def matchrow(self, table, where):
-  #-------------------------------
-    for row in self._db.where(table, what=web.sqllist('rowid'), limit=1, **where):
-      return row['rowid']
+  def findrow(self, table, cond):
+  #------------------------------
+    sql = [ 'select rowid from %s where ' % table]
+    sql.append(' and '.join([ '(%s = :%s)' % (n, n) for n in cond ]))
+    sql.append(' limit 1')
+    for r in self.execute(''.join(sql), cond): return r[0]
     return 0
 
   def readrow(self, table, cols, where, order=None):
   #-------------------------------------------------
-    for row in self._db.select(table, what=web.sqllist(cols), where=where, order=order, limit=1):
-      return row
+    try:                   cols.__iter__
+    except AttributeError: cols = [ str(cols) ]
+    sql = [ 'select %s from %s' % (', '.join(list(cols)), table) ]
+    if where: sql.append(' where %s' % where)
+    if order: sql.append(' order %s' % order)
+    sql.append(' limit 1')
+    for r in self.execute(''.join(sql)):
+      return { n: r[i] for i, n in enumerate(cols) }
     return { }

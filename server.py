@@ -14,8 +14,9 @@ import argparse
 import ConfigParser
 import signal
 import logging
-import web
+
 import tornado.options
+from tornado.options import define
 
 ##import rpdb2; rpdb2.start_embedded_debugger('test')
 
@@ -71,8 +72,8 @@ def parse_args():
   return parser.parse_args()
 
 
-def init_server(wsgi = False):
-#=============================
+def init_server():
+#=================
   args = parse_args()
   config_file = args.config if args.config[0] == '/' else os.path.join(module_path, args.config)
   global options
@@ -91,30 +92,11 @@ def init_server(wsgi = False):
   logging.getLogger().addHandler(console)
   logging.info('Starting BioSignalML repository server...')
 
-  web.config.biosignalml = { }
-  web.config.biosignalml['server_base'] = server_base
-  web.config.biosignalml['recordings']  = os.path.join(server_base,
-                                                       options.repository['recordings'])
-  web.config.biosignalml['database']    = os.path.join(server_base,
-                                                       options.repository['database'])
-  web.config.biosignalml['repository']  = repository.BSMLRepository(options.repository['uri'],
-                                                                    options.repository['triplestore'])
-
-  tornado.options.define('recordings', default = web.config.biosignalml['recordings'])
-  tornado.options.define('repository', default = web.config.biosignalml['repository'])
-  tornado.options.define('recording_prefix', default = options.repository['uri']
-                                                     + options.repository['recording_prefix'])
-  tornado.options.define('debug',      default = (options.logging['log_level'] == 'DEBUG'))
-
+  define('recordings', os.path.join(server_base, options.repository['recordings']))
+  define('database',   os.path.join(server_base, options.repository['database']))
+  define('repository',
+    repository.BSMLRepository(options.repository['uri'], options.repository['triplestore']))
+  define('recording_prefix', options.repository['uri'] + options.repository['recording_prefix'])
+  define('debug',      (options.logging['log_level'] == 'DEBUG'))
   tornado.options.host = options.repository['host']
   tornado.options.port = int(options.repository['port'])
-
-  import frontend      # Needs to have both web.config.biosignalml and repository initialised...
-
-  return frontend.wsgifunc()
-
-
-if __name__ == '__main__':
-#=========================
-
-  init_server()

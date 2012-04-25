@@ -31,7 +31,7 @@ def _check(name, passwd):
 #========================
   level = 0
   db = Database()
-  row = db.matchrow('users', {'username': name, 'password': passwd })
+  row = db.findrow('users', {'username': name, 'password': passwd })
   if row:
     try:
       level = int(db.readrow('users', 'level', where='rowid=%d' % row)['level'])
@@ -39,7 +39,6 @@ def _check(name, passwd):
     except Exception:
       raise
       pass
-  db.close()
   return level
 
 class Logout(htmlview.BasePage):

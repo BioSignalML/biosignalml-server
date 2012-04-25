@@ -23,7 +23,7 @@ import tornado.options as options
 ## import rpdb2; rpdb2.start_embedded_debugger('test')
 
 import server
-frontend_app = server.init_server(True)  # Setup globals
+server.init_server()  # Setup globals
 
 import endpoints.webstream as webstream
 import endpoints.metadata  as metadata 
@@ -31,6 +31,7 @@ import endpoints.recording as recording
 
 import frontend.user
 import frontend.forms
+import frontend.sparql
 import frontend.search
 import frontend.htmlview
 application = tornado.web.Application([
