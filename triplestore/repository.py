@@ -341,7 +341,7 @@ class QueryResults(object):
       if value.startswith(self._repobase):
         result['html'] = ('%s<a href="%s" uri="%s" class="cluetip">%s</a>%s'
                        % (LT,
-                          '/repository' + value[len(self._repobase + 'recording/'):],
+                          '/repository/' + value[len(self._repobase + '/recording/'):],
                           value, uri,
                           GT))
                  ## '/repository/' is web-server path to view objects in repository
@@ -349,7 +349,7 @@ class QueryResults(object):
       elif value.startswith('http://physionet.org/'): ########### ... URI to a Signal, Recording, etc...
         result['html'] = ('%s<a href="%s" uri="%s" class="cluetip">%s</a>%s'
                        % (LT,
-                          '/repository' + value.replace(':', '%3A', 1),
+                          '/repository/' + value.replace(':', '%3A', 1),
                           value, uri,
                           GT))
                  ## '/repository/' is web-server path to view objects in repository
