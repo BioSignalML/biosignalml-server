@@ -27,8 +27,8 @@ class Button(object):
 
 class Field(object):
 #===================
-  def __init__(self, prompt, promptpos, id, fieldpos, length, data='', type='input'):
-  #----------------------------------------------------------------------------------
+  def __init__(self, prompt, promptpos, id, fieldpos, length, data='', type=''):
+  #-----------------------------------------------------------------------------
     self.prompt = prompt
     self.promptpos = promptpos
     self.id = id
@@ -40,6 +40,10 @@ class Field(object):
   @classmethod
   def hidden(cls, id, data):
     return cls('', (0, 0), id, (0, 0), 0, data=data, type='hidden')
+
+  @classmethod
+  def textarea(cls, prompt, id, width, height, data=''):
+    return cls(prompt, (0, 0), id, (width, height), 0, data=data, type='textarea')
 
 
 def boxsize(handler, cols, rows):

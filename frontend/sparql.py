@@ -9,16 +9,16 @@
 ######################################################
 
 
-import web
-
 import logging
+import tornado.web
+from tornado.options import options
 
 from biosignalml.rdf import NAMESPACES
 from biosignalml.utils import xmlescape
 from biosignalml.model import BSML
 
-import templates
-
+from forms import Button, Field
+import htmlview
 
 namespaces = {
   'bsml': str(BSML.URI),
@@ -28,7 +28,7 @@ namespaces.update(NAMESPACES)
 
 def prologue():
 #==============
-  p = [ 'BASE <%s>' % web.config.biosignalml['repository'].uri ]
+  p = [ 'BASE <%s>' % options.repository.uri ]
   for prefix, uri in namespaces.iteritems():
     p.append('PREFIX %s: <%s>' % (prefix, uri))
   return '\n'.join(p)
@@ -36,8 +36,9 @@ def prologue():
 
 def search(sparql):
 #==================
+  if not sparql: return ''
   body = ['<div id="sparqlresult"><table class="search">']
-  results = web.config.biosignalml['repository'].query(sparql, header=True, html=True, abbreviate=True)
+  results = options.repository.query(sparql, header=True, html=True, abbreviate=True)
   for n, r in enumerate(results):
     if n == 0:
       if isinstance(r, list):
@@ -59,19 +60,21 @@ def search(sparql):
   return ''.join(body)
 
 
-_page_template   = templates.Page()
-
-_sparql_template = templates.SparqlForm()
-
-def sparqlquery(data, param=''):
-#===============================
+class Query(htmlview.BasePage):
+#==============================
 ##  logging.debug('DATA: %s', data)
 
-  query = data.get('query', '')
-  if query:
-    result = search(query)
-  else:
-    result = ''
+  def render(self, query, results=''):
+    htmlview.BasePage.render(self, 'tform.html',
+      title = 'SPARQL search...',
+      rows = 16,  cols = 0,
+      buttons = [ Button('Search', 1, 13) ],
+      fields  = [ Field.textarea('SPARQL', 'query', 75, 20, data=query) ],
+      content = results
+      )
+
+  @tornado.web.authenticated
+  def get(self):
     p = [ ]
     p.append(prologue())
     p.append('PREFIX text: <http://4store.org/fulltext#>')
@@ -81,8 +84,9 @@ def sparqlquery(data, param=''):
     p.append('    ?subject ?predicate ?object')
     p.append('    }')
     p.append('  } limit 20')
-    query = '\n'.join(p) # Default namespace prefixes and query
-  return _page_template.page(title   = 'SPARQL search...',
-                             content = _sparql_template.sparqlquery('SPARQL', '/sparqlquery', query)
-                                     + result,
-                            )
+    self.render('\n'.join(p)) # Default namespace prefixes and query
+
+  @tornado.web.authenticated
+  def post(self):
+    query = self.get_argument('query', '')
+    self.render(query, search(query))

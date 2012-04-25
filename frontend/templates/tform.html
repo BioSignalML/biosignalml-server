@@ -11,14 +11,22 @@
    {% end %}
    {% for f in fields %}
     {% if f.prompt %}<span {% raw position(f.promptpos[0], f.promptpos[1], 'prompt') %}>
-     {% if f.prompt[-1] in ['?', ':'] %}{{ f.prompt }}{% else %}{{ f.prompt[:-1] }}:{% end %}
+     {{ f.prompt }}{% if f.prompt[-1] not in ['?', ':'] %}:{% end %}
     </span>{% end %}
-    <span {% raw position(f.fieldpos[0], f.fieldpos[1]) %}>
-     <input value="{{ f.data }}" name="{{ f.id }}" id="{{ f.id }}"
+    {% if f.type == 'textarea' %}
+     <span class="fixed">
+      <textarea name="{{ f.id }}" id="{{ f.id }}"
+       cols="{{ f.fieldpos[0] }}" rows="{{ f.fieldpos[1] }}"
+       onchange="changed(this)">{{ f.data }}</textarea>
+     </span>
+    {% else %}
+     <span {% raw position(f.fieldpos[0], f.fieldpos[1]) %}>
+      <input value="{{ f.data }}" name="{{ f.id }}" id="{{ f.id }}"
        maxlength="{{ f.length }}" style="width:{% raw fieldwidth(f.length) %}em"
        {% if f.type %}type="{{ f.type }}"{% end %}
        onfocus="this.select()" onchange="changed(this)">
-    </span>
+     </span>
+    {% end %}
    {% end %}
   </form>
  </div>
