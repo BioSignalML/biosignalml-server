@@ -137,7 +137,7 @@ function setup_result_click() {
   $.ajax({
    url: '/comet/search/related',
    type: 'POST',
-   data: { 'id': this.id },
+   data: { 'id': this.id, '_xsrf': getCookie("_xsrf") },
    complete:
     function(response, status) {
      if (status == 'success') {
@@ -174,7 +174,8 @@ function enable_cluetips() {
         dataType: 'json',
         type:     'POST',
         data:     'uri=' + $(this).attr('uri').toString()
-        },
+                + '&_xsrf=' + getCookie("_xsrf"),
+			},
       ajaxProcess: function(data) {
         return data.html ;
         },
@@ -190,6 +191,7 @@ $(document).ready(function() {
  $.ajax({
    url: '/comet/search/setup',
    type: 'POST',
+   data: { '_xsrf': getCookie("_xsrf") },
    complete:
      function(response, status) {
        if (status == 'success') {
@@ -240,6 +242,7 @@ $(document).ready(function() {
   var searchdata = get_data() ;
   if (searchdata != '') {
    $("div#spinner").html("<img src='./static/img/ajax-loader.gif'>") ;
+   searchdata['_xsrf'] = getCookie("_xsrf") ;
    $.ajax({
     url: '/comet/search/query',
     type: 'POST',

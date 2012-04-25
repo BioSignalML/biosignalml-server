@@ -69,7 +69,7 @@ class Login(htmlview.BasePage):
                                       self.get_argument('password', ''))
     else:              level = 0
     if level:
-      self.set_cookie('userlevel', str(level),
+      self.set_secure_cookie('userlevel', str(level),
                       **{'max-age': str(frontend.SESSION_TIMEOUT)})
       self.redirect(self.get_argument('next', '/'))
     elif btn == 'Login': self.redirect('/login?unauthorised')

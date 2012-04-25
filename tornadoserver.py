@@ -62,10 +62,11 @@ application = tornado.web.Application([
   ui_modules = { 'Menu':    frontend.htmlview.MenuModule,
                  'SubTree': frontend.htmlview.SubTree },
   cookie_secret = 'a2ojhhjqwbn3knk33d3mzd8ynbw/e;l22s=2gDHHaqq9',
+  xsrf_cookies = True,
   debug = options.options.debug,
   )
 
-application.listen(options.port, options.host)
+application.listen(options.port, options.host, xheaders=True)
 logging.info('Starting http://%s:%d/', options.host, options.port)
 
 try:

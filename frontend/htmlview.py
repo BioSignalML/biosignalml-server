@@ -27,13 +27,13 @@ class BasePage(tornado.web.RequestHandler):
     kwargs = { 'title': '', 'content': '',
                'stylesheets': [ ], 'scripts': [ ],
                'refresh': 0, 'alert': '', 'message': '',
-               'keypress': None, 'level': int(self.get_cookie('userlevel', 0)),
+               'keypress': None, 'level': self.get_current_user(),
              }
     kwargs.update(kwds)
     return tornado.web.RequestHandler.render(self, template, **kwargs)
 
   def get_current_user(self):
-    try: return int(self.get_cookie('userlevel'))
+    try: return int(self.get_secure_cookie('userlevel'))
     except TypeError: return 0
 
 PREFIXES = { 'bsml':  BSML.URI }
