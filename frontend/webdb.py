@@ -32,14 +32,14 @@ class Database(object):
     for r in self.execute(''.join(sql), cond): return r[0]
     return 0
 
-  def readrow(self, table, cols, where, order=None):
-  #-------------------------------------------------
+  def readrow(self, table, cols, where, order=None, bindings=None):
+  #----------------------------------------------------------------
     try:                   cols.__iter__
     except AttributeError: cols = [ str(cols) ]
     sql = [ 'select %s from %s' % (', '.join(list(cols)), table) ]
     if where: sql.append(' where %s' % where)
     if order: sql.append(' order %s' % order)
     sql.append(' limit 1')
-    for r in self.execute(''.join(sql)):
+    for r in self.execute(''.join(sql), bindings):
       return { n: r[i] for i, n in enumerate(cols) }
     return { }
