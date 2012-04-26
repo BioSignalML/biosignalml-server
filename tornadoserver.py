@@ -29,6 +29,7 @@ import endpoints.webstream as webstream
 import endpoints.metadata  as metadata 
 import endpoints.recording as recording
 
+import frontend
 import frontend.user
 import frontend.forms
 import frontend.sparql
@@ -59,8 +60,8 @@ application = tornado.web.Application([
   ui_methods = { 'boxsize':    frontend.forms.boxsize,
                  'position':   frontend.forms.position,
                  'fieldwidth': frontend.forms.fieldwidth },
-  ui_modules = { 'Menu':    frontend.htmlview.MenuModule,
-                 'SubTree': frontend.htmlview.SubTree },
+  ui_modules = { 'Menu':    frontend.MenuModule,
+                 'SubTree': frontend.SubTree },
   cookie_secret = 'a2ojhhjqwbn3knk33d3mzd8ynbw/e;l22s=2gDHHaqq9',
   xsrf_cookies = True,
   debug = options.options.debug,
