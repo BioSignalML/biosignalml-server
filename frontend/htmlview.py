@@ -14,9 +14,10 @@ import tornado.web
 from tornado.options import options
 
 import biosignalml.rdf
-from biosignalml.model import BSML
+from biosignalml import BSML, Annotation
 from biosignalml.utils import maketime, trimdecimal, chop
 
+from forms import Button, Field
 import frontend
 import mktree
 import menu
@@ -70,11 +71,15 @@ def property_details(object, properties, **args):
   return '<p>' + '</p><p>'.join(r) + '</p>'
 
 
+def annotatelink(uri):
+  return '<a href="/repository/%s?annotations">Annotations</a>' % uri
+
 signal_properties = Properties([
                       ('Id',    'uri',   chop, ['n']),
                       ('Name',  'label'),
                       ('Units', 'units', abbreviate),
                       ('Rate',  'rate',  trimdecimal),
+                      ('*Annotations', 'uri', annotatelink),
                     ])
 
 def signal_table(handler, recording, selected=None):
@@ -92,6 +97,10 @@ def signal_table(handler, recording, selected=None):
     selected = selectedrow,
     treespace = True,
     tableclass = 'signal')
+
+def annotations(handler, uri):
+  return handler.render_string('annotate.html',
+    uri=uri, annotations = [ ])
 
 
 recording_properties = Properties([
@@ -168,13 +177,31 @@ class Repository(frontend.BasePage):
         recuri = str(recording.uri)
       else:
         selectedsig = None
-      self.render('tpage.html',
-        title = recuri,
-        tree = self.xmltree(repo.recordings(), prefix, frontend.REPOSITORY, name),
-        style = 'signal',
-        content = build_metadata(recuri) + signal_table(self, recording, selectedsig)
-        )
+      kwds = dict(title = recuri, style = 'signal',
+                  tree = self.xmltree(repo.recordings(), prefix, frontend.REPOSITORY, name),
+                  content = build_metadata(recuri)
+                          + signal_table(self, recording, selectedsig) )
+      if 'annotations' in self.request.query:
+        target = selectedsig if selectedsig else recuri
+        kwds['content'] += annotations(self, target)
+        self.render('tform.html',
+          bottom = True,    # Form below other content
+          treespace = True,
+          rows = 6,  cols = 0,
+          buttons = [ Button('Annotate', 1, 4), Button('Cancel', 1, 5) ],
+          fields = [ Field.textarea('Add Annotation', 'annotation', 60, 8),
+                     Field.hidden('target', target ) ],
+          **kwds)
+      else: self.render('tpage.html', **kwds)
     else:
       self.render('tpage.html',
         title = 'Recordings in repository:',
         tree = self.xmltree(repo.recordings(), prefix, frontend.REPOSITORY))
+
+  @tornado.web.authenticated
+  def post(self, name=''):
+    body = self.get_argument('annotation', '').strip()
+    if self.get_argument('action') == 'Annotate' and body:
+      target = self.get_argument('target')
+      recording = repo.get_recording(target)
+      ann = Annotation.note(recording.make_uri(), target, body, user)
