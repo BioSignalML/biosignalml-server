@@ -85,9 +85,9 @@ def signal_table(handler, recording, selected=None):
   selectedrow = -1
   for n, sig in enumerate(recording.signals()):
     if str(sig.uri) == selected: selectedrow = n
-    rows.append(signal_properties.details(sig, n=lenhdr))
+    rows.append(signal_properties.details(sig, True, n=lenhdr))
   return handler.render_string('table.html',
-    header = signal_properties.header(),
+    header = signal_properties.header(True),
     rows = rows,
     selected = selectedrow,
     tableclass = 'signal')
