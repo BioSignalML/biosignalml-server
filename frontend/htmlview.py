@@ -66,8 +66,8 @@ def property_details(object, properties, **args):
   for n, d in enumerate(properties.details(object, **args)):
     if d:
       t = '<br/>'.join(d) if isinstance(d, list) else d
-      r.append((prompts[n] + ': ' + t) if prompts[n] else t)
-  return '<p>' + '</P><p>'.join(r) + '</p>'
+      r.append(prompts[n] + ': ' + t)
+  return '<p>' + '</p><p>'.join(r) + '</p>'
 
 
 signal_properties = Properties([
