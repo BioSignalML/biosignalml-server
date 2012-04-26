@@ -53,6 +53,7 @@ class SubTree(tornado.web.UIModule):
 
 
 class MenuModule(tornado.web.UIModule):
+#======================================
   def render(self, level=0):
     out = [ '<div id="menubar"><ul class="jd_menu">' ]
     for item in menu.getmenu(level): out.append(self.menu_entry(item))
@@ -62,7 +63,7 @@ class MenuModule(tornado.web.UIModule):
   def menu_entry(self, item):
     out = [ '<li>' ]
     if item[1]:
-      out.append('<a href="/%s" title="%s" onClick="return oktoexit(this)">%s</a>' % (item[1], item[0], item[0]))
+      out.append('<a href="%s" title="%s" onClick="return oktoexit(this)">%s</a>' % (item[1], item[0], item[0]))
     elif item[0]:
       out.append('<span class="menu">%s</span>' % item[0])
     if len(item) > 2: out.append(sub_menu(item[2]))

@@ -11,27 +11,29 @@
 
 
 import logging
+
+import frontend
 import user
 
 ADMINMENU  = ("System Administration", None,
-               [ ("Manage Users",                     "users"),
+               [ ("Manage Users",                     "/users"),
 #                ("Display Audit Trail",              "audit"),
 #                ("Display/Configure System Options", "options"),
                ] )
 
 UPDATEMENU  = ("Settings", None,
-               [ ("Namespaces", "namespaces"),
+               [ ("Namespaces", "/namespaces"),
                ] )
 
 def VIEWERMENU(level):
 #=====================
-  return [ ("View Repository",   "repository"),
-           ("Search Repository", "search"),
-           ("SPARQL Query",      "sparqlquery"),
+  return [ ("View Repository",   frontend.REPOSITORY[:-1]),
+           ("Search Repository", "/search"),
+           ("SPARQL Query",      "/sparqlquery"),
          ]
 
-LOGINMENU  = ("Login",  "login")
-LOGOUTMENU = ("Logout", "logout")
+LOGINMENU  = ("Login",  "/login")
+LOGOUTMENU = ("Logout", "/logout")
 
 def getmenu(level):
 #==================
