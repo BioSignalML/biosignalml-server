@@ -20,6 +20,8 @@
        cols="{{ f.fieldpos[0] }}" rows="{{ f.fieldpos[1] }}"
        onchange="changed(this)">{{ f.data }}</textarea>
      </span>
+    {% elif f.type == 'hidden' %}
+     <input type="hidden" value="{{ f.data }}" name="{{ f.id }}">
     {% else %}
      <span {% raw position(f.fieldpos[0], f.fieldpos[1]) %}>
       <input value="{{ f.data }}" name="{{ f.id }}" id="{{ f.id }}"
