@@ -1,16 +1,16 @@
 {% set selected = globals().get('selected', -1) %}
-{% block content %}
-  <div class="table"><table {% if globals().get('tableclass') %}class="{{ tableclass }}"{% end %}>
-   <tr>{% for h in header %}<th>{{ h }}</th>{% end %}</tr>  
-   {% set odd = True %}
-   {% for n, row in enumerate(rows) %}
-    <tr{% if (n == selected) %} class="selected"{% elif odd %} class="odd"{% end %}>
-     {% for r in row %}
-       <td>{% if isinstance(r, list) %}{% for l in r %}{{ l }}<br/>{% end %}
-           {% else %}{% raw r %}{% end %}</td>
-     {% end %}
-    <tr>
-    {% set odd = not odd %}
-   {% end %}
-  </table></div>
-{% end %}
+<div class="table{% if globals().get('treespace') %} treespace{% end %}">
+ <table {% if globals().get('tableclass') %}class="{{ tableclass }}"{% end %}>
+  <tr>{% for h in header %}<th>{{ h }}</th>{% end %}</tr>
+  {% set odd = True %}
+  {% for n, row in enumerate(rows) %}
+   <tr{% if (n == selected) %} class="selected"{% elif odd %} class="odd"{% end %}>
+    {% for r in row %}
+     <td>{% if isinstance(r, list) %}{% for l in r %}{{ l }}<br/>{% end %}
+         {% else %}{% raw r %}{% end %}</td>
+    {% end %}
+   <tr>
+   {% set odd = not odd %}
+  {% end %}
+ </table>
+</div>
