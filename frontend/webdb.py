@@ -9,15 +9,14 @@
 ######################################################
 
 import apsw
-from tornado.options import options
 
 
 class Database(object):
 #======================
 
-  def __init__(self):
-  #------------------
-    self._db = apsw.Connection(options.database)
+  def __init__(self, name):
+  #------------------------
+    self._db = apsw.Connection(name)
     self._cursor = self._db.cursor()
 
   def execute(self, sql, bindings=None):

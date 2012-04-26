@@ -21,6 +21,8 @@ from tornado.options import define
 ##import rpdb2; rpdb2.start_embedded_debugger('test')
 
 import triplestore.repository as repository
+import frontend.webdb as webdb
+
 
 RECORDING_ENDPOINT  = '/recording/'    #: Import and export complete recording files
 METADATA_ENDPOINT   = '/metadata/'     #: Get and put RDF metadata
@@ -93,7 +95,8 @@ def init_server():
   logging.info('Starting BioSignalML repository server...')
 
   define('recordings', os.path.join(server_base, options.repository['recordings']))
-  define('database',   os.path.join(server_base, options.repository['database']))
+  define('database',
+    webdb.Database(os.path.join(server_base, options.repository['database'])))
   define('repository',
     repository.BSMLRepository(options.repository['uri'], options.repository['triplestore']))
   define('recording_prefix', options.repository['uri'] + options.repository['recording_path'])
