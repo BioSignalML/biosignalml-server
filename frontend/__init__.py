@@ -89,14 +89,13 @@ class BasePage(tornado.web.RequestHandler):
     return tornado.web.RequestHandler.render(self, template, **kwargs)
 
   def get_current_user(self):
-    level = self.get_secure_cookie('userlevel')
-    if level is not None:
-      self.set_secure_cookie('userlevel', level, **{'max-age': str(SESSION_TIMEOUT)})
-      try: return int(level)
-      except TypeError: pass
-    return 0
+    token = self.get_secure_cookie('usertoken')
+    if token is not None:
+      self.set_secure_cookie('usertoken', token, **{'max-age': str(SESSION_TIMEOUT)})
+    return token
 
   def userlevel(self):
+    import user
     if not hasattr(self, "_user_level"):
-      self._user_level = self.get_current_user()
+      self._user_level = user.level(self.current_user)
     return self._user_level

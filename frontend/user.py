@@ -8,10 +8,12 @@
 #
 ######################################################
 
+import uuid
 import logging
-import tornado.web
 
-from webdb import Database
+import tornado.web
+from tornado.options import options
+
 from forms import Button, Field
 import frontend
 
@@ -20,24 +22,42 @@ UPDATER       = 5
 ADMINISTRATOR = 9
 
 
+def name(token):
+#===============
+  try:
+    return options.database.readrow('users', 'username',
+                                    where='token=:token', bindings=dict(token=token))['username']
+  except KeyError:
+    return None
+
+def level(token):
+#================
+  try:
+    return int(options.database.readrow('users', 'level',
+                                        where='token=:token', bindings=dict(token=token))['level'])
+  except (TypeError, KeyError):
+    return 0
+
 def _check(name, passwd):
 #========================
-  level = 0
-  db = Database()
-  row = db.findrow('users', {'username': name, 'password': passwd })
+  db = options.database
+  db.execute('begin transaction')
+  row = db.findrow('users', dict(username=name, password=passwd))
   if row:
     try:
-      level = int(db.readrow('users', 'level', where='rowid=%d' % row)['level'])
-      ## logging.debug("User level: %d", level)
+      token = str(uuid.uuid1())
+      db.execute('update users set token=:token where rowid=:row',
+                    dict(token=token, row=row))
+      db.execute('commit')
+      return token
     except Exception:
-      raise
-      pass
-  return level
+      db.execute('rollback')
+  return None
 
 class Logout(frontend.BasePage):
 #===============================
   def get(self):
-    self.set_secure_cookie('userlevel', '0')
+    self.set_secure_cookie('usertoken', '0')
     self.redirect('/login')
 
 class Login(frontend.BasePage):
@@ -57,12 +77,13 @@ class Login(frontend.BasePage):
 
   def post(self):
     import frontend
-    btn = self.get_argument('action', '')
-    if btn == 'Login': level = _check(self.get_argument('username', ''),
-                                      self.get_argument('password', ''))
-    else:              level = 0
-    if level:
-      self.set_secure_cookie('userlevel', str(level),
+    token = None
+    btn = self.get_argument('action')
+    username = self.get_argument('username', '')
+    if btn == 'Login' and username:
+      token = _check(username, self.get_argument('password', ''))
+    if token:
+      self.set_secure_cookie('usertoken', token,
                       **{'max-age': str(frontend.SESSION_TIMEOUT)})
       self.redirect(self.get_argument('next', '/'))
     elif btn == 'Login': self.redirect('/login?unauthorised')
