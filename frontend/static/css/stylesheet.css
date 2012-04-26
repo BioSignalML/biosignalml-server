@@ -345,26 +345,24 @@ span.right {
 
 #tree {
   float: left ;
-  width: 250px ;
+  width: 200px ;
   margin-right: 10px ;
   padding: 5px ;
   padding-right: 0 ;
   }
 
+div.treespace {
+  margin-left: 215px ;      /* tree width + padding + margins */
+  margin-right: 10px ;
+  }
+
 div#contentbody {
-  margin-left: 0px ;      /* Start past tree column */
+  margin-left: 0px ;
   margin-right: 0px ;
   border: 0 ;
 /*  width: 88% ;   */
 /*  width: 100% ;  */	    /* IE 7 needs something to pull out RH margin... */	
   }
-
-
-div.table {
-  margin-left: 265px ;      /* tree width + padding + margins ?? */
-  margin-right: 10px ;
-  }
-
 
 /* clueTip layout */
 
