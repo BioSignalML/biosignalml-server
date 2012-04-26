@@ -90,6 +90,7 @@ def signal_table(handler, recording, selected=None):
     header = signal_properties.header(True),
     rows = rows,
     selected = selectedrow,
+    treespace = True,
     tableclass = 'signal')
 
 
