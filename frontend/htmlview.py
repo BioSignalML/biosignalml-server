@@ -37,12 +37,15 @@ class Properties(object):
   def __init__(self, properties):
     self._properties = properties
 
-  def header(self):
-    return [ p[0] for p in self._properties ]
+  def header(self, all=False):
+    if all:
+      return [ (p[0] if p[0][0] != '*' else p[0][1:]) for p in self._properties ]
+    else:
+      return [ p[0] for p in self._properties if p[0][0] != '*']
 
-  def details(self, object, **args):
+  def details(self, object, all=False, **args):
     r = [ ]
-    for p in self._properties:
+    for p in [ p for p in self._properties if (all or p[0][0] != '*')]:
       prop = p[1]
       v = getattr(object, prop, None)
       if v is None:
