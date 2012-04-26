@@ -40,9 +40,13 @@
    <div class="title"><h1>{{ title }}</h1></div>
    {% if globals().get('tree') %}{% raw tree %}{% end %} 
    <div id="contentbody">
-     {% block content %}
+     {% if not globals().get('bottom', 0) %}
+       {% block content %}{% end %}
      {% end %}
      {% if globals().get('content') %}{% raw content %}{% end %}
+     {% if globals().get('bottom', 0) %}
+       {% block content %}{% end %}
+     {% end %}
    </div>
   </div>
   <div id="footer"></div>
