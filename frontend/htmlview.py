@@ -148,7 +148,7 @@ class Repository(frontend.BasePage):
   def get(self, name=''):
     #logging.debug('GET: %s (%s)', name, self.get_current_user())
     repo = options.repository
-    prefix = repo.uri + '/recording'  ## MUST match path of ReST recording server ####
+    prefix = options.recording_prefix[:-1]
     if name:
       recuri = (name if name.startswith('http://') or name.startswith('file://')
                else '%s/%s' % (prefix, name))

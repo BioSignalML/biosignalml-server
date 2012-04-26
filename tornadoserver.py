@@ -39,7 +39,7 @@ application = tornado.web.Application([
     ( server.STREAMDATA_ENDPOINT,         webstream.StreamDataSocket),
     ( '/stream/echo/',                    webstream.StreamEchoSocket),
     ( server.METADATA_ENDPOINT + '(.*)',  metadata.metadata),
-    ( server.options.repository['recording_prefix'] + '(.*)', recording.ReST),
+    ( server.RECORDING_ENDPOINT + '(.*)', recording.ReST),
     ('/comet/metadata',                   frontend.htmlview.Metadata), # For tooltip popups
     ('/repository/(.*)',                  frontend.htmlview.Repository),
     ('/repository',                       frontend.htmlview.Repository),

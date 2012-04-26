@@ -35,7 +35,7 @@ DEFAULTS  = { 'uri': 'http://devel.biosignalml.org',
               'database': './database/repository.db',
               'recordings': './recordings/',
               'triplestore': 'http://localhost:8083',
-              'recording_prefix': RECORDING_ENDPOINT,
+              'recording_path': RECORDING_ENDPOINT,
 
               'log_file': './log/biosignalml.log',
               'log_level': 'DEBUG', # 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
@@ -96,7 +96,7 @@ def init_server():
   define('database',   os.path.join(server_base, options.repository['database']))
   define('repository',
     repository.BSMLRepository(options.repository['uri'], options.repository['triplestore']))
-  define('recording_prefix', options.repository['uri'] + options.repository['recording_prefix'])
+  define('recording_prefix', options.repository['uri'] + options.repository['recording_path'])
   define('debug',      (options.logging['log_level'] == 'DEBUG'))
   tornado.options.host = options.repository['host']
   tornado.options.port = int(options.repository['port'])
