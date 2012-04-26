@@ -80,6 +80,8 @@ div.formbox {
   background-color: #CBEB8D;
   border: 2px dotted #063;
   padding: 10px ;
+  padding-top: 0 ;
+  padding-left: 0 ;
   margin: 10px ;
   }
 
@@ -125,6 +127,10 @@ form span.fixed textarea[readonly] {
   background: #CCC ;
   border: 0.1em inset;
   padding-left: 0.2em ;
+  }
+
+form span.fixed textarea {
+  width: 100% ;
   }
 
 form span.fixed select {
