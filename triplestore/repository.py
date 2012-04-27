@@ -17,7 +17,7 @@ import json
 
 import biosignalml.formats
 
-from biosignalml import BSML, Recording, Signal
+from biosignalml import BSML, Recording, Signal, Event, Annotation
 from biosignalml.utils import xmlescape
 
 from biosignalml.rdf import RDF, DCTERMS
@@ -259,6 +259,24 @@ class BSMLRepository(Repository):
 #      r.sort()
 #      return r
 #    else: return None
+
+  def get_annotation(self, uri):
+  #-----------------------------
+    '''
+    Get an Annotation from the repository.
+
+    :param uri: The URI of an Annotation.
+    :rtype: :class:`~biosignalml.Annotation`
+    '''
+    graph = self.make_graph(uri, '<%(uri)s> ?p ?o',
+                            'graph ?rec { ?rec a <%(rtype)s> .'
+                          + ' <%(uri)s> a  <%(type)s> .'
+                          + ' <%(uri)s> ?p ?o }',
+                            params = { 'uri': str(uri),
+                                       'type': str(BSML.Annotation),
+                                       'rtype': str(BSML.Recording),
+                                      })
+    return Annotation.create_from_graph(uri, graph) if len(graph) else None
 
 
 class SparqlHead(object):
