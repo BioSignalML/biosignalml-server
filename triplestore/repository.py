@@ -71,7 +71,7 @@ class Repository(object):
 
   def extend_graph(self, uri, rdf, format=Format.RDFXML):
   #---------------------------------------------------
-    self._triplestore.extend_graph(uri, rdf, format=Format.TURTLE)
+    self._triplestore.extend_graph(uri, rdf, format=format)
 
 
   def delete_graph(self, uri):
