@@ -126,7 +126,7 @@ class Repository(object):
     '''
     ttl = self.construct(template, where, graph_uri, params, Format.TURTLE)
     #logging.debug("Statements: %s", ttl)  ###
-    return Graph.create_from_string(ttl, Format.TURTLE, Uri(self.uri))
+    return Graph.create_from_string(uri, ttl, Format.TURTLE)
 
   def get_type(self, uri, graph=None):
   #-----------------------------------
