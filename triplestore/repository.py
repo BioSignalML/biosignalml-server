@@ -117,8 +117,8 @@ class Repository(object):
       elif r['o']['type'] == 'typed-literal': return r['o']['value'] ## check datatype and convert...
     return None
 
-  def make_graph(self, template, where, graph_uri=None, params = { }):
-  #-------------------------------------------------------------------
+  def make_graph(self, uri, template, where, graph_uri=None, params = { }):
+  #------------------------------------------------------------------------
     '''
     Construct a RDF graph from a query againt the repository/
 
@@ -204,8 +204,9 @@ class BSMLRepository(Repository):
     if graph_uri is not None:
       rclass = biosignalml.formats.CLASSES.get(str(self.get_object(uri, DCTERMS.format, graph_uri)),
                                                Recording)
-      graph = self.make_graph('<%(uri)s> ?p ?o', '<%(uri)s> ?p ?o', graph_uri, { 'uri': str(graph_uri) })
-      return rclass.create_from_graph(str(graph_uri), graph)
+      graph = self.make_graph(graph_uri, '<%(uri)s> ?p ?o', '<%(uri)s> ?p ?o',
+                              graph_uri, { 'uri': str(graph_uri) })
+      return rclass.create_from_graph(graph_uri, graph)
     else:
       return None
 
@@ -223,7 +224,7 @@ class BSMLRepository(Repository):
     rec = self.get_recording(uri, graph_uri)
     if rec is not None:
       for sig in self.get_subjects(BSML.recording, rec.uri, rec.uri):
-        graph = self.make_graph('<%(uri)s> ?p ?o', '<%(uri)s> ?p ?o', rec.uri, { 'uri': str(sig) })
+        graph = self.make_graph(uri, '<%(uri)s> ?p ?o', '<%(uri)s> ?p ?o', rec.uri, { 'uri': str(sig) })
         rec.add_signal(Signal.create_from_graph(str(sig), graph, units=None))
     return rec
 
@@ -239,7 +240,7 @@ class BSMLRepository(Repository):
     :param uri: The URI of a Signal.
     :rtype: :class:`~biosignalml.Signal`
     '''
-    graph = self.make_graph('<%(uri)s> ?p ?o',
+    graph = self.make_graph(uri, '<%(uri)s> ?p ?o',
                             'graph ?rec { ?rec a <%(rtype)s> .'
                           + ' <%(uri)s> <%(reln)s> ?rec .'
                           + ' <%(uri)s> a  <%(type)s> .'
