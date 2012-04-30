@@ -20,7 +20,7 @@ import biosignalml.formats
 from biosignalml import BSML, Recording, Signal, Event, Annotation
 from biosignalml.utils import xmlescape
 
-from biosignalml.rdf import RDF, DCTERMS
+from biosignalml.rdf import RDF, DCTERMS, OA
 from biosignalml.rdf import Uri, Node, Resource, BlankNode, Graph, Statement
 from biosignalml.rdf import Format
 
@@ -260,23 +260,44 @@ class BSMLRepository(Repository):
 #      return r
 #    else: return None
 
-  def get_annotation(self, uri):
-  #-----------------------------
+  def get_annotation(self, uri, graph_uri=None):
+  #---------------------------------------------
     '''
     Get an Annotation from the repository.
 
     :param uri: The URI of an Annotation.
+    :param graph_uri: An optional URI of the graph to query.
     :rtype: :class:`~biosignalml.Annotation`
     '''
-    graph = self.make_graph(uri, '<%(uri)s> ?p ?o',
-                            'graph ?rec { ?rec a <%(rtype)s> .'
-                          + ' <%(uri)s> a  <%(type)s> .'
-                          + ' <%(uri)s> ?p ?o }',
-                            params = { 'uri': str(uri),
-                                       'type': str(BSML.Annotation),
-                                       'rtype': str(BSML.Recording),
-                                      })
+    if graph_uri is None:
+      graph_uri = self.get_recording_graph_uri(uri)
+    graph = self.make_graph(uri,
+      '<%(u)s> ?p ?o',
+      'graph <%(g)s> { <%(u)s> a <%(t)s> . <%(u)s> ?p ?o }',
+      params = dict(g=graph_uri, u=uri, t=BSML.Annotation))
+    graph.add_statements(self.make_graph(uri,
+      '?b ?p ?o',
+      'graph <%(g)s> { <%(u)s> a <%(t)s> . <%(u)s> <%(b)s> ?b . ?b ?p ?o }',
+      params = dict(g=graph_uri, u=uri, t=BSML.Annotation, b=OA.hasBody)) )
+#    print body.serialise(rdf.Format.TURTLE)
     return Annotation.create_from_graph(uri, graph) if len(graph) else None
+
+  def annotations(self, uri, graph_uri=None):
+  #------------------------------------------
+    '''
+    Return a list of all Annotations about a subject.
+
+    :param uri: The URI of the subject.
+    :rtype: list[:class:`~biosignalml.Annotation`]
+    '''
+    if graph_uri is None:
+      graph_uri = self.get_recording_graph_uri(uri)
+    return [ (r['a']['value'])
+      for r in self._triplestore.select(
+        '?a',
+        'graph <%(g)s> { ?a a <%(t)s> . ?a <%(tg)s> <%(u)s> . ?a <%(tm)s> ?tm }'
+          % dict(g=graph_uri, t=BSML.Annotation, tg=OA.hasTarget, u=uri, tm=OA.annotated),
+        order = '?tm') ]
 
 
 class SparqlHead(object):
