@@ -56,17 +56,18 @@ class FourStore(TripleStore):
                                     }, Format.JSON)
                                 )['boolean']
 
-  def select(self, fields, where, graph=None, distinct=False, limit=None):
-  #-----------------------------------------------------------------------
-    return json.loads(self.query('select%(distinct)s %(fields)s where { %(graph)s { %(where)s } }%(limit)s'
-                                  % { 'distinct': ' distinct' if distinct else '',
-                                      'fields': fields,
-                                      'graph': ('graph <%s>' % str(graph)) if graph else '',
-                                      'where': where,
-                                      'limit': (' limit %s' % limit) if limit else '',
-                                    }, Format.JSON
-                                )
-                     ).get('results', {}).get('bindings', [])
+  def select(self, fields, where, graph=None, distinct=False, order=None, limit=None):
+  #-----------------------------------------------------------------------------------
+    return json.loads(
+      self.query('select%(distinct)s %(fields)s where { %(graph)s { %(where)s } }%(order)s%(limit)s'
+                 % dict(distinct=' distinct' if distinct else '',
+                        fields=fields,
+                        graph=('graph <%s>' % graph) if graph else '',
+                        where=where,
+                        order=(' order by %s' % order) if order else '',
+                        limit=(' limit %s' % limit) if limit else ''),
+                 Format.JSON)
+        ).get('results', {}).get('bindings', [])
 
   def construct(self, template, where, graph=None, params = { }, format=Format.RDFXML):
   #------------------------------------------------------------------------------------

@@ -27,8 +27,25 @@ class TripleStore(object):
   #--------------------------------
     pass
 
-  def select(self, fields, where, graph=None, distinct=False, limit=None):
-  #-----------------------------------------------------------------------
+  def select(self, fields, where, graph=None, order=None, distinct=False, limit=None):
+  #-----------------------------------------------------------------------------------
+    '''
+    Get all items from a graph or repository.
+
+    :param fields: The variables to be returned from the matched pattern.
+    :type fields: str
+    :param where: The graph pattern to match.
+    :type where: str
+    :param graph: The URI of an optional graph to query within.
+    :param order: The variable(s) to optionall order the results.
+    :param distinct: Ensure result sets are distinct.
+    :param limit: Optionally limit the number of result sets.
+    :type limit: str
+    :return: A list of dictionaries, keyed by selected field names, where each value
+     is a dictionary about the result field, as per the 'bindings' list described in
+     http://www.w3.org/TR/rdf-sparql-json-res/.
+    :rtype: list
+    '''
     pass
 
   def construct(self, template, where, graph=None, params = { }, format=Format.RDFXML):
