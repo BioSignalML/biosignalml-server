@@ -185,12 +185,12 @@ class ReST(httpchunked.ChunkedHandler):
   def finished_put(self, writer):
   #------------------------------
     writer._output.close()
+    logging.debug("Imported %s -> %s (%s)", writer._source, writer._fname, writer._uri)
     recording = writer.Recording.open(writer._fname, uri=writer._uri, digest=writer._sha.hexdigest())
     options.repository.replace_graph(recording.uri, recording.metadata_as_graph().serialise())
     recording.close()
 
 
-    logging.debug("Imported %s -> %s (%s)", writer._source, writer._fname, writer._uri)
 
     # Or do we return HTML? RDF/XML of provenance? And include location in provenance...
     # OR a <status>Added...</status> message ???
