@@ -22,42 +22,22 @@ UPDATER       = 5
 ADMINISTRATOR = 9
 
 
-def name(token):
+def level(name):
 #===============
   try:
-    return options.database.readrow('users', 'username',
-                                    where='token=:token', bindings=dict(token=token))['username']
-  except KeyError:
-    return None
-
-def level(token):
-#================
-  try:
     return int(options.database.readrow('users', 'level',
-                                        where='token=:token', bindings=dict(token=token))['level'])
+                                        where='username=:name', bindings=dict(name=name))['level'])
   except (TypeError, KeyError):
     return 0
 
 def _check(name, passwd):
 #========================
-  db = options.database
-  db.execute('begin transaction')
-  row = db.findrow('users', dict(username=name, password=passwd))
-  if row:
-    try:
-      token = str(uuid.uuid1())
-      db.execute('update users set token=:token where rowid=:row',
-                    dict(token=token, row=row))
-      db.execute('commit')
-      return token
-    except Exception:
-      db.execute('rollback')
-  return None
+  return options.database.findrow('users', dict(username=name, password=passwd))
 
 class Logout(frontend.BasePage):
 #===============================
   def get(self):
-    self.set_secure_cookie('usertoken', '0')
+    self.set_secure_cookie('username', '')
     self.redirect('/login')
 
 class Login(frontend.BasePage):
@@ -77,14 +57,10 @@ class Login(frontend.BasePage):
 
   def post(self):
     import frontend
-    token = None
     btn = self.get_argument('action')
     username = self.get_argument('username', '')
-    if btn == 'Login' and username:
-      token = _check(username, self.get_argument('password', ''))
-    if token:
-      self.set_secure_cookie('usertoken', token,
-                      **{'max-age': str(frontend.SESSION_TIMEOUT)})
+    if btn == 'Login' and username and _check(username, self.get_argument('password', '')):
+      self.set_secure_cookie('username', username, **{'max-age': str(frontend.SESSION_TIMEOUT)})
       self.redirect(self.get_argument('next', '/'))
     elif btn == 'Login': self.redirect('/login?unauthorised')
     else:                self.redirect('/login')

@@ -89,10 +89,10 @@ class BasePage(tornado.web.RequestHandler):
     return tornado.web.RequestHandler.render(self, template, **kwargs)
 
   def get_current_user(self):
-    token = self.get_secure_cookie('usertoken')
-    if token is not None:
-      self.set_secure_cookie('usertoken', token, **{'max-age': str(SESSION_TIMEOUT)})
-    return token
+    name = self.get_secure_cookie('username')
+    if name is not None:
+      self.set_secure_cookie('username', name, **{'max-age': str(SESSION_TIMEOUT)})
+    return name
 
   def userlevel(self):
     import user
