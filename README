@@ -35,3 +35,8 @@ curl -T ~/biosignalml/testdata/sinewave.edf -H "Content-type: application/x-edf"
 curl -H 'Accept: application/x-stream'						 \
   http://devel.biosignalml.org/recording/test/sinewave
 
+
+
+curl -H "Transfer-Encoding: chunked" -T file5M \
+  http://devel.biosignalml.org/recording/test/sinewave
+
