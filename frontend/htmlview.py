@@ -178,6 +178,9 @@ def build_metadata(uri):
     elif objtype == BSML.Annotation:
       ann = repo.get_annotation(uri)
       html.append(property_details(ann, annotation_properties))
+    elif objtype == rdf.CNT.ContentAsText:
+      ann = repo.get_annotation_by_content(uri)
+      html.append(property_details(ann, annotation_properties))
     else:
       html.append(str(objtype))
   html.append('</div>')

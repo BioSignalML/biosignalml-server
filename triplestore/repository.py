@@ -282,6 +282,21 @@ class BSMLRepository(Repository):
 #    print body.serialise(rdf.Format.TURTLE)
     return Annotation.create_from_graph(uri, graph) if len(graph) else None
 
+  def get_annotation_by_content(self, uri, graph_uri=None):
+    '''
+    Get an Annotation from the repository idebtified by its body content.
+
+    :param uri: The URI of the body of an Annotation.
+    :param graph_uri: An optional URI of the graph to query.
+    :rtype: :class:`~biosignalml.Annotation`
+    '''
+    if graph_uri is None:
+      graph_uri = self.get_recording_graph_uri(uri)
+    for r in self._triplestore.select('?a',
+      'graph <%(g)s> { ?a a <%(t)s> . ?a <%(b)s> <%(u)s> }'
+        % dict(g=graph_uri, t=BSML.Annotation, b=OA.hasBody, u=uri) ):
+      return self.get_annotation(r['a']['value'], graph_uri)
+
   def annotations(self, uri, graph_uri=None):
   #------------------------------------------
     '''
