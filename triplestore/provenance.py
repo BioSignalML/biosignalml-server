@@ -13,26 +13,27 @@ from datetime import datetime
 
 from biosignalml.rdf import Graph, Statement
 from biosignalml.rdf import DCTERMS
+from biosignalml.utils import utctime, datetime_to_isoformat
 
 
 class Provenance(Graph):
 #=======================
 
   def __init__(self, store, uri):
-  #-------------------------
-    super(Provenance, self).__init__(uri)
+  #------------------------------
+    Graph.__init__(self, uri)
     self.__store = store
 
-  def add(self, uri): ## , format, digest):
-  #------------------------------------
-    self.append(Statement(uri, DCTERMS.dateSubmitted, datetime.utcnow().isoformat()))
+  def add(self, uri, creator): ## , format, digest):
+  #---------------------------
+    self.append(Statement(uri, DCTERMS.dateSubmitted, datetime_to_isoformat(utctime()) ))
     ##### self.append(Statement(uri, DCTERMS.format,        format))
     ## And need to now put these into the store....
 
   def delete(self, graph):
   #---------------------
     ## 'DCTERMS.dateRemoved' is not a DCTERMS Terms property...
-    self.append(Statement(uri, DCTERMS.dateRemoved, datetime.utcnow().isoformat()), self)
+    self.append(Statement(uri, DCTERMS.dateRemoved, datetime_to_isoformat(utctime()) ))
     ## ANd need to updayte the store...
 
 
