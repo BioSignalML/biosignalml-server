@@ -13,18 +13,20 @@ import logging
 import tornado.web
 from tornado.options import options
 
-import biosignalml.rdf
+import biosignalml.rdf as rdf
 from biosignalml import BSML, Annotation
-from biosignalml.utils import maketime, trimdecimal, chop
+from biosignalml.utils import trimdecimal, chop, xmlescape
+from biosignalml.utils import maketime, datetime_to_isoformat
 
 from forms import Button, Field
 import frontend
 import mktree
 import menu
+import user
 
 
 PREFIXES = { 'bsml':  BSML.URI }
-PREFIXES.update(biosignalml.rdf.NAMESPACES)
+PREFIXES.update(rdf.NAMESPACES)
 
 def abbreviate(u):
   s = str(u) if u else ''
@@ -62,17 +64,24 @@ class Properties(object):
     return r
 
 def property_details(object, properties, **args):
+#------------------------------------------------
   r = [ ]
   prompts = properties.header()
   for n, d in enumerate(properties.details(object, **args)):
     if d:
-      t = '<br/>'.join(d) if isinstance(d, list) else d
-      r.append(prompts[n] + ': ' + t)
+      t = '<br/>'.join(list(d)) if hasattr(d, '__iter__') else str(d)
+      r.append('<span class="emphasised">%s: </span>%s' % (prompts[n], xmlescape(t).replace('\n', '<br/>')))
   return '<p>' + '</p><p>'.join(r) + '</p>'
 
 
+def rdflink(uri):
+#----------------
+  return '<a href="%s">RDF</a>' % uri
+
 def annotatelink(uri):
+#---------------------
   return '<a href="/repository/%s?annotations">Annotations</a>' % uri
+
 
 signal_properties = Properties([
                       ('Id',    'uri',   chop, ['n']),
@@ -80,9 +89,56 @@ signal_properties = Properties([
                       ('Units', 'units', abbreviate),
                       ('Rate',  'rate',  trimdecimal),
                       ('*Annotations', 'uri', annotatelink),
+                      ('*RDF',         'uri', rdflink),
                     ])
 
+recording_properties = Properties([
+                         ('Desc',      'description'),
+                         ('Created',   'starttime'),
+                         ('Duration',  'duration', maketime),
+                         ('Format',    'format', abbreviate),
+                         ('Study',     'investigation'),
+                         ('Comments',  'comment'),
+##                         ('Source',    'source'),
+                         ('Submitted', 'dateSubmitted', datetime_to_isoformat),
+                       ])
+
+annotation_properties = Properties([
+                          ('About',      'target'),
+                          ('Created',    'annotated', datetime_to_isoformat),
+                          ('Author',     'annotator'),
+                          ('Annotation', 'body', lambda b: b.text),
+                        ])
+
+def recording_info(rec):
+#-----------------------
+  html = [ '<div id="recording" class="treespace">' ]
+  html.append('<div class="block">')
+  html.append(rdflink(rec.uri))
+  html.append(annotatelink(rec.uri))
+  html.append('</div>')
+  html.append(property_details(rec, recording_properties))
+  html.append('</div>')
+  return ''.join(html)
+
+def annotation_info(ann):
+#------------------------
+  props = Properties([('Author',     'annotator'),
+                      ('Created',    'annotated', datetime_to_isoformat),
+                      ('Annotation', 'body', lambda b: b.text)])
+  h = [ ]
+  prompts = props.header()
+  for n, d in enumerate(props.details(ann)):
+    if d is None: d = ''
+    t = '<br/>'.join(list(d)) if hasattr(d, '__iter__') else str(d)
+    p = '<span class="prompt">%s: </span>%s' % (prompts[n], xmlescape(t).replace('\n', '<br/>'))
+    if   n == 0: h.append('<div><div class="half">%s</div>' % p)
+    elif n == 1: h.append('<span>%s</span></div>' % p)
+    else:        h.append('<p>%s</p>' % p)
+  return ''.join(h)
+
 def signal_table(handler, recording, selected=None):
+#---------------------------------------------------
   lenhdr = len(str(recording.uri)) + 1
   # Above is for abbreviating signal id;
   # should we check str(sig.uri).startswith(str(rec.uri)) ??
@@ -98,23 +154,9 @@ def signal_table(handler, recording, selected=None):
     treespace = True,
     tableclass = 'signal')
 
-def annotations(handler, uri):
-  return handler.render_string('annotate.html',
-    uri=uri, annotations = [ ])
-
-
-recording_properties = Properties([
-                         ('Desc',      'description'),
-                         ('Created',   'starttime'),
-                         ('Duration',  'duration', maketime),
-                         ('Format',    'format', abbreviate),
-                         ('Study',     'investigation'),
-                         ('Comments',  'comment'),
-                         ('Source',    'source'),
-                         ('Submitted', 'dateSubmitted', lambda d: str(d) + ' UTC'),
-                       ])
 
 def build_metadata(uri):
+#-----------------------
   #logging.debug('Get metadata for: %s', uri)
   html = [ '<div class="metadata">' ]
   if uri:
@@ -129,10 +171,15 @@ def build_metadata(uri):
     elif objtype == BSML.Signal:       # repo.has_signal(uri)
       sig = repo.get_signal(uri)
       html.append(property_details(sig, signal_properties, n=0))
-    elif objtype == BSML.Event:
-      html.append('event comment, time, etc')
+    elif objtype in (BSML.Event, rdf.EVT.Event):
+      html.append('event type, time, etc')
+    elif objtype in (rdf.TL.RelativeInstant, rdf.TL.RelativeInterval):
+      html.append('time, etc')
     elif objtype == BSML.Annotation:
-      html.append('annotation comment, time, etc')
+      ann = repo.get_annotation(uri)
+      html.append(property_details(ann, annotation_properties))
+    else:
+      html.append(str(objtype))
   html.append('</div>')
   return ''.join(html)
 
@@ -146,7 +193,7 @@ class Metadata(tornado.web.RequestHandler):  # Tool-tip popup
 class Repository(frontend.BasePage):
 #===================================
 
-  def xmltree(self, nodes, base, prefix, select=''):
+  def _xmltree(self, nodes, base, prefix, select=''):
     tree = mktree.maketree(nodes, base)
     #logging.debug('tree: %s', tree)
     if select.startswith(options.recording_prefix):
@@ -155,19 +202,18 @@ class Repository(frontend.BasePage):
       selectpath = select.rsplit('/', select.count('/') - 2)
     else:
       selectpath = select.split('/')
+    #logging.debug('SP: %s, %s', select, selectpath)
     return self.render_string('ttree.html',
                                tree=tree, prefix=prefix,
                                selectpath=selectpath)
 
-  @tornado.web.authenticated
-  def get(self, name=''):
-    #logging.debug('GET: %s (%s)', name, self.get_current_user())
+  def _show_contents(self, name):
     repo = options.repository
     prefix = options.recording_prefix[:-1]
     if name:
       recuri = (name if name.startswith('http://') or name.startswith('file://')
                else '%s/%s' % (prefix, name))
-      logging.debug('RECORDING: %s', recuri)
+      #logging.debug('RECORDING: %s', recuri)
       recording = repo.get_recording_with_signals(recuri)
       if recording is None:
         self.send_error(404) # 'Unknown recording...')
@@ -178,15 +224,18 @@ class Repository(frontend.BasePage):
       else:
         selectedsig = None
       kwds = dict(title = recuri, style = 'signal',
-                  tree = self.xmltree(repo.recordings(), prefix, frontend.REPOSITORY, name),
-                  content = build_metadata(recuri)
+                  tree = self._xmltree(repo.recordings(), prefix, frontend.REPOSITORY, name),
+                  content = recording_info(recording)
                           + signal_table(self, recording, selectedsig) )
       if 'annotations' in self.request.query:
         target = selectedsig if selectedsig else recuri
-        kwds['content'] += annotations(self, target)
+        kwds['content'] += self.render_string('annotate.html', uri=target,
+                             annotations = [ annotation_info(repo.get_annotation(ann))
+                                               for ann in repo.annotations(target) ] )
         self.render('tform.html',
           bottom = True,    # Form below other content
           treespace = True,
+          formclass = 'annotform',
           rows = 6,  cols = 0,
           buttons = [ Button('Annotate', 1, 4), Button('Cancel', 1, 5) ],
           fields = [ Field.textarea('Add Annotation', 'annotation', 60, 8),
@@ -196,12 +245,20 @@ class Repository(frontend.BasePage):
     else:
       self.render('tpage.html',
         title = 'Recordings in repository:',
-        tree = self.xmltree(repo.recordings(), prefix, frontend.REPOSITORY))
+        tree = self._xmltree(repo.recordings(), prefix, frontend.REPOSITORY))
+
+  @tornado.web.authenticated
+  def get(self, name=''):
+    self._show_contents(name)
 
   @tornado.web.authenticated
   def post(self, name=''):
     body = self.get_argument('annotation', '').strip()
     if self.get_argument('action') == 'Annotate' and body:
+      repo = options.repository
       target = self.get_argument('target')
       recording = repo.get_recording(target)
-      ann = Annotation.note(recording.make_uri(), target, body, user)
+      ann = Annotation.Note(recording.make_uri(prefix='annotation'), target,
+                            '%s/user/%s' % (repo.uri, self.current_user), body)
+      repo.extend_graph(recording.graph.uri, ann.metadata_as_string())
+    self._show_contents(name)

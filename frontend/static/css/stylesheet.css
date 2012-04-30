@@ -267,11 +267,14 @@ div.block a {
   }
 
 
-
 .emphasised {
   font-weight: bold ;
   }
 
+.prompt {
+  font-weight: bold;
+  font-size: 0.9em;
+}
 
 .search th {
   text-align: left ;
@@ -422,3 +425,40 @@ table.results tr {
 table.results tr.odd {
   background: #FFF ;
   }
+
+div#recording p {
+  margin-top: 0 ;
+  margin-bottom: 0 ;
+  }
+
+div#annotations {
+  background: #cbed8b;
+  border: 2px solid #acd655;
+  border-top: 0;
+  border-bottom: 0;
+  }
+div#annotations .title {
+  margin-bottom: 0;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  font-weight: bold;
+  }
+div.annotform {
+  margin-top: 0;
+  border: 2px solid #acd655;
+  border-top: 1px solid #cbed8b;
+  }
+div.annotation {
+  border-bottom: 2px dotted #036;
+  padding: 5px;
+  padding-left: 10px;
+  }
+div.annotation p {
+  margin-top: 0 ;
+  margin-bottom: 0 ;
+  }
+
+.half {
+  float: left;
+  width: 50%;
+ }

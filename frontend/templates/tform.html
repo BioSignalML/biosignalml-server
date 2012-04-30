@@ -1,7 +1,8 @@
 {% extends 'tpage.html' %}
 {% block content %}
 <div {% raw boxsize(cols, rows) %}
-  class="formbox{% if globals().get('treespace') %} treespace{% end %}">
+  class="formbox{% if globals().get('treespace') %} treespace{% end %}{%
+                   if globals().get('formclass') %} {{ formclass }}{% end %}">
  <div class="form">
   <form autocomplete="off" id="form" method="post">
    {% raw xsrf_form_html() %}
