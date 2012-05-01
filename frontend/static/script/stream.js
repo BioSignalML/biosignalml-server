@@ -234,7 +234,6 @@ StreamParser.prototype =
         if (data[pos] == STREAM.CHAR_LFEED) {
           pos += 1 ;
           datalen -= 1 ;
-print(this.header.uri, this.header.dtype) ;
           this.receiver(new StreamBlock(this.blockno, this.type, this.header, this.buffer)) ;
           this.state = PARSE.RESET ;
           }
