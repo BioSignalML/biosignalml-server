@@ -232,12 +232,13 @@ class BSMLRepository(Repository):
 #  #-------------------------------
 #    return self.get_object(uri, BSML.recording)
 
-  def get_signal(self, uri):
-  #-------------------------
+  def get_signal(self, uri, graph_uri=None):
+  #-----------------------------------------
     '''
     Get a Signal from the repository.
 
     :param uri: The URI of a Signal.
+    :param graph_uri: An optional URI of the graph to query.
     :rtype: :class:`~biosignalml.Signal`
     '''
     graph = self.make_graph(uri, '<%(uri)s> ?p ?o',
