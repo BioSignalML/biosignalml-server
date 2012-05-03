@@ -70,10 +70,14 @@ class ReST(httpchunked.ChunkedHandler):
 
   _mimetype = { }
   _class = { }
+  _extns = { }
 
   for name, cls in biosignalml.formats.CLASSES.iteritems():
     _mimetype[name] = cls.MIMETYPE
     _class[cls.MIMETYPE] = cls
+    for extn in cls.EXTENSIONS:
+      _extns[extn] = cls.MIMETYPE
+
   def check_xsrf_cookie(self):
   #---------------------------
     ''' Don't check XSRF token for ReST POSTs. '''
@@ -84,10 +88,15 @@ class ReST(httpchunked.ChunkedHandler):
     tail = name.rsplit('#', 1)
     fragment = tail[1] if len(tail) > 1 else ''
     head = tail[0]
+    parts = head.split('/', 1)
+    name = parts[-1].rsplit('.', 1)
+    parts[-1] = name[0]     # Have removed extension
+    uri = '/'.join(parts)
+    extn = name[1] if len(name) > 1 else ''
     if head.startswith('http:'):
-      return (head, head.replace('/', '_'), fragment)
+      return (uri, head.replace('/', '_'), extn, fragment)
     else:
-      return (options.recording_prefix + head, head, fragment)
+      return (options.recording_prefix + uri, head, extn, fragment)
 
   def _write_error(self, status, msg=None):
   #----------------------------------------
@@ -99,7 +108,7 @@ class ReST(httpchunked.ChunkedHandler):
 
     logging.debug('GET: %s, %s', name, self.request.uri)
 
-    uri, filename, fragment = self._get_names(name)
+    uri, filename, extn, fragment = self._get_names(name)
     rec_uri = options.repository.get_recording_graph_uri(uri)
     if rec_uri is None:
       self._write_error(404, msg="Recording unknown for '%s'" % uri)
@@ -150,25 +159,22 @@ class ReST(httpchunked.ChunkedHandler):
     Import a recording into the repository.
 
     """
-    logging.debug("URI, NM: %s, %s", self.request.uri, name)  #############
-    logging.debug("HDRS: %s", self.request.headers)
-    ctype = self.request.headers.get('Content-Type', 'application/x-raw')
+    #logging.debug("URI, NM: %s, %s", self.request.uri, name)  #############
+    #logging.debug("HDRS: %s", self.request.headers)
+    rec_uri, fname, extn, fragment = self._get_names(name)
+    ctype = self.request.headers.get('Content-Type')
+    if ctype is None:
+      ctype = ReST._extns.get(extn, 'application/x-raw')
     if not ctype.startswith('application/x-'):
       self._write_error(415, msg="Invalid Content-Type: '%s'" % ctype)
       return
-
     RecordingClass = ReST._class.get(ctype)
     if not RecordingClass:
       self._write_error(415, msg="Unknown Content-Type: '%s'" % ctype)
       return
-
-    rec_uri, fname, fragment = self._get_names(name)
-
     ##file_id   = str(uuid.uuid4()) + '.' + format
     ##file_name = os.path.abspath(os.path.join(options.repository.storepath, file_id))
-
     file_name = os.path.abspath(os.path.join(options.recordings, fname))
-
     #if container: file_uri = os.path.split(file_uri)[0]
 
     logging.debug('URI: %s, FILE: %s', rec_uri, file_name)
@@ -226,7 +232,7 @@ class ReST(httpchunked.ChunkedHandler):
 
   def delete(self, name, **kwds):
   #------------------------------
-    rec_uri, fname, fragment = self._get_names(name)
+    rec_uri, fname, extn, fragment = self._get_names(name)
     if rec_uri is None: return
     recording = options.repository.get_recording(rec_uri)
     if recording.source is None:
