@@ -74,6 +74,10 @@ class ReST(httpchunked.ChunkedHandler):
   for name, cls in biosignalml.formats.CLASSES.iteritems():
     _mimetype[name] = cls.MIMETYPE
     _class[cls.MIMETYPE] = cls
+  def check_xsrf_cookie(self):
+  #---------------------------
+    ''' Don't check XSRF token for ReST POSTs. '''
+    pass
 
   def _get_names(self, name):
   #--------------------------
