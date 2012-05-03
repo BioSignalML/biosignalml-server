@@ -211,7 +211,7 @@ class ReST(httpchunked.ChunkedHandler):
 
     self.set_header('Content-Type', 'text/xml')
     self.set_status(200)
-    location = recording.uri
+    location = str(recording.uri)
     self.set_header('Location', location)
     #self.set_header('Location', str(recording.uri))
     self.write('\n'.join(['<bsml>',
