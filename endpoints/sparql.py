@@ -25,7 +25,7 @@ class sparql(tornado.web.RequestHandler):
     
   def request_handler(self, response):
     if response.code != 599: self.set_status(response.code)
-    else:                    self.set_staus(504)  # gateway timeout
+    else:                    self.set_status(504)  # gateway timeout
     self.finish()
     self.ioloop.stop()
 
