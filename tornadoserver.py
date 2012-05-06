@@ -28,6 +28,7 @@ server.init_server()  # Setup globals
 import endpoints.webstream as webstream
 import endpoints.metadata  as metadata 
 import endpoints.recording as recording
+import endpoints.sparql    as sparql
 
 import frontend
 import frontend.user
@@ -40,6 +41,7 @@ application = tornado.web.Application([
     ( '/stream/echo/',                    webstream.StreamEchoSocket),
     ( server.METADATA_ENDPOINT + '(.*)',  metadata.metadata),
     ( server.RECORDING_ENDPOINT + '(.*)', recording.ReST),
+    ( '/sparql/',                         sparql.sparql),
     ('/comet/metadata',                   frontend.htmlview.Metadata), # For tooltip popups
     ('/repository/(.*)',                  frontend.htmlview.Repository),
     ('/repository',                       frontend.htmlview.Repository),
