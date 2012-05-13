@@ -114,20 +114,26 @@ class ReST(httpchunked.ChunkedHandler):
       self._write_error(404, msg="Recording unknown for '%s'" % uri)
       return
 
-    accept = metadata.acceptheaders(self.request)
+    accept = list(metadata.acceptheaders(self.request))  # Ignore q:
+    logging.debug('Accept: %s', accept)
     self.set_header('Vary', 'Accept')      # Let caches know we've used Accept header
     objtype = options.repository.get_type(uri, rec_uri)
     if objtype == BSML.Recording:
       recording = options.repository.get_recording(uri, rec_uri)
-      ctype = ReST._mimetype.get(str(recording.format), 'application/x-raw')
+#      ctype = ReST._mimetype.get(str(recording.format), 'application/x-raw')
+      ctype = recording.MIMETYPE
 ## Should we set 'Content-Location' header as well?
 ## (to actual URL of representation returned).
-      if ctype in accept: # send file
+      accept_string = ' '.join(accept)
+      if not ('turtle' in accept_string
+           or 'xml' in accept_string
+           or 'rdf' in accept_string):
+      # if ctype in accept: # send file
         if recording.source is None:
           self._write_error(404, msg="Missing recording source: '%s'" % source)
           return
-        filename = str(recording.source)
-        logging.debug("Streaming '%s'", filename)
+        filename = ' '.join([str(f) for f in recording.source])
+        logging.debug("Sending '%s'", filename)
         try:
           rfile = urllib.urlopen(filename).fp
           self.set_header('Content-Type', ctype)
@@ -211,7 +217,7 @@ class ReST(httpchunked.ChunkedHandler):
 
     self.set_header('Content-Type', 'text/xml')
     self.set_status(200)
-    location = recording.uri
+    location = str(recording.uri)
     self.set_header('Location', location)
     #self.set_header('Location', str(recording.uri))
     self.write('\n'.join(['<bsml>',
