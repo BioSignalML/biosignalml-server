@@ -70,8 +70,8 @@ class metadata(tornado.web.RequestHandler):
     elif n.is_blank():    return '_:%s' % str(n)
     elif n.is_literal():
       l = [ '"%s"' % n.literal[0] ]
-      if   n.literal[1]: l.append('@%s'  % n.literal[1])
-      elif n.literal[2]: l.append('^^%s' % n.literal[2])
+      if   n.literal[1]: l.append('@%s'    % n.literal[1])
+      elif n.literal[2]: l.append('^^<%s>' % n.literal[2])
       return ''.join(l)
 
   def post(self, name, **kwds):
