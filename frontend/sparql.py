@@ -67,9 +67,9 @@ class Query(frontend.BasePage):
   def render(self, query, results=''):
     frontend.BasePage.render(self, 'tform.html',
       title = 'SPARQL search...',
-      rows = 16,  cols = 0,
-      buttons = [ Button('Search', 1, 13) ],
-      fields  = [ Field.textarea('SPARQL', 'query', 75, 20, data=query) ],
+      rows = 22,  cols = 0,
+      buttons = [ Button('Search', 1, 2) ],
+      fields  = [ Field.textarea('SPARQL', 'query', 75, 26, data=query) ],
       content = results
       )
 
