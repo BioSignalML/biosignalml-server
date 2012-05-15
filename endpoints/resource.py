@@ -20,6 +20,7 @@ import logging
 import uuid
 import os
 import urllib
+import httplib
 import hashlib
 from datetime import datetime
 
@@ -31,8 +32,6 @@ from biosignalml.model import BSML
 
 import biosignalml.formats
 import biosignalml.rdf as rdf
-
-import metadata
 
 
 def raise_error(handler, code, msg=None):
@@ -68,6 +67,8 @@ class FileWriter(object):
 class ReST(httpchunked.ChunkedHandler):
 #======================================
 
+  SUPPORTED_METHODS = ("GET", "HEAD", "POST", "DELETE", "PUT", "OPTIONS", "PATCH")
+
   _mimetype = { }
   _class = { }
   _extns = { }
@@ -80,8 +81,30 @@ class ReST(httpchunked.ChunkedHandler):
 
   def check_xsrf_cookie(self):
   #---------------------------
-    ''' Don't check XSRF token for ReST POSTs. '''
+    """Don't check XSRF token for ReST POSTs."""
     pass
+
+  def write_error(self, status_code, **kwds):
+  #------------------------------------------
+    self.finish("<html><title>%(code)d: %(message)s</title>"
+                "<body>%(code)d: %(message)s</body></html>" % {
+            "code": status_code,
+            "message": httplib.responses[status_code],
+            })
+
+  def _write_error(self, status, msg=None):
+  #----------------------------------------
+    raise_error(self, status, msg)
+
+  def _accept_headers(self):
+  #-------------------------
+    """
+    Parse an Accept header and return a dictionary with
+    mime-type as an item key and its parameters as the value.
+    """
+    return { k[0].strip(): k[1].strip() if len(k) > 1 else ''
+               for k in [ a.split(';', 1)
+                for a in self.request.headers.get('Accept', '*/*').split(',') ] }
 
   def _get_names(self, name):
   #--------------------------
@@ -96,27 +119,21 @@ class ReST(httpchunked.ChunkedHandler):
     if head.startswith('http:'):
       return (uri, head.replace('/', '_'), extn, fragment)
     else:
-      return (options.recording_prefix + uri, head, extn, fragment)
-
-  def _write_error(self, status, msg=None):
-  #----------------------------------------
-    raise_error(self, status, msg)
+      print uri, head, extn
+      return (options.resource_prefix + head, head, extn, fragment)
 
 
   def get(self, name, **kwds):
   #----------------------------
-
-    logging.debug('GET: %s, %s', name, self.request.uri)
-
     uri, filename, extn, fragment = self._get_names(name)
     rec_uri = options.repository.get_recording_graph_uri(uri)
+    logging.debug('GET: %s, %s, %s, %s', name, self.request.uri, uri, rec_uri)
     if rec_uri is None:
-      self._write_error(404, msg="Recording unknown for '%s'" % uri)
+      self.send_error(404)
+      #self._write_error(404, msg="Recording unknown for '%s'" % uri)
       return
 
-    accept = list(metadata.acceptheaders(self.request))  # Ignore q:
-    logging.debug('Accept: %s', accept)
-    self.set_header('Vary', 'Accept')      # Let caches know we've used Accept header
+    accept = self._accept_headers()
     objtype = options.repository.get_type(uri, rec_uri)
     if objtype == BSML.Recording:
       recording = options.repository.get_recording(uri, rec_uri)
@@ -124,11 +141,8 @@ class ReST(httpchunked.ChunkedHandler):
       ctype = recording.MIMETYPE
 ## Should we set 'Content-Location' header as well?
 ## (to actual URL of representation returned).
-      accept_string = ' '.join(accept)
-      if not ('turtle' in accept_string
-           or 'xml' in accept_string
-           or 'rdf' in accept_string):
-      # if ctype in accept: # send file
+      # only send recording if '*/*' or content type match
+      if ctype in accept or len(accept) == 1 and 'application' in accept: # send file
         if recording.source is None:
           self._write_error(404, msg="Missing recording source: '%s'" % source)
           return
@@ -136,6 +150,7 @@ class ReST(httpchunked.ChunkedHandler):
         logging.debug("Sending '%s'", filename)
         try:
           rfile = urllib.urlopen(filename).fp
+          self.set_header('Vary', 'Accept')      # Let caches know we've used Accept header
           self.set_header('Content-Type', ctype)
           self.set_header('Content-Disposition', 'attachment; filename=%s' % filename)
           while True:
@@ -151,12 +166,46 @@ class ReST(httpchunked.ChunkedHandler):
     # Either not a Recording or ctype not in accept header, so send RDF
     format = rdf.Format.TURTLE if ('text/turtle' in accept
                                 or 'application/x-turtle' in accept) else rdf.Format.RDFXML
+
+    ## 415 Unsupported Media Type if accept is not */* nor something we can serve...
+
     # check rdf+xml, turtle, n3, html ??
+    self.set_header('Vary', 'Accept')      # Let caches know we've used Accept header
     self.set_header('Content-Type', rdf.Format.mimetype(format))
-    self.write(options.repository.construct('?s ?p ?o',
-                                            '?s ?p ?o FILTER (?p != <http://4store.org/fulltext#stem>'
-                                                      + ' && (?s = <%(uri)s> || ?o = <%(uri)s>))',
-                                            rec_uri, { 'uri': uri }, format))
+    if name == '':
+      graph_uri = options.repository.uri
+      self.write(options.repository.construct('?s ?p ?o',
+                                              'graph <%(graph)s> { ?s ?p ?o'
+                                            + ' FILTER (?p != <http://4store.org/fulltext#stem>) }',
+                                              params={ 'graph': graph_uri },  format=format))
+    else:
+      self.write(options.repository.construct('?s ?p ?o',
+                                              'graph <%(graph)s> { ?s ?p ?o'
+                                            + ' FILTER (?p != <http://4store.org/fulltext#stem>'
+                                            + ' && (?s = <%(uri)s> || ?o = <%(uri)s>)) }',
+                                              params={ 'graph': rec_uri, 'uri': uri },
+                                              format=format))
+
+  def _format(self):
+  #-----------------
+    ctype = self.request.headers.get('Content-Type')
+    if ctype in ['text/turtle', 'application/x-turtle']:
+      return rdf.Format.TURTLE
+    elif ctype == 'application/rdf+xml':
+      return rdf.Format.RDFXML
+    else:
+      return None
+
+  @staticmethod
+  def _node(n):
+  #------------
+    if   n.is_resource(): return '<%s>' % str(n)
+    elif n.is_blank():    return '_:%s' % str(n)
+    elif n.is_literal():
+      l = [ '"%s"' % n.literal[0] ]
+      if   n.literal[1]: l.append('@%s'    % n.literal[1])
+      elif n.literal[2]: l.append('^^<%s>' % n.literal[2])
+      return ''.join(l)
 
 
   def put(self, name, **kwds):
@@ -268,3 +317,8 @@ class ReST(httpchunked.ChunkedHandler):
   def head(self, name, **kwds):
   #----------------------------
     self.write("<html><body><p>HEAD: %s</p></body></html>" % name)
+
+  def patch(self, name, **kwds):
+  #-----------------------------
+      self.set_status(201)
+      self.finish()

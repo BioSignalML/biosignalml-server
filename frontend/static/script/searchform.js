@@ -65,7 +65,7 @@ function got_type() {
 
 function search_tests(fld) {
  if      (fld.tests.length > 1) {
-  return select_list('Select test:', fld.tests, true) ;
+  return select_list('', fld.tests, true) ;
   }
  else if (fld.tests.length == 1) {
   return $('<span>' + fld.tests[0] + '</span>') ;
@@ -175,7 +175,7 @@ function enable_cluetips() {
         type:     'POST',
         data:     'uri=' + $(this).attr('uri').toString()
                 + '&_xsrf=' + getCookie("_xsrf"),
-			},
+                        },
       ajaxProcess: function(data) {
         return data.html ;
         },

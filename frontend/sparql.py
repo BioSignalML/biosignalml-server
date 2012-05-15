@@ -28,7 +28,7 @@ namespaces.update(NAMESPACES)
 
 def prologue():
 #==============
-  p = [ 'BASE <%s>' % options.repository.uri ]
+  p = [ 'BASE <%s>' % options.resource_prefix ]
   for prefix, uri in namespaces.iteritems():
     p.append('PREFIX %s: <%s>' % (prefix, uri))
   return '\n'.join(p)
@@ -67,9 +67,9 @@ class Query(frontend.BasePage):
   def render(self, query, results=''):
     frontend.BasePage.render(self, 'tform.html',
       title = 'SPARQL search...',
-      rows = 16,  cols = 0,
-      buttons = [ Button('Search', 1, 13) ],
-      fields  = [ Field.textarea('SPARQL', 'query', 75, 20, data=query) ],
+      rows = 22,  cols = 0,
+      buttons = [ Button('Search', 1, 2) ],
+      fields  = [ Field.textarea('SPARQL', 'query', 75, 26, data=query) ],
       content = results
       )
 
@@ -82,6 +82,7 @@ class Query(frontend.BasePage):
     p.append('select * where {')
     p.append('  graph ?graph {')
     p.append('    ?subject ?predicate ?object')
+    p.append('    filter (?predicate != text:stem && ?graph != <system:config>)')
     p.append('    }')
     p.append('  } limit 20')
     self.render('\n'.join(p)) # Default namespace prefixes and query
