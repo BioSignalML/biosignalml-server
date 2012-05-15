@@ -377,8 +377,8 @@ class QueryResults(object):
         self._prefixes[h[1][0]] = h[1][1]
     #logging.debug('PFX: %s', self._prefixes)
 
-  def _abbreviate_uri(self, uri):
-  #------------------------------
+  def abbreviate_uri(self, uri):
+  #-----------------------------
     for name, prefix in self._prefixes.iteritems():
       if uri.startswith(prefix): return '%s:%s' % (name, uri[len(prefix):])
     if self._base and uri.startswith(self._base): return '<%s>' % uri[len(self._base):]
@@ -389,7 +389,7 @@ class QueryResults(object):
     rtype = result.get('type')
     value = result.get('value')
     if   rtype == 'uri':
-      uri = self._abbreviate_uri(value) if self._abbreviate else uri
+      uri = self.abbreviate_uri(value) if self._abbreviate else uri
       if uri[0] == '<':
         uri = uri[1:-1]
         LT = '&lt;'

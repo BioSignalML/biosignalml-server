@@ -35,14 +35,17 @@ def _values(predicate, rtype):
 ##       + "\n\nselect ?v where { { ?s %s ?v } union { graph ?g { ?s %s ?v } } }"
 ##       % (predicate, predicate) )
          + "\n\nselect ?v where { ?s %s ?v }" % predicate )
-  for r in options.repository.query(sparql):
-    if r[0].get('value'):
-      if rtype == str: values.append(tornado.escape.xhtml_escape(unicode(r[0]['value'])))
+  results = options.repository.query(sparql)
+  for r in results:
+    v = r[0].get('value')
+    if v:
+      if r[0]['type'] == 'uri':
+        values.append(tornado.escape.xhtml_escape(results.abbreviate_uri(v)))
+      elif rtype == str:
+        values.append(tornado.escape.xhtml_escape(unicode(v)))
       else:
-        try:
-          values.append(rtype(str(r[0]['value'])))
-        except ValueError:
-          values.append('')
+        try:               values.append(rtype(str(v)))
+        except ValueError: values.append('')
   values = list(set(values))
   values.sort()
   return values
@@ -60,8 +63,8 @@ SEARCH_FIELDS = [ { 'prompt': 'having text',
                   { 'prompt': 'with units',
                     'property': 'bsml:units',
                     'tests':  ['equal', 'not equal'],
-                    'sparql': [ '?s %(property)s "%(value)s" .',                   # equal
-                                '?s %(property)s ?o . FILTER (?o != "%(value)s")',  # not equal
+                    'sparql': [ '?s %(property)s %(value)s .',                   # equal
+                                '?s %(property)s ?o . FILTER (?o != %(value)s)', # not equal
                               ],
                     'values': [ ]
                     },
@@ -204,10 +207,10 @@ class Search(frontend.BasePage):
 
   @tornado.web.authenticated
   def post(self):
+    data = self.request.arguments
     #logging.debug('DATA: %s', data)
     # check data.get('action', '') == 'Search'
 
-    data = self.request.arguments    
     lines = [ ]
     lastline = -1
     line_reln = None
