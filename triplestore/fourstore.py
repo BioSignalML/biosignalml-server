@@ -13,42 +13,29 @@ import json
 import logging
 
 import tornado.ioloop
-import tornado.simple_httpclient
+import tornado.httpclient
 
 from biosignalml.rdf import Format
 
 from triplestore import TripleStore
 
 
-class HTTPClient(object):
-#========================
-
-  def __init__(self):
-    self.ioloop = tornado.ioloop.IOLoop()
-    self.httpclient = tornado.simple_httpclient.SimpleAsyncHTTPClient(self.ioloop)
-
-  def response_handler(self, response):
-    self.response = response
-    self.ioloop.stop()
-
-  def fetch(self, endpoint, **kwds):
-    logging.debug('fetch...')
-    self.httpclient.fetch(endpoint, self.response_handler, **kwds)
-    self.ioloop.start()
-    return self.response
-
 class StoreException(Exception):
 #===============================
   pass
+
 
 class FourStore(TripleStore):
 #============================
 
   def _request(self, endpoint, method, **kwds):
   #--------------------------------------------
-    response = HTTPClient().fetch(self._href + endpoint, method=method, connect_timeout=1, **kwds)
-    if response.code == 599:  # Timeout
-      raise StoreException("Can not connect to 4store -- check it's running")
+    try:
+      response = tornado.httpclient.HTTPClient().fetch(self._href + endpoint,
+                                                       method=method, connect_timeout=1,
+                                                       **kwds)
+    except tornado.httpclient.HTTPError, msg:
+      raise StoreException("Can not connect to 4store -- check it's running (%s)" % msg)
     if response.code not in [200, 201]: raise Exception(content)
     return response.body
 
