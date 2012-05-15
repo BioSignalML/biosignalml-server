@@ -148,7 +148,7 @@ class BSMLRepository(Repository):
   def has_recording(self, uri):
   #----------------------------
     ''' Check a URI refers to a Recording. '''
-    return self.check_type(uri, BSML.Recording, uri)
+    return self.check_type(uri, BSML.Recording, uri)   # Look for uri in graph with same uri
 
   def has_signal(self, uri):
   #-------------------------
@@ -404,13 +404,13 @@ class QueryResults(object):
                           GT))
                  ## '/repository/' is web-server path to view objects in repository
       ## Following needs work...
-      elif value.startswith('http://physionet.org/'): ########### ... URI to a Signal, Recording, etc...
-        result['html'] = ('%s<a href="%s" uri="%s" class="cluetip">%s</a>%s'
-                       % (LT,
-                          '/repository/' + value.replace(':', '%3A', 1),
-                          value, uri,
-                          GT))
-                 ## '/repository/' is web-server path to view objects in repository
+#      elif value.startswith('http://physionet.org/'): ########### ... URI to a Signal, Recording, etc...
+#        result['html'] = ('%s<a href="%s" uri="%s" class="cluetip">%s</a>%s'
+#                       % (LT,
+#                          '/repository/' + value.replace(':', '%3A', 1),
+#                          value, uri,
+#                          GT))
+#                 ## '/repository/' is web-server path to view objects in repository
       else:
         result['html'] = '%s%s%s' % (LT, uri, GT)
     elif rtype == 'bnode':
