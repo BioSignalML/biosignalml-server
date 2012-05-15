@@ -28,11 +28,13 @@ class sparql(tornado.web.RequestHandler):
     else:                    self.set_status(504)  # gateway timeout
     self.finish()
     self.ioloop.stop()
+    self.ioloop.close()
+    self.http_client.close()
 
   def do_query(self, body=None):
     self.ioloop = ioloop.IOLoop()
-    http_client = httpclient.AsyncHTTPClient(self.ioloop)
-    http_client.fetch(
+    self.http_client = httpclient.AsyncHTTPClient(self.ioloop)
+    self.http_client.fetch(
       options.repository._triplestore._href + self.request.uri,
       self.request_handler,
       method = self.request.method,
