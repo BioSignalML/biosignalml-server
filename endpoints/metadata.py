@@ -30,6 +30,7 @@ def acceptheaders(request):
 class metadata(tornado.web.RequestHandler):
 #==========================================
 
+  SUPPORTED_METHODS = ("GET", "HEAD", "POST", "DELETE", "PUT", "OPTIONS", "PATCH")
   def get(self, name, **kwds):
   #---------------------------
     ##logging.debug('GET: "%s" %s', name, self.request.headers)
@@ -106,6 +107,12 @@ class metadata(tornado.web.RequestHandler):
       # return...  ???
     else:
       self.send_error(404)
+
+
+  def patch(self, name, **kwds):
+  #-----------------------------
+      self.set_status(201)
+      self.finish()
 
 #  def delete(self, name, **kwds):
 #  #------------------------------
