@@ -60,17 +60,23 @@ class metadata(tornado.web.RequestHandler):
     self.set_header('Vary', 'Accept')      # Let caches know we've used Accept header
 
     self.set_header('Content-Type', rdf.Format.mimetype(format))
-    if name == '': graph_uri = options.repository.uri
-    else:          graph_uri = options.repository.get_recording_graph_uri(name)
-    if graph_uri is None:
-      self.set_status(404)
-    else:
+    if name == '':
+      graph_uri = options.repository.uri
       self.write(options.repository.construct('?s ?p ?o',
                                               'graph <%(graph)s> { ?s ?p ?o'
-                                            + ' FILTER (?p != <http://4store.org/fulltext#stem>'
-                                            + ' && (?s = <%(name)s> || ?o = <%(name)s>)) }',
-                                              params={ 'graph': graph_uri, 'name': name},
-                                              format=format))
+                                            + ' FILTER (?p != <http://4store.org/fulltext#stem>) }',
+                                              params={ 'graph': graph_uri },  format=format))
+    else:
+      graph_uri = options.repository.get_recording_graph_uri(name)
+      if graph_uri is None:
+        self.send_error(404)
+      else:
+        self.write(options.repository.construct('?s ?p ?o',
+                                                'graph <%(graph)s> { ?s ?p ?o'
+                                              + ' FILTER (?p != <http://4store.org/fulltext#stem>'
+                                              + ' && (?s = <%(name)s> || ?o = <%(name)s>)) }',
+                                                params={ 'graph': graph_uri, 'name': name },
+                                                format=format))
 
   def _format(self):
   #-----------------
