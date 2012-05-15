@@ -72,13 +72,15 @@ class metadata(tornado.web.RequestHandler):
                                               params={ 'graph': graph_uri, 'name': name},
                                               format=format))
 
-  @property
   def _format(self):
   #-----------------
-    return (rdf.Format.TURTLE if self.request.headers.get('Content-Type')
-                                   in ['text/turtle', 'application/x-turtle']
-                              else
-            rdf.Format.RDFXML)
+    ctype = self.request.headers.get('Content-Type')
+    if ctype in ['text/turtle', 'application/x-turtle']:
+      return rdf.Format.TURTLE
+    elif ctype == 'application/rdf+xml':
+      return rdf.Format.RDFXML
+    else:
+      return None
 
   @staticmethod
   def _node(n):
@@ -97,7 +99,11 @@ class metadata(tornado.web.RequestHandler):
     else:          graph_uri = options.repository.get_recording_graph_uri(name)
     ##logging.debug('POST: %s (%s)\n%s', name, graph_uri, self.request.body)
     if graph_uri is not None:
-      graph = rdf.Graph.create_from_string(self.request.body, self._format, graph_uri)
+      try:
+        graph = rdf.Graph.create_from_string(graph_uri, self.request.body, self._format())
+      except rdf.RDFParseError:
+        self.send_error(400)    # Bad request
+        return
       options.repository.update(graph_uri,
         [ (self._node(s.subject), self._node(s.predicate), self._node(s.object)) for s in graph ] )
       # return...  ???
@@ -106,10 +112,20 @@ class metadata(tornado.web.RequestHandler):
 
   def put(self, name, **kwds):
   #----------------------------
-    ##logging.debug('PUT: %s %s\n%s', name, self._format, self.request.body)
-    if name == '': self.send_error(401)  # Unauthorised
-    elif (rdf.Graph.create_from_string(self.request.body, self._format, name)
-          .contains(rdf.Statement(name, rdf.RDF.type, BSML.Recording))):
+    format = self._format()
+    ##logging.debug('PUT: %s %s\n%s', name, format, self.request.body)
+    if name == '':
+      self.send_error(401)  # Unauthorised
+      return
+    elif format is None:
+      self.send_error(415)  # Unsupported Media Type
+      return
+    try:
+      g = rdf.Graph.create_from_string(name, self.request.body, format)
+    except rdf.RDFParseError:
+      self.send_error(400)    # Bad request
+      return
+    if g.contains(rdf.Statement(name, rdf.RDF.type, BSML.Recording)):
       # ask ??
       # and (name BSML.format BSML.BioSignalML)
       # if not in repository and source not set, or in repository but with no source
@@ -119,7 +135,8 @@ class metadata(tornado.web.RequestHandler):
         # And if existing recording, do we have authority to replace it...
         self.send_error(401)  ## Unauthorised
       else:
-        options.repository.replace_graph(name, self.request.body, self._format)
+        # Check source ???
+        options.repository.replace_graph(name, self.request.body, format)
       # return...  ???
     else:
       self.send_error(404)
