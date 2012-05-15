@@ -10,6 +10,7 @@
 
 
 import logging
+import httplib
 import tornado.web
 from tornado.options import options
 
@@ -36,6 +37,15 @@ class metadata(tornado.web.RequestHandler):
   #---------------------------
     ''' Don't check XSRF token for ReST POSTs. '''
     pass
+
+  def write_error(self, status_code, **kwds):
+  #------------------------------------------
+    self.finish("<html><title>%(code)d: %(message)s</title>"
+                "<body>%(code)d: %(message)s</body></html>" % {
+            "code": status_code,
+            "message": httplib.responses[status_code],
+            })
+
 
   def get(self, name, **kwds):
   #---------------------------
