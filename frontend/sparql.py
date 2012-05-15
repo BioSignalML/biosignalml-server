@@ -82,6 +82,7 @@ class Query(frontend.BasePage):
     p.append('select * where {')
     p.append('  graph ?graph {')
     p.append('    ?subject ?predicate ?object')
+    p.append('    filter (?predicate != text:stem && ?graph != <system:config>)')
     p.append('    }')
     p.append('  } limit 20')
     self.render('\n'.join(p)) # Default namespace prefixes and query
