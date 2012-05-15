@@ -15,6 +15,8 @@ import logging
 import RDF as librdf
 import json
 
+from tornado.options import options
+
 import biosignalml.formats
 
 from biosignalml import BSML, Recording, Signal, Event, Annotation
@@ -397,7 +399,7 @@ class QueryResults(object):
       if value.startswith(self._repobase):
         result['html'] = ('%s<a href="%s" uri="%s" class="cluetip">%s</a>%s'
                        % (LT,
-                          '/repository/' + value[len(self._repobase + '/recording/'):],
+                          '/repository/' + value[len(options.resource_prefix):],
                           value, uri,
                           GT))
                  ## '/repository/' is web-server path to view objects in repository

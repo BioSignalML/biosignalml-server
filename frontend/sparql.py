@@ -28,7 +28,7 @@ namespaces.update(NAMESPACES)
 
 def prologue():
 #==============
-  p = [ 'BASE <%s>' % options.repository.uri ]
+  p = [ 'BASE <%s>' % options.resource_prefix ]
   for prefix, uri in namespaces.iteritems():
     p.append('PREFIX %s: <%s>' % (prefix, uri))
   return '\n'.join(p)

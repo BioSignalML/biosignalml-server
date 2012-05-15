@@ -24,8 +24,7 @@ import triplestore.repository as repository
 import frontend.webdb as webdb
 
 
-RECORDING_ENDPOINT  = '/recording/'    #: Import and export complete recording files
-METADATA_ENDPOINT   = '/metadata/'     #: Get and put RDF metadata
+RESOURCE_ENDPOINT   = '/resource/'     #: Import and export resource representations
 STREAMDATA_ENDPOINT = '/stream/data/'  #: Stream signal data in and out
 
 LOGFORMAT = '%(asctime)s %(levelname)8s %(threadName)s: %(message)s'
@@ -37,7 +36,7 @@ DEFAULTS  = { 'uri': 'http://devel.biosignalml.org',
               'database': './database/repository.db',
               'recordings': './recordings/',
               'triplestore': 'http://localhost:8083',
-              'recording_path': RECORDING_ENDPOINT,
+              'resource_path': RESOURCE_ENDPOINT,
 
               'log_file': './log/biosignalml.log',
               'log_level': 'DEBUG', # 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
@@ -99,7 +98,7 @@ def init_server():
     webdb.Database(os.path.join(server_base, options.repository['database'])))
   define('repository',
     repository.BSMLRepository(options.repository['uri'], options.repository['triplestore']))
-  define('recording_prefix', options.repository['uri'] + options.repository['recording_path'])
+  define('resource_prefix', options.repository['uri'] + options.repository['resource_path'])
   define('debug',      (options.logging['log_level'] == 'DEBUG'))
   tornado.options.host = options.repository['host']
   tornado.options.port = int(options.repository['port'])
