@@ -30,11 +30,8 @@ def _values(predicate, rtype):
 #=============================
   values = [ ]
   # Redland 'distinct' is buggy, so we get everything and filter and sort ourselves.
-  sparql = (PREFIXES
-## SLOW in Redland SQLite
-##       + "\n\nselect ?v where { { ?s %s ?v } union { graph ?g { ?s %s ?v } } }"
-##       % (predicate, predicate) )
-         + "\n\nselect ?v where { ?s %s ?v }" % predicate )
+  sparql = PREFIXES + "\n\nselect distinct ?v where { ?s %s ?v }" % predicate
+  #logging.debug('SP: %s', sparql)
   results = options.repository.query(sparql)
   for r in results:
     v = r[0].get('value')
