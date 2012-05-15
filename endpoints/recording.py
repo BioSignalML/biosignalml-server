@@ -145,6 +145,9 @@ class ReST(httpchunked.ChunkedHandler):
     # Either not a Recording or ctype not in accept header, so send RDF
     format = rdf.Format.TURTLE if ('text/turtle' in accept
                                 or 'application/x-turtle' in accept) else rdf.Format.RDFXML
+
+      ## 415 Unsupported Media Type
+
     # check rdf+xml, turtle, n3, html ??
     self.set_header('Content-Type', rdf.Format.mimetype(format))
     self.write(options.repository.construct('?s ?p ?o',
