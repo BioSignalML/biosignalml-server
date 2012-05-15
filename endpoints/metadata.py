@@ -31,6 +31,12 @@ class metadata(tornado.web.RequestHandler):
 #==========================================
 
   SUPPORTED_METHODS = ("GET", "HEAD", "POST", "DELETE", "PUT", "OPTIONS", "PATCH")
+
+  def check_xsrf_cookie(self):
+  #---------------------------
+    ''' Don't check XSRF token for ReST POSTs. '''
+    pass
+
   def get(self, name, **kwds):
   #---------------------------
     ##logging.debug('GET: "%s" %s', name, self.request.headers)
