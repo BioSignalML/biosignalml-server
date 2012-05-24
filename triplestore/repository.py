@@ -15,6 +15,8 @@ import logging
 import RDF as librdf
 import json
 
+from tornado.options import options
+
 import biosignalml.formats
 
 from biosignalml import BSML, Recording, Signal, Event, Annotation
@@ -146,7 +148,7 @@ class BSMLRepository(Repository):
   def has_recording(self, uri):
   #----------------------------
     ''' Check a URI refers to a Recording. '''
-    return self.check_type(uri, BSML.Recording, uri)
+    return self.check_type(uri, BSML.Recording, uri)   # Look for uri in graph with same uri
 
   def has_signal(self, uri):
   #-------------------------
@@ -375,8 +377,8 @@ class QueryResults(object):
         self._prefixes[h[1][0]] = h[1][1]
     #logging.debug('PFX: %s', self._prefixes)
 
-  def _abbreviate_uri(self, uri):
-  #------------------------------
+  def abbreviate_uri(self, uri):
+  #-----------------------------
     for name, prefix in self._prefixes.iteritems():
       if uri.startswith(prefix): return '%s:%s' % (name, uri[len(prefix):])
     if self._base and uri.startswith(self._base): return '<%s>' % uri[len(self._base):]
@@ -387,7 +389,7 @@ class QueryResults(object):
     rtype = result.get('type')
     value = result.get('value')
     if   rtype == 'uri':
-      uri = self._abbreviate_uri(value) if self._abbreviate else uri
+      uri = self.abbreviate_uri(value) if self._abbreviate else uri
       if uri[0] == '<':
         uri = uri[1:-1]
         LT = '&lt;'
@@ -397,18 +399,18 @@ class QueryResults(object):
       if value.startswith(self._repobase):
         result['html'] = ('%s<a href="%s" uri="%s" class="cluetip">%s</a>%s'
                        % (LT,
-                          '/repository/' + value[len(self._repobase + '/recording/'):],
+                          '/repository/' + value[len(options.resource_prefix):],
                           value, uri,
                           GT))
                  ## '/repository/' is web-server path to view objects in repository
       ## Following needs work...
-      elif value.startswith('http://physionet.org/'): ########### ... URI to a Signal, Recording, etc...
-        result['html'] = ('%s<a href="%s" uri="%s" class="cluetip">%s</a>%s'
-                       % (LT,
-                          '/repository/' + value.replace(':', '%3A', 1),
-                          value, uri,
-                          GT))
-                 ## '/repository/' is web-server path to view objects in repository
+#      elif value.startswith('http://physionet.org/'): ########### ... URI to a Signal, Recording, etc...
+#        result['html'] = ('%s<a href="%s" uri="%s" class="cluetip">%s</a>%s'
+#                       % (LT,
+#                          '/repository/' + value.replace(':', '%3A', 1),
+#                          value, uri,
+#                          GT))
+#                 ## '/repository/' is web-server path to view objects in repository
       else:
         result['html'] = '%s%s%s' % (LT, uri, GT)
     elif rtype == 'bnode':

@@ -9,32 +9,35 @@
 ######################################################
 
 import urllib
-import httplib2
 import json
 import logging
+
+import tornado.ioloop
+import tornado.httpclient
 
 from biosignalml.rdf import Format
 
 from triplestore import TripleStore
 
 
+class StoreException(Exception):
+#===============================
+  pass
+
+
 class FourStore(TripleStore):
 #============================
-
-  def __init__(self, href):
-  #------------------------
-    super(FourStore, self).__init__(href)
-    self._http = httplib2.Http()
 
   def _request(self, endpoint, method, **kwds):
   #--------------------------------------------
     try:
-      response, content = self._http.request(self._href + endpoint, method=method, **kwds)
-    except AttributeError:
-      raise Exception("Can not connect to 4store -- check it's running")
-    #logging.debug('Request -> %s', response)
-    if response.status not in [200, 201]: raise Exception(content)
-    return content
+      response = tornado.httpclient.HTTPClient().fetch(self._href + endpoint,
+                                                       method=method, connect_timeout=1,
+                                                       **kwds)
+    except tornado.httpclient.HTTPError, msg:
+      raise StoreException("Can not connect to 4store -- check it's running (%s)" % msg)
+    if response.code not in [200, 201]: raise Exception(content)
+    return response.body
 
   def query(self, sparql, format=Format.RDFXML):
   #---------------------------------------------

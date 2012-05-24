@@ -199,8 +199,8 @@ class Repository(frontend.BasePage):
   def _xmltree(self, nodes, base, prefix, select=''):
     tree = mktree.maketree(nodes, base)
     #logging.debug('tree: %s', tree)
-    if select.startswith(options.recording_prefix):
-      selectpath = select[len(options.recording_prefix):].split('/')
+    if select.startswith(options.resource_prefix):
+      selectpath = select[len(options.resource_prefix):].split('/')
     elif select.startswith('http://') or select.startswith('file://'):
       selectpath = select.rsplit('/', select.count('/') - 2)
     else:
@@ -212,7 +212,7 @@ class Repository(frontend.BasePage):
 
   def _show_contents(self, name):
     repo = options.repository
-    prefix = options.recording_prefix[:-1]
+    prefix = options.resource_prefix[:-1]
     if name:
       recuri = (name if name.startswith('http://') or name.startswith('file://')
                else '%s/%s' % (prefix, name))
