@@ -99,7 +99,7 @@ recording_properties = Properties([
                          ('Format',    'format', abbreviate),
                          ('Study',     'investigation'),
                          ('Comments',  'comment'),
-##                         ('Source',    'source'),
+                         ('Source',    'source'),
                          ('Submitted', 'dateSubmitted', datetime_to_isoformat),
                        ])
 

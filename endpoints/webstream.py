@@ -110,18 +110,21 @@ class StreamDataSocket(StreamServer):
         count = block.header.get('count')
         if offset is None and count is None: segment = None
         else:                                segment = (offset, count)
+        dtypes = { 'dtype': block.header.get('dtype'), 'ctype': block.header.get('ctype') }
         for sig in self._sigs:
           for d in sig.read(interval=sig.recording.interval(*interval) if interval else None,
                             segment=segment,
                             points=block.header.get('maxsize', 0)):
+            keywords = dtypes.copy()
             if isinstance(d.dataseries, UniformTimeSeries):
-              timing = { 'rate': d.dataseries.rate }
+              keywords['rate'] = d.dataseries.rate
             else:
-              timing = { 'clock': d.dataseries.times }
-            self.send_block(stream.SignalData(str(sig.uri), d.starttime, d.dataseries.data, **timing).streamblock())
+              keywords['clock'] = d.dataseries.times
+            self.send_block(stream.SignalData(str(sig.uri), d.starttime, d.dataseries.data, **keywords).streamblock())
       except Exception, msg:
-        self.send_block(stream.ErrorBlock(0, block, str(msg)))
-        if options.debug: raise
+        if str(msg) != "Stream is closed":
+          self.send_block(stream.ErrorBlock(0, block, str(msg)))
+          if options.debug: raise
       finally:
         self.close()     ## All done with data request
 
