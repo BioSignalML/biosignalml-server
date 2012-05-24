@@ -1,0 +1,40 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head>
+  <title>BioSignalML Stream Test</title>
+  <script type="text/javascript" src="/static/script/stream.js"></script>
+  <script type="text/javascript">
+    function gotblock(block) {
+      console.log("Got block:\n  Type: '%s'\n  Header: %s\n  Length: %d bytes",
+                  block.type, JSON.stringify(block.header), block.data.byteLength) ;
+      if (block.type == 'E') {
+        console.log("  ERROR: %s", makestring(new Uint8Array(block.data))) ;
+        }
+      else if (block.type == 'D') {
+        if      (block.header.dtype == '<f8') data = new Float64Array(block.data) ;
+        else if (block.header.dtype == '<f4') data = new Float32Array(block.data) ;
+        console.log("  Data: [%f, %f, %f, %f, %f, ...]",
+                    data[0], data[1], data[2], data[3], data[4]) ;
+        }
+      }
+   function request() {
+     getSignal('http://' + window.document.location.hostname + '/resource/physiobank/mitdb/100/signal/0',
+               gotblock,
+               0, 10) ;
+//     getSignal('http://' + window.document.location.hostname + '/resource/physiobank/mitdb/100/signal/0',
+//               gotblock,
+//               0, 10, '<f4') ;          // Float32Array
+     }
+  </script>
+ </head>
+
+ <body onload="request()">
+  <h1>BioSignalML Stream Test</h1>
+
+  <p>
+    Use a debugger to set a breakpoint in 'gotblock()' and reload page.
+  </p>
+ </body>
+</html>
+
+
