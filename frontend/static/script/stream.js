@@ -1,3 +1,15 @@
+/*****************************************************
+ *
+ *  BioSignalML Implementation
+ *
+ *  Copyright (c) 2010 - 2012  David Brooks
+ *
+ ****************************************************/
+
+
+var STREAM_ENDPOINT = '/stream/data/' ;
+
+
 function StreamBlock(blockno, type, header, data)
 /*=============================================*/
 {
@@ -9,12 +21,15 @@ function StreamBlock(blockno, type, header, data)
 
 
 var STREAM = {
-  VERSION:        1,
+  VERSION:   1
+  }
 
-  CHAR_LFEED:  0x0A,   // '\n'
-  CHAR_HASH:   0x23,   // '#'
-  CHAR_ZERO:   0x30,   // '0'
-  CHAR_NINE:   0x39,   // '9'
+var CHAR = {
+  LFEED:  0x0A,   // '\n'
+  HASH:   0x23,   // '#'
+  ZERO:   0x30,   // '0'
+  NINE:   0x39,   // '9'
+  V:      0x56    // 'V'
   }
 
 var ERROR = {
@@ -82,9 +97,8 @@ StreamParser.prototype =
     var datalen = data.byteLength ;
 
     while (datalen > 0) {
-
       if      (this.state == PARSE.RESET) {                 // Looking for a block
-        while (datalen > 0 && data[pos] != STREAM.CHAR_HASH) {
+        while (datalen > 0 && data[pos] != CHAR.HASH) {
           ++pos ;
           --datalen ;
           }
@@ -99,7 +113,7 @@ StreamParser.prototype =
         this.type = data[pos] ;
         pos += 1 ;
         datalen -= 1 ;
-        if (this.type != STREAM.CHAR_HASH) {
+        if (this.type != CHAR.HASH) {
           this.blockno += 1 ;
           this.version = 0 ;
           this.state = PARSE.VERSION ;
@@ -109,13 +123,13 @@ StreamParser.prototype =
         }
 
       else if (this.state == PARSE.VERSION) {               // Version number
-        while (datalen > 0 && STREAM.CHAR_ZERO <= data[pos] && data[pos] <= STREAM.CHAR_NINE) {
-          this.version = 10*this.version + (data[pos] - STREAM.CHAR_ZERO) ;
+        while (datalen > 0 && CHAR.ZERO <= data[pos] && data[pos] <= CHAR.NINE) {
+          this.version = 10*this.version + (data[pos] - CHAR.ZERO) ;
           pos += 1 ;
           datalen -= 1 ;
           }
         if (datalen > 0) {
-          if (data[pos] != 'V')
+          if (data[pos] != CHAR.V)
             this.error = ERROR.BAD_FORMAT ;
           else if (this.version != STREAM.VERSION)
             this.error = ERROR.VERSION_MISMATCH ;
@@ -129,8 +143,8 @@ StreamParser.prototype =
         }
 
       else if (this.state == PARSE.HDRLEN) {                // Getting header length
-        while (datalen > 0 && STREAM.CHAR_ZERO <= data[pos] && data[pos] <= STREAM.CHAR_NINE) {
-          this.length = 10*this.length + (data[pos] - STREAM.CHAR_ZERO) ;
+        while (datalen > 0 && CHAR.ZERO <= data[pos] && data[pos] <= CHAR.NINE) {
+          this.length = 10*this.length + (data[pos] - CHAR.ZERO) ;
           pos += 1 ;
           datalen -= 1 ;
           }
@@ -162,8 +176,8 @@ StreamParser.prototype =
         }
 
       else if (this.state == PARSE.DATALEN) {               // Getting content length
-        while (datalen > 0 && STREAM.CHAR_ZERO <= data[pos] && data[pos] <= STREAM.CHAR_NINE) {
-          this.length = 10*this.length + (data[pos] - STREAM.CHAR_ZERO) ;
+        while (datalen > 0 && CHAR.ZERO <= data[pos] && data[pos] <= CHAR.NINE) {
+          this.length = 10*this.length + (data[pos] - CHAR.ZERO) ;
           pos += 1 ;
           datalen -= 1 ;
           }
@@ -171,7 +185,7 @@ StreamParser.prototype =
         }
 
       else if (this.state == PARSE.HDREND) {                // Checking header LF
-        if (data[pos] == STREAM.CHAR_LFEED) {
+        if (data[pos] == CHAR.LFEED) {
           pos += 1 ;
           datalen -= 1 ;
           this.buffer = new ArrayBuffer(this.length) ;
@@ -199,7 +213,7 @@ StreamParser.prototype =
         }
 
       else if (this.state == PARSE.TRAILER) {               // Getting trailer
-        if (data[pos] == STREAM.CHAR_HASH) {
+        if (data[pos] == CHAR.HASH) {
           pos += 1 ;
           datalen -= 1 ;
           this.length -= 1 ;
@@ -210,7 +224,7 @@ StreamParser.prototype =
         }
 
       else if (this.state == PARSE.CHECKSUM) {              // Checking for checksum
-        if (data[pos] != STREAM.CHAR_LFEED) {
+        if (data[pos] != CHAR.LFEED) {
           this.length = 32 ;    // 32 checksum characters (hex digest)
           this.state = PARSE.CHECKDATA ;
           }
@@ -231,11 +245,14 @@ StreamParser.prototype =
         }
 
       else if (this.state == PARSE.BLOCKEND) {              // Checking for final LF
-        if (data[pos] == STREAM.CHAR_LFEED) {
+        if (data[pos] == CHAR.LFEED) {
           pos += 1 ;
           datalen -= 1 ;
-          this.receiver(new StreamBlock(this.blockno, this.type, this.header, this.buffer)) ;
           this.state = PARSE.RESET ;
+
+          this.receiver(new StreamBlock(this.blockno, String.fromCharCode(this.type),
+                                        this.header, this.buffer)) ;
+
           }
         else
           this.error = ERROR.MISSING_TRAILER_LF ;
@@ -246,7 +263,7 @@ StreamParser.prototype =
         }
 
       if (this.error != ERROR.NONE) {
-//print('ERROR:', this.state, this.error) ;
+        console.error('Stream parsing error: %d, state=%d', this.error, this.state) ;
         this.error = ERROR.NONE ;
         this.state = PARSE.RESET ;
         }
@@ -258,19 +275,78 @@ StreamParser.prototype =
   }
 
 
-function main()
+
+function makeblob(s)      // Make a Blob from a string
+/*================*/      // FF 14 will implement Blob(s)
 {
-  var sp = new StreamParser() ;
-  sp.receiver = function(datablock) { print('block!') ; }
-
-  var data = '#d1M84{"uri":"http://example.org/test/xx/sinewave9","start":0,"duration":10,"dtype":"<f4"}0\n##\n' ;
-
-  var x = new Int8Array(data.length) ;
-  for (var i = 0 ;  i < data.length ;  ++i) {
-    x[i] = data[i].charCodeAt(0) ;
+  if (window.BlobBuilder) {
+    bb = new BlobBuilder() ;
     }
-  sp.process(x) ;
+  else if (window.MozBlobBuilder) {
+    bb = new MozBlobBuilder() ;     // Replace with Blob in FF 14 ??
+    }
+  else if (window.WebKitBlobBuilder) {
+    bb = new WebKitBlobBuilder() ;
+    }
+  else if (window.MSBlobBuilder) {
+    bb = new MSBlobBuilder() ;
+    }
+  else {
+    alert('BlobBuilder Not Supported');
+    return;
+    }
+  bb.append(s) ;
+  return bb.getBlob() ;
   }
 
 
-//main() ;
+function getSignal(uri, processor, start, duration, datatype)
+/*=========================================================*/
+{
+  websocket = 'ws://' + window.document.location.host + STREAM_ENDPOINT ;
+  protocol = 'biosignalml-ssf';
+  sp = new StreamParser() ;
+  sp.receiver = processor ;
+
+  if (window.WebSocket) {
+    ws = new WebSocket(websocket, protocol);
+    }
+  else if (window.MozWebSocket) {
+    ws = MozWebSocket(websocket, protocol);
+    }
+  else {
+    alert('WebSocket Not Supported');
+    return;
+    }
+  ws.binaryType = "arraybuffer" ;
+
+  window.onunload = function() {
+    ws.close();
+    } ;
+
+  ws.onerror = function(evt) {
+    alert('WebSocket error');
+    } ;
+
+  ws.onmessage = function(evt) {
+    var data = new Uint8Array(evt.data);
+    sp.process(data) ;
+    } ;
+
+  ws.onopen = function() {
+    var hdr = {uri: uri } ;
+    if (typeof start != 'undefined') {
+      hdr.start = start ;
+      if (typeof duration != 'undefined') {
+        hdr.duration = duration ;
+        if (typeof datatype != 'undefined') hdr.dtype = datatype ;
+        }
+      }
+    h = JSON.stringify(hdr) ;
+//    s = '#d' + STREAM.VERSION.toString() + 'V'
+    var s = '#d1V'
+             + h.length.toString() + h
+             + '0\n##\n' ;
+    ws.send(makeblob(s)) ;
+    } ;
+  }
