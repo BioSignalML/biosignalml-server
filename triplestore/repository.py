@@ -221,6 +221,16 @@ class BSMLRepository(Repository):
         rec.add_signal(Signal.create_from_graph(sig_uri, graph, units=None))
     return rec
 
+  def store_recording(self, recording):
+  #------------------------------------
+    """
+    Store a recording's metadata in the repository.
+
+    :param recording: The :class:`~biosignalml.Recording` to store.
+    """
+    self.replace_graph(recording.uri, recording.metadata_as_graph().serialise())
+
+
 #  def signal_recording(self, uri):
 #  #-------------------------------
 #    return self.get_object(uri, BSML.recording)

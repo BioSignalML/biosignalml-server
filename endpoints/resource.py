@@ -252,7 +252,7 @@ class ReST(httpchunked.ChunkedHandler):
     writer._output.close()
     logging.debug("Imported %s -> %s (%s)", writer._source, writer._fname, writer._uri)
     recording = writer.Recording.open(writer._fname, uri=writer._uri, digest=writer._sha.hexdigest())
-    options.repository.replace_graph(recording.uri, recording.metadata_as_graph().serialise())
+    options.repository.store_recording(recording)
     recording.close()
 
 
