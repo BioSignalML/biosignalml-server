@@ -139,10 +139,6 @@ class Repository(object):
   #------------------------------
     return self.get_object(uri, RDF.type, graph)
 
-  def check_type(self, uri, type, graph=None):
-  #-------------------------------------------
-    return self.ask('<%s> a <%s>' % (str(uri), str(type)), graph)
-
 
 class BSMLRepository(Repository):
 #================================
