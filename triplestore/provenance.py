@@ -9,11 +9,9 @@
 ######################################################
 
 
-from datetime import datetime
-
-from biosignalml.rdf import Graph, Statement
-from biosignalml.rdf import DCTERMS
-from biosignalml.utils import utctime, datetime_to_isoformat
+from biosignalml.rdf import Uri, Graph, Statement
+from biosignalml.rdf import RDF, RDFG, PRV
+from biosignalml.utils import utctime_as_string
 
 
 class Provenance(Graph):
@@ -22,16 +20,24 @@ class Provenance(Graph):
   def __init__(self, store, uri):
   #------------------------------
     Graph.__init__(self, uri)
-    self.__store = store
+    self._store = store
 
-  def add(self, uri, creator): ## , format, digest):
-  #---------------------------
-    self.append(Statement(uri, DCTERMS.dateSubmitted, datetime_to_isoformat(utctime()) ))
-    ##### self.append(Statement(uri, DCTERMS.format,        format))
-    ## And need to now put these into the store....
+  def add_graph(self, graph, agent, ancestor=None):
+  #------------------------------------------------
+    self.append(Statement(graph, RDF.type, PRV.DataItem))
+    self.append(Statement(graph, RDF.type, RDFG.Graph))
+    if ancestor: self.append(Statement(graph, PRV.precededBy, ancestor))
+    createdby = self.uri.make_uri()
+    self.append(Statement(graph, PRV.createdBy, createdby))
+    self.append(Statement(createdby, RDF.type, PRV.DataCreation))
+    self.append(Statement(createdby, PRV.performedBy, agent))
+    self.append(Statement(createdby, PRV.completedAt, '"%s"^^xsd:dateTime'
+                                                    % utils.utctime_as_string()))
 
-  def delete(self, graph):
-  #---------------------
+    # now is when we lock and update store...
+
+  def delete_graph(self, graph):
+  #-----------------------------
     ## 'DCTERMS.dateRemoved' is not a DCTERMS Terms property...
     self.append(Statement(uri, DCTERMS.dateRemoved, datetime_to_isoformat(utctime()) ))
     ## ANd need to updayte the store...
@@ -44,8 +50,109 @@ class Provenance(Graph):
 
 ## Also store md5/sha hashes of file objects...
 
+  def get_current_resources(self, rtype):
+  #--------------------------------------
+    '''
+    Return a list of URI's in a given class that are in graphs which have provenance.
+
+    :param rtype: The class of resource to find.
+    :rtype: list[:class:`~biosignalml.rdf.Uri`]
+    '''
+    return [ Uri(r['r']['value']) for r in self._store.select(
+      '?r',
+      '''graph <%(pgraph)s> { ?g a <%(gtype)s> MINUS { ?p <%(preceded)s> ?g }}
+         graph ?g { ?r a <%(rtype)s> }''',
+      params=dict(pgraph=self.uri,
+                  gtype=RDFG.Graph,
+                  preceded=PRV.precededBy,
+                  rtype=rtype),
+      distinct=True,
+      order='?r')
+      ]
+
+  def get_current_resource_and_graph(self, uri, rtype):
+  #----------------------------------------------------
+    """
+    Return the resource and graph URIS where the graph has provenance, contains a specific object,
+     and the resource is of the given type.
+
+    :param uri: The URI of an object.
+    :param rtype: The class of resource the graph has to have.
+    :rtype: tuple(:class:`~biosignalml.rdf.Uri`, :class:`~biosignalml.rdf.Uri`)
+    """
+    for r in self._store.select(
+      '?r ?g',
+      '''graph <%(pgraph)s> { ?g a <%(gtype)s> MINUS { ?p <%(preceded)s> ?g }}
+         graph ?g { ?r a <%(rtype)s> . <%(obj)s> a ?t }''',
+      params=dict(pgraph=self.uri,
+                  gtype=RDFG.Graph,
+                  preceded=PRV.precededBy,
+                  rtype=rtype,
+                  obj=uri)): return (Uri(r['r']['value']), Uri(r['g']['value']))
+    return (None, None)
+
+    def has_current_resource(self, uri, rtype):
+    #------------------------------------------
+      return self._store.ask(
+        '''graph <%(pgraph)s> { ?g a <%(gtype)s> MINUS { ?p <%(preceded)s> ?g }}
+           graph ?g { ?r a <%(rtype)s> . <%(obj)s> a ?t }''',
+        params=dict(pgraph=self.uri,
+                    gtype=RDFG.Graph,
+                    preceded=PRV.precededBy,
+                    rtype=rtype,
+                    obj=uri))
+
 
 """
+Need to include basic provenance (created, by??) with recording...
+
+<resource/rec> dc:hasProvenance <resource/guid> .
+
+class Provenance(object):
+#========================
+
+  def __init__(self, uri):
+  #-----------------------
+    self.uri = uri
+    self.statements = ['<%s> {' % self.uri]
+    self.agent = 'file://' + os.path.abspath(__file__)
+
+  def __str__(self):
+  #---------------
+    return '\n  '.join(self.statements + ['}'])
+
+  def add_graph(self, graph):
+  #--------------------------
+    self.statements.append('<%s> a prv:DataItem, rdfg:Graph ;' % graph)
+    self.statements.append('  prv:createdBy [ a prv:DataCreation ;')
+    self.statements.append('                  prv:performedBy <%s> ;' % self.agent)
+    self.statements.append('                  prv:completedAt "%s"^^xsd:dateTime ;'
+                                                % utils.datetime_to_isoformat(utils.utctime()))
+    self.statements.append('                ] .')
+
+
+
+
+prefix prv: <http://purl.org/net/provenance/ns#>
+prefix rdfg: <http://www.w3.org/2004/03/trix/rdfg-1/>
+
+select ?g ?r where {
+  graph ?g { ?r a bsml:Recording }
+  graph <http://devel.biosignalml.org/provenance>
+    { ?g a rdfg:Graph MINUS { ?p prv:precededBy ?g } }
+  }
+
+<http://devel.biosignalml.org/provenance> {
+  <mitdb/100V2> a prv:DataItem, rdfg:Graph ;
+    prv:precededBy <mitdb/100V1> ;
+    prv:createdBy [ a prv:DataCreation ;
+                    prv:performedBy <http://www.bcs.co.nz/Users/dave> ;
+                    prv:completedAt "2012-05-16T05:18Z"^^xsd:dateTime ;
+                  ] .
+  }
+
+
+
 
 Access everything via <provenance> graph:
 
@@ -58,7 +165,7 @@ Access everything via <provenance> graph:
 <rec_graph/1> a prov:NamedGraph ;
               dc:created "..."^^xsd:DateTime ;
               dc:creator "..." ;
-              dc:replacedBy <rec_graph/2> 
+              dc:replacedBy <rec_graph/2>
               prov:version 1 ;
               prov:validFrom "..."^^xsd:DateTime ;
               prov:validUntil "..."^^xsd:DateTime ;
@@ -67,7 +174,7 @@ Access everything via <provenance> graph:
 <rec_graph/3> a prov:NamedGraph ;
               dc:created "..."^^xsd:DateTime ;
               dc:creator "..." ;
-              dc:replaceds <rec_graph/2> 
+              dc:replaceds <rec_graph/2>
               prov:version 3 ;
               prov:validFrom "..."^^xsd:DateTime ;
               .
