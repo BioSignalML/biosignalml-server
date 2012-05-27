@@ -153,24 +153,18 @@ class BSMLRepository(Repository):
   def has_recording(self, uri):
   #----------------------------
     ''' Check a URI refers to a Recording. '''
-    return self.check_type(uri, BSML.Recording, uri)   # Look for uri in graph with same uri
+    return self._provenance.has_current_resource(uri, BSML.Recording)
 
   def has_signal(self, uri):
   #-------------------------
     ''' Check a URI refers to a Signal. '''
-    ##return self.check_type(uri, BSML.Signal)
-    return self.ask('graph ?g { ?g a <%(rclass)s> . <%(uri)s> a <%(class)s> }'
-      % { 'rclass': BSML.Recording, 'uri': uri, 'class': BSML.Signal })
+    return self._provenance.has_current_resource(uri, BSML.Signal)
 
   def has_signal_in_recording(self, sig, rec):
   #-------------------------------------------
     ''' Check a URI refers to a Signal in a given Recording. '''
-    return self.ask('''<%(rec)s> a <%(rclass)s> .
-                       <%(sig)s> a <%(class)s> .
-                       <%(sig)s> <%(prop)s> <%(rec)s>'''
-      % { 'rec': rec, 'rclass': BSML.Recording,
-          'sig': sig, 'class':  BSML.Signal,
-          'prop': BSML.recording }, rec)
+    return (self._provenance.has_current_resource(rec, BSML.Recording)
+        and self._provenance.has_current_resource(uri, BSML.Signal))
 
   def recordings(self):
   #--------------------
@@ -190,9 +184,7 @@ class BSMLRepository(Repository):
     :param uri: The URI of some object.
     :rtype: tuple(:class:`~biosignalml.rdf.Uri`, :class:`~biosignalml.rdf.Uri`)
     """
-    for r in self._triplestore.select('?g', 'graph ?g { ?g a <%s> . <%s> a ?t }' % (BSML.Recording, uri)):
-      return Uri(r['g']['value'])
-    return None
+    return self._provenance.get_current_resource_and_graph(uri, BSML.Recording)
 
   def get_recording(self, uri):
   #----------------------------
