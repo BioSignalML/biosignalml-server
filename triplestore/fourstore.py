@@ -24,19 +24,29 @@ class StoreException(Exception):
 #===============================
   pass
 
-
 class FourStore(TripleStore):
 #============================
 
   def _request(self, endpoint, method, **kwds):
   #--------------------------------------------
-    try:
-      response = tornado.httpclient.HTTPClient().fetch(self._href + endpoint,
-                                                       method=method, connect_timeout=1,
-                                                       **kwds)
-    except tornado.httpclient.HTTPError, msg:
+    ioloop = tornado.ioloop.IOLoop()
+    client = tornado.httpclient.AsyncHTTPClient(ioloop)
+    self._reponse = None
+    def callback(response):
+      self._response = response
+      ioloop.stop()
+    client.fetch(self._href + endpoint,
+                 callback,
+                 method=method, connect_timeout=1,
+                 **kwds)
+    ioloop.start()
+    response = self._response
+    client.close()
+    ioloop.close()
+    if response.code == 599:
       raise StoreException("Can not connect to 4store -- check it's running (%s)" % msg)
-    if response.code not in [200, 201]: raise Exception(content)
+    elif response.code not in [200, 201]:
+      raise Exception(response.body)
     return response.body
 
   def query(self, sparql, format=Format.RDFXML):
