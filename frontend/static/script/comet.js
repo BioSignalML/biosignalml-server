@@ -67,16 +67,16 @@ function makeblob(s)      // Make a Blob from a string
 function getSignalStream(uri, blockprocess)
 /*========================================*/
 {
-  websocket = 'ws://' + window.document.location.host + '/stream/data/' ;
+  stream = 'ws://' + window.document.location.host + '/stream/data/' ;
   protocol = 'biosignalml-ssf';
   streamparser = new StreamParser() ;
   sp.receiver = blockprocess ;
 
   if (window.WebSocket) {
-    ws = new WebSocket(websocket, protocol);
+    ws = new WebSocket(stream, protocol);
     }
   else if (window.MozWebSocket) {
-    ws = MozWebSocket(websocket, protocol);
+    ws = MozWebSocket(stream, protocol);
     }
   else {
     alert('WebSocket Not Supported');
