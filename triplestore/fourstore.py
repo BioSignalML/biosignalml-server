@@ -51,35 +51,37 @@ class FourStore(TripleStore):
       logging.error('4store: %s, %s', msg, sparql)
       raise
 
-  def ask(self, where, graph=None):
-  #--------------------------------
+  def ask(self, where, params=None, graph=None):
+  #---------------------------------------------
+    if params is None: params = {}
     return json.loads(self.query('ask where { %(graph)s { %(where)s } }'
-                                  % { 'graph': ('graph <%s>' % str(graph)) if graph else '',
-                                      'where': where,
-                                    }, Format.JSON)
+                                 % dict(graph=('graph <%s>' % str(graph)) if graph else '',
+                                        where=where % params),
+                                 Format.JSON)
                                 )['boolean']
 
-  def select(self, fields, where, graph=None, distinct=False, order=None, limit=None):
-  #-----------------------------------------------------------------------------------
+  def select(self, fields, where, params=None, graph=None, distinct=False, order=None, limit=None):
+  #------------------------------------------------------------------------------------------------
+    if params is None: params = {}
     return json.loads(
       self.query('select%(distinct)s %(fields)s where { %(graph)s { %(where)s } }%(order)s%(limit)s'
                  % dict(distinct=' distinct' if distinct else '',
                         fields=fields,
                         graph=('graph <%s>' % graph) if graph else '',
-                        where=where,
+                        where=where % params,
                         order=(' order by %s' % order) if order else '',
                         limit=(' limit %s' % limit) if limit else ''),
                  Format.JSON)
         ).get('results', {}).get('bindings', [])
 
-  def construct(self, template, where, graph=None, params = { }, format=Format.RDFXML):
-  #------------------------------------------------------------------------------------
+  def construct(self, template, where, params=None, graph=None, format=Format.RDFXML):
+  #-----------------------------------------------------------------------------------
+    if params is None: params = {}
     return self.query('construct { %(tplate)s } where { %(graph)s { %(where)s } }'
-                       % { 'tplate': template % params,
-                           'graph': ('graph <%s>' % str(graph)) if graph else '',
-                           'where': where % params,
-                         }, format
-                     )
+                      % dict(tplate=template % params,
+                             graph=('graph <%s>' % str(graph)) if graph else '',
+                             where=where % params),
+                      format)
 
   def describe(self, uri, format=Format.RDFXML):
   #-----------------------------------------------

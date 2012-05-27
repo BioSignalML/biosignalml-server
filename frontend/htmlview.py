@@ -161,7 +161,8 @@ def build_metadata(uri):
   html = [ '<div class="metadata">' ]
   if uri:
     repo = options.repository
-    objtype = repo.get_type(uri)
+    rec_uri, graph_uri = repo.get_recording_and_graph_uri(uri)
+    objtype = repo.get_type(uri, graph_uri)
     if   objtype == BSML.Recording:    # repo.has_recording(uri)
       rec = repo.get_recording(uri)
       ## What about a local cache of opened recordings?? (keyed by uri)

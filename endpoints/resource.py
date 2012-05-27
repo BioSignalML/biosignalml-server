@@ -126,17 +126,17 @@ class ReST(httpchunked.ChunkedHandler):
   def get(self, name, **kwds):
   #----------------------------
     uri, filename, extn, fragment = self._get_names(name)
-    rec_uri = options.repository.get_recording_graph_uri(uri)
+    rec_uri, graph_uri = options.repository.get_recording_and_graph_uri(uri)
     logging.debug('GET: %s, %s, %s, %s', name, self.request.uri, uri, rec_uri)
-    if rec_uri is None:
+    if graph_uri is None:
       self.send_error(404)
       #self._write_error(404, msg="Recording unknown for '%s'" % uri)
       return
 
     accept = self._accept_headers()
-    objtype = options.repository.get_type(uri, rec_uri)
+    objtype = options.repository.get_type(uri, graph_uri)
     if objtype == BSML.Recording:
-      recording = options.repository.get_recording(uri, rec_uri)
+      recording = options.repository.get_recording(rec_uri)
 #      ctype = ReST._mimetype.get(str(recording.format), 'application/x-raw')
       ctype = recording.MIMETYPE
 ## Should we set 'Content-Location' header as well?

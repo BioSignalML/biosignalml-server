@@ -23,12 +23,12 @@ class TripleStore(object):
   #---------------------------------------------
     pass
 
-  def ask(self, where, graph=None):
-  #--------------------------------
+  def ask(self, where, params=None, graph=None):
+  #---------------------------------------------
     pass
 
-  def select(self, fields, where, graph=None, order=None, distinct=False, limit=None):
-  #-----------------------------------------------------------------------------------
+  def select(self, fields, where, graph=None, params=None, order=None, distinct=False, limit=None):
+  #------------------------------------------------------------------------------------------------
     '''
     Get all items from a graph or repository.
 
@@ -36,8 +36,9 @@ class TripleStore(object):
     :type fields: str
     :param where: The graph pattern to match.
     :type where: str
+    :param params: A dictionary of string format substitutions applied to the `where` argument.
     :param graph: The URI of an optional graph to query within.
-    :param order: The variable(s) to optionall order the results.
+    :param order: The variable(s) to optional order the results.
     :param distinct: Ensure result sets are distinct.
     :param limit: Optionally limit the number of result sets.
     :type limit: str
@@ -48,8 +49,8 @@ class TripleStore(object):
     '''
     pass
 
-  def construct(self, template, where, graph=None, params = { }, format=Format.RDFXML):
-  #------------------------------------------------------------------------------------
+  def construct(self, template, where, params=None, graph=None, format=Format.RDFXML):
+  #-----------------------------------------------------------------------------------
     pass
 
   def describe(self, uri, format=Format.RDFXML):
