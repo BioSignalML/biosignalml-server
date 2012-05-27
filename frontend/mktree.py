@@ -12,12 +12,12 @@
 ## Partially based on Tools/scripts/dutree.py from Python sources.
 
 
-def maketree(nodes, prefix):
-#===========================
+def maketree(uris, prefix):
+#==========================
   namestart = len(prefix) + 1
   tree = {}
-  for node in nodes:
-    uri = str(node.uri)
+  for u in uris:
+    uri = str(u)
     if   uri.startswith(prefix):
       path = uri[namestart:]
       components = path.split('/')
@@ -29,7 +29,7 @@ def maketree(nodes, prefix):
       components = path.split('/')
     if components[0] == '':  components[0] = '/'
     if components[-1] == '': del components[-1]
-    else:                    components[-1] = (components[-1], path, node)
+    else:                    components[-1] = (components[-1], path, uri)
     tree = addpath(components, tree)
   return sort(tree)
 
@@ -45,7 +45,7 @@ def addpath(c, t):
 def _text(k):
 #============
   if isinstance(k, tuple): return _text(k[0])
-  else:                    return str(k)  
+  else:                    return str(k)
 
 def sort(t):
 #===========
@@ -76,9 +76,9 @@ if __name__ == '__main__':
            ] ),
 
     ('d',  [ ('r4', [ ]) ]),
-    
+
     ('r0', [ ])
-     
+
   ]
 
 

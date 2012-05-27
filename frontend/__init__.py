@@ -37,7 +37,7 @@ class SubTree(tornado.web.UIModule):
         html.append(' id="%s"' % details[1])
         html.append('>')
         html.append(SubTree.treeaction(details[0],
-          prefix + details[1].replace(':', '%3A'), details[2].uri))
+          prefix + details[1].replace(':', '%3A'), details[2]))
       else:
         if depth < len(selected) and t[0] == selected[depth]:
           html.append(' class="jstree-open"')

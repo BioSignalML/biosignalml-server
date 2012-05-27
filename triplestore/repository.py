@@ -169,12 +169,11 @@ class BSMLRepository(Repository):
   def recordings(self):
   #--------------------
     '''
-    Return a list of all the Recordings in the repository.
+    Return a list of URI's of the Recordings in the repository.
 
-    :rtype: list[:class:`~biosignalml.Recording`]
+    :rtype: list[:class:`~biosignalml.rdf.Uri`]
     '''
-    return [ Recording(r['r']['value'])
-               for r in self._triplestore.select('?r', 'graph ?r { ?r a <%s> }' % BSML.Recording) ]
+    return self._provenance.get_current_resources(BSML.Recording)
 
   def get_recording_and_graph_uri(self, uri):
   #------------------------------------------

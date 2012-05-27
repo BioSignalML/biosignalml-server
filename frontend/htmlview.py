@@ -197,8 +197,8 @@ class Metadata(tornado.web.RequestHandler):  # Tool-tip popup
 class Repository(frontend.BasePage):
 #===================================
 
-  def _xmltree(self, nodes, base, prefix, select=''):
-    tree = mktree.maketree(nodes, base)
+  def _xmltree(self, uris, base, prefix, select=''):
+    tree = mktree.maketree(uris, base)
     #logging.debug('tree: %s', tree)
     if select.startswith(options.resource_prefix):
       selectpath = select[len(options.resource_prefix):].split('/')
