@@ -5,10 +5,11 @@
  $(function () {
    $.jstree._themes = "/static/themes/" ;
    $("#tree").jstree({
-     core: { animation: 0, initially_open: [ "{{ selectpath }}" ], load_open: true },
+     core: { animation: 0, load_open: true,
+             initially_open: [{% for p in selectpath %}"{{ p }}",{% end %}]
+           },
      plugins: [ "themes", "html_data" ],
      themes: { theme: "default", dots: true, icons: true }
      }) ;
    }) ;
 </script>
-
