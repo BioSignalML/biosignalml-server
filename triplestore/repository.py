@@ -50,6 +50,10 @@ class Repository(object):
     del self._provenance
     del self._triplestore
 
+  def provenance_uri(self):
+  #------------------------
+    return self._provenance.uri
+
   def update(self, uri, triples):
   #------------------------------
     self._triplestore.update(uri, triples)

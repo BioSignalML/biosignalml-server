@@ -252,10 +252,11 @@ class Search(frontend.BasePage):
       sparql.append('PREFIX text: <http://4store.org/fulltext#>')
       sparql.append('')
       # Redland 'distinct' is buggy..
-      sparql.append('select ?s ?t where {')
+      sparql.append('select ?s ?t where { graph ?g {')
       sparql.append(query)
       sparql.append('?s rdf:type ?t .')   ##  % stype)
-      sparql.append('}')
+      sparql.append('filter(?g != <%s>)' % options.repository.provenance_uri())
+      sparql.append('} }')
       subjects = set()
       for r in options.repository.query('\n'.join(sparql), html=True, abbreviate=True):
         #logging.debug('R: %s', r)
