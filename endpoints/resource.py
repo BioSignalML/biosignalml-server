@@ -47,11 +47,11 @@ class FileWriter(object):
 
   def __init__(self, fname, uri, source, cls):
   #-------------------------------------------
-    self._fname = fname
-    self._output = open(fname, 'wb')
-    self._sha = hashlib.sha512()
-    self._uri = uri
-    self._source = source
+    self.fname = fname
+    self.output = open(fname, 'wb')
+    self.sha = hashlib.sha512()
+    self.uri = uri
+    self.source = source
     self.Recording = cls
 
   def write(self, data):
@@ -232,18 +232,16 @@ class ReST(httpchunked.ChunkedHandler):
 
     try:            os.makedirs(os.path.dirname(file_name))
     except OSError: pass
+    newfile = FileWriter(file_name, rec_uri, name, RecordingClass)
+    if not self.have_chunked(newfile, self.finished_put):
+      newfile.write(self.request.body)
+      self.finished_put(newfile)
 
-    writer = FileWriter(file_name, rec_uri, name, RecordingClass)
-    if not self.have_chunked(writer, self.finished_put):
-      writer.write(self.request.body)
-      self.finished_put(writer)
-
-
-  def finished_put(self, writer):
-  #------------------------------
-    writer._output.close()
-    logging.debug("Imported %s -> %s (%s)", writer._source, writer._fname, writer._uri)
-    recording = writer.Recording.open(writer._fname, uri=writer._uri, digest=writer._sha.hexdigest())
+  def finished_put(self, newfile):
+  #-------------------------------
+    newfile.output.close()
+    logging.debug("Imported %s -> %s (%s)", newfile.source, newfile.uri, newfile.fname)
+    recording = newfile.Recording.open(newfile.uri, fname=newfile.fname, digest=newfile._sha.hexdigest())
     options.repository.store_recording(recording)
     recording.close()
 
