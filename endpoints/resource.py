@@ -115,17 +115,13 @@ class ReST(httpchunked.ChunkedHandler):
     name = parts[-1].rsplit('.', 1)
     parts[-1] = name[0]     # Have removed extension
     uri = '/'.join(parts)
-    extn = name[1] if len(name) > 1 else ''
-    if head.startswith('http:'):
-      return (uri, head.replace('/', '_'), extn, fragment)
-    else:
-      print uri, head, extn
-      return (options.resource_prefix + head, head, extn, fragment)
+    if head.startswith('http:'): return (uri, fragment)
+    else: return (options.resource_prefix + head, fragment)
 
 
   def get(self, name, **kwds):
   #----------------------------
-    uri, filename, extn, fragment = self._get_names(name)
+    uri, fragment = self._get_names(name)
     rec_uri, graph_uri = options.repository.get_recording_and_graph_uri(uri)
     logging.debug('GET: %s, %s, %s, %s', name, self.request.uri, uri, rec_uri)
     if graph_uri is None:
@@ -207,7 +203,6 @@ class ReST(httpchunked.ChunkedHandler):
       elif n.literal[2]: l.append('^^<%s>' % n.literal[2])
       return ''.join(l)
 
-
   def put(self, name, **kwds):
   #---------------------------
     """
@@ -216,7 +211,7 @@ class ReST(httpchunked.ChunkedHandler):
     """
     #logging.debug("URI, NM: %s, %s", self.request.uri, name)  #############
     #logging.debug("HDRS: %s", self.request.headers)
-    rec_uri, fname, extn, fragment = self._get_names(name)
+    rec_uri, fragment = self._get_names(name)
     ctype = self.request.headers.get('Content-Type')
     if ctype is None:
       ctype = ReST._extns.get(extn, 'application/x-raw')
@@ -227,11 +222,8 @@ class ReST(httpchunked.ChunkedHandler):
     if not RecordingClass:
       self._write_error(415, msg="Unknown Content-Type: '%s'" % ctype)
       return
-    ##file_id   = str(uuid.uuid4()) + '.' + format
-    ##file_name = os.path.abspath(os.path.join(options.repository.storepath, file_id))
-    file_name = os.path.abspath(os.path.join(options.recordings, fname))
-    #if container: file_uri = os.path.split(file_uri)[0]
-
+    file_name = os.path.abspath(os.path.join(options.recordings,
+                                str(uuid.uuid1()) + '.' + RecordingClass.EXTENSIONS[0]))
     logging.debug('URI: %s, FILE: %s', rec_uri, file_name)
 
     if options.repository.check_type(rec_uri, BSML.Recording):
@@ -287,7 +279,7 @@ class ReST(httpchunked.ChunkedHandler):
 
   def delete(self, name, **kwds):
   #------------------------------
-    rec_uri, fname, extn, fragment = self._get_names(name)
+    rec_uri, fragment = self._get_names(name)
     if rec_uri is None: return
     recording = options.repository.get_recording(rec_uri)
     if recording.source is None:
