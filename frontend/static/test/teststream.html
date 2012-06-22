@@ -20,7 +20,7 @@
    function request() {
      getSignal('http://' + window.document.location.hostname + '/resource/physiobank/mitdb/100/signal/0',
                gotblock,
-               0, 10) ;
+               0, 1000) ;
 //     getSignal('http://' + window.document.location.hostname + '/resource/physiobank/mitdb/100/signal/0',
 //               gotblock,
 //               0, 10, '<f4') ;          // Float32Array
@@ -28,12 +28,9 @@
   </script>
  </head>
 
- <body onload="request()">
-  <h1>BioSignalML Stream Test</h1>
-
-  <p>
-    Use a debugger to set a breakpoint in 'gotblock()' and reload page.
-  </p>
+ <body>
+  <p>Use a debugger to watch the console and click:</p>
+  <h2 onclick='request()'>LOAD</h2>
  </body>
 </html>
 
