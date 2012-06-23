@@ -43,7 +43,7 @@ class Provenance(Graph):
   def delete_graph(self, graph):
   #-----------------------------
     ## 'DCTERMS.dateRemoved' is not a DCTERMS Terms property...
-    self.append(Statement(uri, DCTERMS.dateRemoved, datetime_to_isoformat(utctime()) ))
+    self.append(Statement(graph, DCTERMS.dateRemoved, datetime_to_isoformat(utctime()) ))
     ## ANd need to updayte the store...
 
 
