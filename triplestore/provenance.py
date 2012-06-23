@@ -91,16 +91,16 @@ class Provenance(Graph):
                   obj=uri)): return (Uri(r['r']['value']), Uri(r['g']['value']))
     return (None, None)
 
-    def has_current_resource(self, uri, rtype):
-    #------------------------------------------
-      return self._store.ask(
-        '''graph <%(pgraph)s> { ?g a <%(gtype)s> MINUS { ?p <%(preceded)s> ?g }}
-           graph ?g { ?r a <%(rtype)s> . <%(obj)s> a ?t }''',
-        params=dict(pgraph=self.uri,
-                    gtype=RDFG.Graph,
-                    preceded=PRV.precededBy,
-                    rtype=rtype,
-                    obj=uri))
+  def has_current_resource(self, uri, rtype):
+  #------------------------------------------
+    return self._store.ask(
+      '''graph <%(pgraph)s> { ?g a <%(gtype)s> MINUS { ?p <%(preceded)s> ?g }}
+         graph ?g { ?r a <%(rtype)s> . <%(obj)s> a ?t }''',
+      params=dict(pgraph=self.uri,
+                  gtype=RDFG.Graph,
+                  preceded=PRV.precededBy,
+                  rtype=rtype,
+                  obj=uri))
 
 
 """
