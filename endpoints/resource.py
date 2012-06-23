@@ -161,9 +161,9 @@ class ReST(httpchunked.ChunkedHandler):
           self._write_error(500, msg="Error serving recording: %s" % msg)
         return
     # Either not a Recording or ctype not in accept header, so send RDF
-    format = rdf.Format.TURTLE if ('text/turtle' in accept
-                                or 'application/x-turtle' in accept) else rdf.Format.RDFXML
-
+    if   'text/turtle' in accept or 'application/x-turtle' in accept: format = rdf.Format.TURTLE
+    elif 'application/json' in accept:                                format = rdf.Format.JSON
+    else:                                                             format = rdf.Format.RDFXML
     ## 415 Unsupported Media Type if accept is not */* nor something we can serve...
 
     # check rdf+xml, turtle, n3, html ??
