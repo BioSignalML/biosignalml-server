@@ -105,8 +105,8 @@ class Repository(object):
   #--------------------------------
     return self._triplestore.ask(query, graph)
 
-  def get_subjects(self, prop, obj, graph=None):
-  #---------------------------------------------
+  def get_subjects(self, prop, obj, graph=None, ordered=False):
+  #------------------------------------------------------------
     if isinstance(obj, Resource) or isinstance(obj, Uri):
       obj = '<%s>' % obj
     elif not isinstance(obj, Node):
@@ -114,7 +114,8 @@ class Repository(object):
     return [ r['s']['value'] for r in
                   self._triplestore.select('?s', '?s <%(prop)s> %(obj)s',
                                             params = dict(prop=prop, obj=obj),
-                                            graph = graph) ]
+                                            graph = graph,
+                                            order = '?s' if ordered else None) ]
 
   def get_object(self, subj, prop, graph=None):
   #--------------------------------------------
@@ -220,7 +221,7 @@ class BSMLRepository(Repository):
     """
     rec = self.get_recording(uri)
     if rec is not None:
-      for sig_uri in self.get_subjects(BSML.recording, rec.uri, graph=rec.graph.uri):
+      for sig_uri in self.get_subjects(BSML.recording, rec.uri, graph=rec.graph.uri, ordered=True):
         graph = self.make_graph(rec.graph.uri, '<%(uri)s> ?p ?o', params=dict(uri=sig_uri), graph=rec.graph.uri)
         rec.add_signal(Signal.create_from_graph(sig_uri, graph, units=None))
     return rec
