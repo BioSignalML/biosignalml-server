@@ -22,11 +22,13 @@ class Provenance(Graph):
     Graph.__init__(self, uri)
     self._store = store
 
-  def add_graph(self, graph, agent, ancestor=None, subject=None):
-  #--------------------------------------------------------------
+
+  def add_graph(self, subject, agent, ancestor=None):
+  #--------------------------------------------------
+    graph = self.uri.make_uri()
     self.append(Statement(graph, RDF.type, PRV.DataItem))
     self.append(Statement(graph, RDF.type, RDFG.Graph))
-    if subject: self.append(Statement(graph, DCTERMS.subject, subject))
+    self.append(Statement(graph, DCTERMS.subject, subject))
     if ancestor: self.append(Statement(graph, PRV.precededBy, ancestor))
     createdby = self.uri.make_uri()
     self.append(Statement(graph, PRV.createdBy, createdby))
@@ -34,8 +36,9 @@ class Provenance(Graph):
     self.append(Statement(createdby, PRV.performedBy, agent))
     self.append(Statement(createdby, PRV.completedAt, '"%s"^^xsd:dateTime'
                                                     % utils.utctime_as_string()))
-
     # now is when we lock and update store...
+    return graph
+
 
   def delete_graph(self, graph):
   #-----------------------------
