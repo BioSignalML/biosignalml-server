@@ -52,12 +52,12 @@ class Provenance(Graph):
 
   def get_current_resources(self, rtype):
   #--------------------------------------
-    '''
+    """
     Return a list of URI's in a given class that are in graphs which have provenance.
 
     :param rtype: The class of resource to find.
     :rtype: list[:class:`~biosignalml.rdf.Uri`]
-    '''
+    """
     return [ Uri(r['r']['value']) for r in self._store.select(
       '?r',
       '''graph <%(pgraph)s> { ?g a <%(gtype)s> MINUS { ?p <%(preceded)s> ?g }}
@@ -102,6 +102,9 @@ class Provenance(Graph):
                   rtype=rtype,
                   obj=uri))
 
+  def knows_resource(self, uri):
+  #-----------------------------
+    return self._store.ask('<%s> a ?t' % uri, graph = self.uri)
 
 """
 Need to include basic provenance (created, by??) with recording...

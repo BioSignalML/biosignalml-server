@@ -54,6 +54,11 @@ class Repository(object):
   #------------------------
     return self._provenance.uri
 
+  def in_provenance(self, uri):
+  #----------------------------
+    ''' Check a URI is in the provenance graph.'''
+    return self._provenance.knows_resource(uri)
+
   def update(self, uri, triples):
   #------------------------------
     self._triplestore.update(uri, triples)
