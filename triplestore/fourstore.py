@@ -44,7 +44,7 @@ class FourStore(TripleStore):
     client.close()
     ioloop.close()
     if response.code == 599:
-      raise StoreException("Can not connect to 4store -- check it's running (%s)" % msg)
+      raise StoreException("Cannot connect to 4store -- check it is running")
     elif response.code not in [200, 201]:
       raise Exception(response.body)
     return response.body
