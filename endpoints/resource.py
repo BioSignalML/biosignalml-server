@@ -123,8 +123,6 @@ class ReST(httpchunked.ChunkedHandler):
   #----------------------------
     uri, fragment = self._get_names(name)
     rec_uri, graph_uri = options.repository.get_recording_and_graph_uri(uri)
-    if graph_uri is None and options.repository.in_provenance(uri):
-      graph_uri = options.repository.provenance_uri()
     logging.debug('GET: name=%s, req=%s, uri=%s, rec=%s, graph=%s',
                         name, self.request.uri, uri, rec_uri, graph_uri)
     if graph_uri is None:

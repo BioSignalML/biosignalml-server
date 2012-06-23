@@ -25,6 +25,7 @@ import tornado.options as options
 import server
 server.init_server()  # Setup globals
 
+import endpoints.provenance as provenance
 import endpoints.webstream as webstream
 import endpoints.resource  as resource
 import endpoints.sparql    as sparql
@@ -39,6 +40,8 @@ application = tornado.web.Application([
     ( server.STREAMDATA_ENDPOINT,         webstream.StreamDataSocket),
     ( '/stream/echo/',                    webstream.StreamEchoSocket),
     ( server.RESOURCE_ENDPOINT + '(.*)',  resource.ReST),
+    ('/provenance/(.*)',                  provenance.ProvenanceRDF),
+    ('/provenance',                       provenance.ProvenanceRDF),
     ( '/sparql/',                         sparql.sparql),
     ('/comet/metadata',                   frontend.htmlview.Metadata), # For tooltip popups
     ('/repository/(.*)',                  frontend.htmlview.Repository),
