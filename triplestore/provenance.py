@@ -10,7 +10,7 @@
 
 
 from biosignalml.rdf import Uri, Graph, Statement
-from biosignalml.rdf import RDF, RDFG, PRV
+from biosignalml.rdf import RDF, RDFG, PRV, DCTERMS
 from biosignalml.utils import utctime_as_string
 
 
@@ -22,10 +22,11 @@ class Provenance(Graph):
     Graph.__init__(self, uri)
     self._store = store
 
-  def add_graph(self, graph, agent, ancestor=None):
-  #------------------------------------------------
+  def add_graph(self, graph, agent, ancestor=None, subject=None):
+  #--------------------------------------------------------------
     self.append(Statement(graph, RDF.type, PRV.DataItem))
     self.append(Statement(graph, RDF.type, RDFG.Graph))
+    if subject: self.append(Statement(graph, DCTERMS.subject, subject))
     if ancestor: self.append(Statement(graph, PRV.precededBy, ancestor))
     createdby = self.uri.make_uri()
     self.append(Statement(graph, PRV.createdBy, createdby))
