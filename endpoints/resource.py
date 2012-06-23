@@ -123,7 +123,8 @@ class ReST(httpchunked.ChunkedHandler):
   #----------------------------
     uri, fragment = self._get_names(name)
     rec_uri, graph_uri = options.repository.get_recording_and_graph_uri(uri)
-    logging.debug('GET: %s, %s, %s, %s', name, self.request.uri, uri, rec_uri)
+    logging.debug('GET: name=%s, req=%s, uri=%s, rec=%s, graph=%s',
+                        name, self.request.uri, uri, rec_uri, graph_uri)
     if graph_uri is None:
       self.send_error(404)
       #self._write_error(404, msg="Recording unknown for '%s'" % uri)
@@ -171,16 +172,13 @@ class ReST(httpchunked.ChunkedHandler):
     if name == '':
       graph_uri = options.repository.uri
       self.write(options.repository.construct('?s ?p ?o',
-                                              'graph <%(graph)s> { ?s ?p ?o'
-                                            + ' FILTER (?p != <http://4store.org/fulltext#stem>) }',
-                                              params={ 'graph': graph_uri },  format=format))
+                                              '?s ?p ?o FILTER (?p != <http://4store.org/fulltext#stem>)',
+                                              graph = graph_uri, format=format))
     else:
       self.write(options.repository.construct('?s ?p ?o',
-                                              'graph <%(graph)s> { ?s ?p ?o'
-                                            + ' FILTER (?p != <http://4store.org/fulltext#stem>'
-                                            + ' && (?s = <%(uri)s> || ?o = <%(uri)s>)) }',
-                                              params={ 'graph': rec_uri, 'uri': uri },
-                                              format=format))
+                                              '?s ?p ?o FILTER (?p != <http://4store.org/fulltext#stem>'
+                                            + ' && (?s = <%(uri)s> || ?o = <%(uri)s>))' % dict(uri=uri),
+                                              graph=graph_uri, format=format))
 
   def _format(self):
   #-----------------
