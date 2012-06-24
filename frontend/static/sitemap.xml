@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:sc="http://sw.deri.org/2007/07/sitemapextension/scschema.xsd">
+  <sc:dataset>
+    <sc:datasetURI>http://demo.biosignalml.org/provenance</sc:datasetURI>
+    <sc:linkedDataPrefix slicing="subject-object">http://demo.biosignalml.org/provenance/</sc:linkedDataPrefix>
+    <lastmod>2012-06-24</lastmod>
+    <changefreq>daily</changefreq>
+   </sc:dataset>
+  <sc:dataset>
+    <sc:linkedDataPrefix slicing="subject-object">http://demo.biosignalml.org/resource/</sc:linkedDataPrefix>
+  </sc:dataset>
+</urlset>
