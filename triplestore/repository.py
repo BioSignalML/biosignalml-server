@@ -22,7 +22,7 @@ import biosignalml.formats
 from biosignalml import BSML, Recording, Signal, Event, Annotation
 from biosignalml.utils import xmlescape
 
-from biosignalml.rdf import RDF, DCTERMS, OA
+from biosignalml.rdf import RDF, DCTERMS, RDFG, PRV, OA
 from biosignalml.rdf import Uri, Node, Resource, BlankNode, Graph, Statement
 from biosignalml.rdf import Format
 
@@ -33,7 +33,7 @@ from provenance import Provenance
 class Repository(object):
 #========================
   '''
-  An RDF repository.
+  An RDF repository storing triples in named graphs and tracking graph provenance.
 
   :param base_uri:
   :param store_uri:
@@ -42,7 +42,7 @@ class Repository(object):
   #---------------------------------------
     self.uri = base_uri
     self._triplestore = TripleStore(store_uri)
-    self._provenance = Provenance(self._triplestore, self.uri + '/provenance')
+    self._provenance = Provenance(self.uri + '/provenance')
 
   def __del__(self):
   #-----------------
@@ -54,10 +54,69 @@ class Repository(object):
   #------------------------
     return self._provenance.uri
 
-  def in_provenance(self, uri):
-  #----------------------------
-    ''' Check a URI is in the provenance graph.'''
-    return self._provenance.knows_resource(uri)
+  def graph_has_provenance(self, graph):
+  #-------------------------------------
+    ''' Check a URI is that of a graph for which we have provenance.'''
+    return self._triplestore.ask(
+      '''graph <%(pgraph)s> { <%(obj)s> a <%(gtype)s> }
+         graph <%(obj)s> { ?s ?p ?o }''',
+      params=dict(pgraph=self._provenance.uri,
+                  gtype=RDFG.Graph,
+                  preceded=PRV.precededBy,
+                  obj=graph))
+
+  def get_current_resources(self, rtype):
+  #--------------------------------------
+    """
+    Return a list of URI's in a given class that are in graphs which have provenance.
+
+    :param rtype: The class of resource to find.
+    :rtype: list[:class:`~biosignalml.rdf.Uri`]
+    """
+    return [ Uri(r['r']['value']) for r in self._triplestore.select(
+      '?r',
+      '''graph <%(pgraph)s> { ?g a <%(gtype)s> MINUS { ?p <%(preceded)s> ?g }}
+         graph ?g { ?r a <%(rtype)s> }''',
+      params=dict(pgraph=self._provenance.uri,
+                  gtype=RDFG.Graph,
+                  preceded=PRV.precededBy,
+                  rtype=rtype),
+      distinct=True,
+      order='?r')
+      ]
+
+  def get_current_resource_and_graph(self, uri, rtype):
+  #----------------------------------------------------
+    """
+    Return the resource and graph URIS where the graph has provenance, contains a specific object,
+     and the resource is of the given type.
+
+    :param uri: The URI of an object.
+    :param rtype: The class of resource the graph has to have.
+    :rtype: tuple(:class:`~biosignalml.rdf.Uri`, :class:`~biosignalml.rdf.Uri`)
+    """
+    for r in self._triplestore.select(
+      '?r ?g',
+      '''graph <%(pgraph)s> { ?g a <%(gtype)s> MINUS { ?p <%(preceded)s> ?g }}
+         graph ?g { ?r a <%(rtype)s> . <%(obj)s> a ?t }''',
+      params=dict(pgraph=self._provenance.uri,
+                  gtype=RDFG.Graph,
+                  preceded=PRV.precededBy,
+                  rtype=rtype,
+                  obj=uri)): return (Uri(r['r']['value']), Uri(r['g']['value']))
+    return (None, None)
+
+  def has_current_resource(self, uri, rtype):
+  #------------------------------------------
+    return self._triplestore.ask(
+      '''graph <%(pgraph)s> { ?g a <%(gtype)s> MINUS { ?p <%(preceded)s> ?g }}
+         graph ?g { ?r a <%(rtype)s> . <%(obj)s> a ?t }''',
+      params=dict(pgraph=self._provenance.uri,
+                  gtype=RDFG.Graph,
+                  preceded=PRV.precededBy,
+                  rtype=rtype,
+                  obj=uri))
+
 
   def update(self, uri, triples):
   #------------------------------
@@ -159,18 +218,18 @@ class BSMLRepository(Repository):
   def has_recording(self, uri):
   #----------------------------
     ''' Check a URI refers to a Recording. '''
-    return self._provenance.has_current_resource(uri, BSML.Recording)
+    return self.has_current_resource(uri, BSML.Recording)
 
   def has_signal(self, uri):
   #-------------------------
     ''' Check a URI refers to a Signal. '''
-    return self._provenance.has_current_resource(uri, BSML.Signal)
+    return self.has_current_resource(uri, BSML.Signal)
 
   def has_signal_in_recording(self, sig, rec):
   #-------------------------------------------
     ''' Check a URI refers to a Signal in a given Recording. '''
-    return (self._provenance.has_current_resource(rec, BSML.Recording)
-        and self._provenance.has_current_resource(uri, BSML.Signal))
+    return (self.has_current_resource(rec, BSML.Recording)
+        and self.has_current_resource(uri, BSML.Signal))
 
   def recordings(self):
   #--------------------
@@ -179,7 +238,7 @@ class BSMLRepository(Repository):
 
     :rtype: list[:class:`~biosignalml.rdf.Uri`]
     '''
-    return self._provenance.get_current_resources(BSML.Recording)
+    return self.get_current_resources(BSML.Recording)
 
   def get_recording_and_graph_uri(self, uri):
   #------------------------------------------
@@ -189,7 +248,7 @@ class BSMLRepository(Repository):
     :param uri: The URI of some object.
     :rtype: tuple(:class:`~biosignalml.rdf.Uri`, :class:`~biosignalml.rdf.Uri`)
     """
-    return self._provenance.get_current_resource_and_graph(uri, BSML.Recording)
+    return self.get_current_resource_and_graph(uri, BSML.Recording)
 
   def get_recording(self, uri):
   #----------------------------

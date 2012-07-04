@@ -17,10 +17,9 @@ from biosignalml.utils import utctime_as_string
 class Provenance(Graph):
 #=======================
 
-  def __init__(self, store, uri):
-  #------------------------------
+  def __init__(self, uri):
+  #-----------------------
     Graph.__init__(self, uri)
-    self._store = store
 
 
   def add_graph(self, subject, agent, ancestor=None):
@@ -53,62 +52,6 @@ class Provenance(Graph):
     #self._store.insert(self, triples...)
 
 ## Also store md5/sha hashes of file objects...
-
-  def get_current_resources(self, rtype):
-  #--------------------------------------
-    """
-    Return a list of URI's in a given class that are in graphs which have provenance.
-
-    :param rtype: The class of resource to find.
-    :rtype: list[:class:`~biosignalml.rdf.Uri`]
-    """
-    return [ Uri(r['r']['value']) for r in self._store.select(
-      '?r',
-      '''graph <%(pgraph)s> { ?g a <%(gtype)s> MINUS { ?p <%(preceded)s> ?g }}
-         graph ?g { ?r a <%(rtype)s> }''',
-      params=dict(pgraph=self.uri,
-                  gtype=RDFG.Graph,
-                  preceded=PRV.precededBy,
-                  rtype=rtype),
-      distinct=True,
-      order='?r')
-      ]
-
-  def get_current_resource_and_graph(self, uri, rtype):
-  #----------------------------------------------------
-    """
-    Return the resource and graph URIS where the graph has provenance, contains a specific object,
-     and the resource is of the given type.
-
-    :param uri: The URI of an object.
-    :param rtype: The class of resource the graph has to have.
-    :rtype: tuple(:class:`~biosignalml.rdf.Uri`, :class:`~biosignalml.rdf.Uri`)
-    """
-    for r in self._store.select(
-      '?r ?g',
-      '''graph <%(pgraph)s> { ?g a <%(gtype)s> MINUS { ?p <%(preceded)s> ?g }}
-         graph ?g { ?r a <%(rtype)s> . <%(obj)s> a ?t }''',
-      params=dict(pgraph=self.uri,
-                  gtype=RDFG.Graph,
-                  preceded=PRV.precededBy,
-                  rtype=rtype,
-                  obj=uri)): return (Uri(r['r']['value']), Uri(r['g']['value']))
-    return (None, None)
-
-  def has_current_resource(self, uri, rtype):
-  #------------------------------------------
-    return self._store.ask(
-      '''graph <%(pgraph)s> { ?g a <%(gtype)s> MINUS { ?p <%(preceded)s> ?g }}
-         graph ?g { ?r a <%(rtype)s> . <%(obj)s> a ?t }''',
-      params=dict(pgraph=self.uri,
-                  gtype=RDFG.Graph,
-                  preceded=PRV.precededBy,
-                  rtype=rtype,
-                  obj=uri))
-
-  def knows_resource(self, uri):
-  #-----------------------------
-    return self._store.ask('<%s> a ?t' % uri, graph = self.uri)
 
 """
 Need to include basic provenance (created, by??) with recording...
