@@ -122,6 +122,7 @@ class Repository(object):
   #------------------------------
     self._triplestore.update(uri, triples)
 
+
   def replace_graph(self, uri, rdf, format=Format.RDFXML):
   #-------------------------------------------------------
     #### graph.append(Statement(graph.uri, DCTERMS._provenance, self._provenance.add(graph.uri)))
@@ -133,6 +134,9 @@ class Repository(object):
     # What about actual recording file(s)? They should also be renamed...
 
     self._triplestore.replace_graph(uri, rdf, format=format)
+
+    #  Generate provenance....
+
 
     #for k, v in provenance.iter_items():
     #  self._provenance.add(self.uri, content-type, hexdigest, ...)
@@ -156,8 +160,8 @@ class Repository(object):
     return QueryResults(self, sparql, header, html, abbreviate)
 
 
-  def construct(self, template, where, params={ }, graph=None, format=Format.RDFXML):
-  #----------------------------------------------------------------------------------
+  def construct(self, template, where, params=None, graph=None, format=Format.RDFXML):
+  #-----------------------------------------------------------------------------------
     return self._triplestore.construct(template, where, params, graph, format)
 
 
@@ -197,6 +201,7 @@ class Repository(object):
     '''
     Construct a RDF graph from a query against the repository/
 
+    :param uri: URI of the resulting graph.
     :rtype: :class:`~biosignalml.rdf.Graph`
     '''
     if where is None: where = template
@@ -267,11 +272,11 @@ class BSMLRepository(Repository):
 
   def recordings(self):
   #--------------------
-    '''
+    """
     Return a list of URI's of the Recordings in the repository.
 
     :rtype: list[:class:`~biosignalml.rdf.Uri`]
-    '''
+    """
     return self.get_current_resources(BSML.Recording)
 
   def get_recording_and_graph_uri(self, uri):
