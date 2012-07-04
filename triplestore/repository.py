@@ -209,6 +209,40 @@ class Repository(object):
     return self.get_object(uri, RDF.type, graph)
 
 
+  def describe(self, uri, graph=None, format=Format.RDFXML):
+  #---------------------------------------------------------
+
+    def description(uri, graph, format):
+    #-----------------------------------
+      return self.construct('?s ?p ?o', '?s ?p ?o FILTER (?p != <http://4store.org/fulltext#stem>'
+                                                     + (' && (?s = <%(uri)s> || ?o = <%(uri)s>))'
+                                                              % dict(uri=uri)) if uri else '',
+                             graph=graph, format=format)
+    class Closure(Graph):
+    #--------------------
+      def __init__(self, rdf, base, format):
+        Graph.__init__(self)
+        self._base = base
+        self._urns = set()
+        for stmt in Graph.create_from_string(base, rdf, format):
+          self.append(stmt)
+          self.add_urn(stmt.subject)
+          self.add_urn(stmt.object)
+
+      def add_urn(self, node):
+        if Resource.is_uuid_urn(node) and str(node) not in self._urns:
+          ttl = description(node, None, Format.TURTLE)
+          self._urns.add(str(node))
+          for stmt in Graph.create_from_string(self._base, ttl, Format.TURTLE):
+            self.append(stmt)
+            print '[%s, %s, %s]' % (stmt.subject, stmt.predicate, stmt.object)
+            if node != stmt.subject: self.add_urn(stmt.subject)
+            if node != stmt.object: self.add_urn(stmt.object)
+
+    ttl = description(uri, graph, format)
+    return Closure(ttl, self.uri, format).serialise(format, base = self.uri + '/')  # Need '/' for Tabulator...
+
+
 class BSMLRepository(Repository):
 #================================
   '''
