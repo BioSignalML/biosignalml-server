@@ -33,6 +33,8 @@ from biosignalml.model import BSML
 import biosignalml.formats
 import biosignalml.rdf as rdf
 
+KnownSchemes = [ 'http', 'urn' ]
+
 
 def raise_error(handler, code, msg=None):
 #========================================
@@ -111,12 +113,14 @@ class ReST(httpchunked.ChunkedHandler):
     tail = name.rsplit('#', 1)
     fragment = tail[1] if len(tail) > 1 else ''
     head = tail[0]
-    parts = head.split('/', 1)
+    parts = head.split('/')
     name = parts[-1].rsplit('.', 1)
     parts[-1] = name[0]     # Have removed extension
     uri = '/'.join(parts)
-    if head.startswith('http:'): return (uri, fragment)
-    else: return (options.resource_prefix + head, fragment)
+    if ':' in head and head.split(':', 1)[0] in KnownSchemes:
+      return (uri, fragment)
+    else:
+      return (options.resource_prefix + head, fragment)
 
 
   def get(self, name, **kwds):
@@ -126,10 +130,16 @@ class ReST(httpchunked.ChunkedHandler):
     logging.debug('GET: name=%s, req=%s, uri=%s, rec=%s, graph=%s',
                         name, self.request.uri, uri, rec_uri, graph_uri)
     if graph_uri is None:
-      self.send_error(404)
-      #self._write_error(404, msg="Recording unknown for '%s'" % uri)
-      return
-
+      if name == '':
+        graph_uri = options.repository.uri
+        uri = ''
+      elif options.repository.graph_has_provenance(uri):
+        graph_uri = uri
+        uri = ''
+      else:
+        self.send_error(404)
+##        self._write_error(404, msg="Recording unknown for '%s'" % uri)
+        return
     accept = self._accept_headers()
     objtype = options.repository.get_type(uri, graph_uri)
     if objtype == BSML.Recording:
@@ -169,16 +179,7 @@ class ReST(httpchunked.ChunkedHandler):
     # check rdf+xml, turtle, n3, html ??
     self.set_header('Vary', 'Accept')      # Let caches know we've used Accept header
     self.set_header('Content-Type', rdf.Format.mimetype(format))
-    if name == '':
-      graph_uri = options.repository.uri
-      self.write(options.repository.construct('?s ?p ?o',
-                                              '?s ?p ?o FILTER (?p != <http://4store.org/fulltext#stem>)',
-                                              graph = graph_uri, format=format))
-    else:
-      self.write(options.repository.construct('?s ?p ?o',
-                                              '?s ?p ?o FILTER (?p != <http://4store.org/fulltext#stem>'
-                                            + ' && (?s = <%(uri)s> || ?o = <%(uri)s>))' % dict(uri=uri),
-                                              graph=graph_uri, format=format))
+    self.write(options.repository.describe(uri, graph=graph_uri, format=format))
 
   def _format(self):
   #-----------------
