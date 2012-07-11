@@ -14,7 +14,7 @@ function Snorql() {
     // modify these to your likeing
     this._poweredByLink = 'http://4store.org/';
     this._poweredByLabel = '4store';
-    this._enableNamedGraphs = false;
+    this._enableNamedGraphs = true;
 
     this._browserBase = null;
     this._namespaces = {};
@@ -264,7 +264,7 @@ function Snorql() {
         else
         	div.appendChild(document.createTextNode("FALSE"));
         this._display(div, 'result');
-        this._updateGraph(this._graph); // refresh links in new result
+        this._updateGraph(this._graph, false); // refresh links in new result
     }
     
     this.displayRDFResult = function(model, resultTitle) {
@@ -274,7 +274,7 @@ function Snorql() {
         div.appendChild(title);
         div.appendChild(new RDFXMLFormatter(model));
         this._display(div, 'result');
-        this._updateGraph(this._graph); // refresh links in new result - necessary for boolean?
+        this._updateGraph(this._graph, false); // refresh links in new result - necessary for boolean?
     }
     
     this.displayJSONResult = function(json, resultTitle) {
@@ -291,7 +291,7 @@ function Snorql() {
             div.appendChild(new SPARQLResultFormatter(json, this._namespaces).toDOM());
         }
         this._display(div, 'result');
-        this._updateGraph(this._graph); // refresh links in new result
+        this._updateGraph(this._graph, false); // refresh links in new result
     }
 
     this._display = function(node, whereID) {
