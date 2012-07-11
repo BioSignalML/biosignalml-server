@@ -4,7 +4,6 @@
 @prefix text: <http://4store.org/fulltext#> .
 @prefix cnt: <http://www.w3.org/2011/content#> .
 
-rdfs:label      text:index text:stem .
 rdfs:comment    text:index text:stem .
 dc:description  text:index text:stem .
 dcterms:description text:index text:stem .
