@@ -36,8 +36,23 @@ import frontend.forms
 import frontend.sparql
 import frontend.search
 import frontend.htmlview
+class Snorql(tornado.web.StaticFileHandler):
+#===========================================
+
+  def check_xsrf_cookie(self):
+  #---------------------------
+    """Don't check XSRF token for ReST POSTs."""
+    pass
+
+  def parse_url_path(self, url_path):
+  #----------------------------------
+    return url_path if url_path else 'index.html'
+
+
 application = tornado.web.Application([
     ( server.STREAMDATA_ENDPOINT,         webstream.StreamDataSocket),
+    ( '/snorql/(.*)',                     Snorql,
+      {'path': os.path.join(os.path.dirname(__file__), 'SNORQL/snorql') }),
     ( '/stream/echo/',                    webstream.StreamEchoSocket),
     ( server.RESOURCE_ENDPOINT + '(.*)',  resource.ReST),
     ('/provenance/(.*)',                  provenance.ProvenanceRDF),
