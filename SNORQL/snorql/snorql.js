@@ -169,10 +169,10 @@ function Snorql() {
     }
 
     this._updateGraph = function(uri, effect) {
-        if (!this._enableNamedGraphs) {
+        if (1 || !this._enableNamedGraphs) {  // ******************* //
             $('default-graph-section').hide();
             $('named-graph-section').hide();
-            $('browse-named-graphs-link').hide();
+            // $('browse-named-graphs-link').hide();
             return;
         }
         var changed = (uri != this._graph);
@@ -383,7 +383,7 @@ function SPARQLResultFormatter(json, namespaces) {
                 hasNamedGraph = true;
             }
         }
-        if (hasNamedGraph) {
+        if (0 && hasNamedGraph) {  // ************************** //
             var th = document.createElement('th');
             th.appendChild(document.createTextNode(' '));
             tr.insertBefore(th, tr.firstChild);
@@ -408,7 +408,7 @@ function SPARQLResultFormatter(json, namespaces) {
                 namedGraph = binding[varName];
             }
         }
-        if (namedGraph) {
+        if (0 && namedGraph) {  // **********************  //
             var link = document.createElement('a');
             link.href = 'javascript:snorql.switchToGraph(\'' + namedGraph.value + '\')';
             link.appendChild(document.createTextNode('Switch'));
