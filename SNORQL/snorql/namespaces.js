@@ -14,6 +14,6 @@ var D2R_namespacePrefixes = {
     bsml: 'http://www.biosignalml.org/ontologies/2011/04/biosignalml#',
     drug: 'http://www.biosignalml.org/ontologies/examples/drug#',
     pbank: 'http://www.biosignalml.org/ontologies/examples/physiobank#',
-    repo: 'http://demo.biosignalml.org/resource/',
+    repo: 'http://demo.biosignalml.org/',
 };
 
