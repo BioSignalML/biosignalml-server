@@ -29,6 +29,7 @@ PREFIXES = { 'bsml':  BSML.URI }
 PREFIXES.update(rdf.NAMESPACES)
 
 def abbreviate(u):
+#-----------------
   s = str(u) if u else ''
   for p, n in PREFIXES.iteritems():
     if s.startswith(n): return ''.join([p, ':', s[len(n):]])
@@ -80,7 +81,7 @@ def rdflink(uri):
 
 def annotatelink(uri):
 #---------------------
-  return '<a href="/repository/%s?annotations">Annotations</a>' % uri
+  return '<a href="/repository/%s?annotations">Add Annotation</a>' % uri
 
 
 signal_properties = Properties([
@@ -88,7 +89,7 @@ signal_properties = Properties([
                       ('Name',  'label'),
                       ('Units', 'units', abbreviate),
                       ('Rate',  'rate',  trimdecimal),
-                      ('*Annotations', 'uri', annotatelink),
+##                      ('*Annotations', 'uri', annotatelink),
                       ('*RDF',         'uri', rdflink),
                     ])
 
@@ -115,7 +116,7 @@ def recording_info(rec):
   html = [ '<div id="recording" class="treespace">' ]
   html.append('<div class="block">')
   html.append(rdflink(rec.uri))
-  html.append(annotatelink(rec.uri))
+##  html.append(annotatelink(rec.uri))
   html.append('</div>')
   html.append(property_details(rec, recording_properties))
   html.append('</div>')
@@ -211,7 +212,7 @@ class Repository(frontend.BasePage):
                                tree=tree, prefix=prefix,
                                selectpath=selectpath)
 
-  def _show_contents(self, name):
+  def _show_contents(self, name, annotate):
     repo = options.repository
     prefix = options.resource_prefix[:-1]
     if name:
@@ -231,11 +232,12 @@ class Repository(frontend.BasePage):
                   tree = self._xmltree(repo.recordings(), prefix, frontend.REPOSITORY, name),
                   content = recording_info(recording)
                           + signal_table(self, recording, selectedsig) )
-      if 'annotations' in self.request.query:
-        target = selectedsig if selectedsig else recuri
-        kwds['content'] += self.render_string('annotate.html', uri=target,
-                             annotations = [ annotation_info(repo.get_annotation(ann))
-                                               for ann in repo.annotations(target) ] )
+      target = selectedsig if selectedsig else recuri
+      annotations = [ annotation_info(repo.get_annotation(ann))
+                       for ann in repo.annotations(target) ]
+      if not annotate : annotations.append(annotatelink(target))
+      kwds['content'] += self.render_string('annotate.html', uri=target, annotations=annotations)
+      if annotate:
         self.render('tform.html',
           bottom = True,    # Form below other content
           treespace = True,
@@ -253,7 +255,7 @@ class Repository(frontend.BasePage):
 
   @tornado.web.authenticated
   def get(self, name=''):
-    self._show_contents(name)
+    self._show_contents(name, 'annotations' in self.request.query)
 
   @tornado.web.authenticated
   def post(self, name=''):
@@ -265,4 +267,4 @@ class Repository(frontend.BasePage):
       ann = Annotation.Note(recording.make_uri(prefix='annotation'), target,
                             '%s/user/%s' % (repo.uri, self.current_user), body)
       repo.extend_graph(recording.graph.uri, ann.metadata_as_string())
-    self._show_contents(name)
+    self._show_contents(name, False)
