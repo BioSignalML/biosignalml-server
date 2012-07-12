@@ -5,6 +5,8 @@
 @prefix cnt: <http://www.w3.org/2011/content#> .
 
 rdfs:comment    text:index text:stem .
+dc:title        text:index text:stem .
+dcterms:title   text:index text:stem .
 dc:description  text:index text:stem .
 dcterms:description text:index text:stem .
 cnt:chars       text:index text:stem .
