@@ -51,7 +51,7 @@ class Snorql(tornado.web.StaticFileHandler):
 
 application = tornado.web.Application([
     ( server.STREAMDATA_ENDPOINT,         webstream.StreamDataSocket),
-    ( '/snorql/(.*)',                     Snorql,
+    ( server.SNORQL_ENDPOINT + '(.*)',    Snorql,
       {'path': os.path.join(os.path.dirname(__file__), 'SNORQL/snorql') }),
     ( '/stream/echo/',                    webstream.StreamEchoSocket),
     ( server.RESOURCE_ENDPOINT + '(.*)',  resource.ReST),

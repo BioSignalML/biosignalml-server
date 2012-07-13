@@ -10,6 +10,7 @@
 
 
 import logging
+import urllib
 import tornado.web
 from tornado.options import options
 
@@ -25,8 +26,20 @@ import menu
 import user
 
 
+SNORQL_ENDPOINT = '/snorql/'      ##### Needs to come from ../server.py
+
 PREFIXES = { 'bsml':  BSML.URI }
 PREFIXES.update(rdf.NAMESPACES)
+
+
+def resource_to_repository_URI(uri):
+#-----------------------------------
+#  logging.debug('U=%s, RP=%s, RS=%s', uri, options.repository.uri, options.resource_prefix)
+  if str(uri).startswith(options.resource_prefix):
+    return str(options.repository.uri) + '/repository/' + str(uri)[len(options.resource_prefix):]
+  else:
+    return uri
+
 
 def abbreviate(u):
 #-----------------
@@ -77,15 +90,21 @@ def property_details(object, properties, **args):
 
 def rdflink(uri):
 #----------------
-  return '<a href="%s">RDF</a>' % uri
+  return ('<a href="%s">RDF</a> <a href="%s?describe=%s">SNORQL</a>'
+         % (uri, SNORQL_ENDPOINT, urllib.quote_plus(str(uri))) )
 
 def annotatelink(uri):
 #---------------------
   return '<a href="/repository/%s?annotations">Add Annotation</a>' % uri
 
 
+def link(uri, trimlen):
+#----------------------
+  return '<a href="%s">%s</a>' % (resource_to_repository_URI(uri), chop(uri, trimlen))
+
+
 signal_properties = Properties([
-                      ('Id',    'uri',   chop, ['n']),
+                      ('Id',    'uri',   link, ['n']),
                       ('Name',  'label'),
                       ('Units', 'units', abbreviate),
                       ('Rate',  'rate',  trimdecimal),
@@ -111,6 +130,7 @@ annotation_properties = Properties([
                           ('Annotation', 'body', lambda b: b.text),
                         ])
 
+
 def recording_info(rec):
 #-----------------------
   html = [ '<div id="recording" class="treespace">' ]
@@ -121,6 +141,7 @@ def recording_info(rec):
   html.append(property_details(rec, recording_properties))
   html.append('</div>')
   return ''.join(html)
+
 
 def annotation_info(ann):
 #------------------------
@@ -137,6 +158,7 @@ def annotation_info(ann):
     elif n == 1: h.append('<span>%s</span></div>' % p)
     else:        h.append('<p>%s</p>' % p)
   return ''.join(h)
+
 
 def signal_table(handler, recording, selected=None):
 #---------------------------------------------------

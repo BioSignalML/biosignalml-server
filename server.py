@@ -26,6 +26,7 @@ import frontend.webdb as webdb
 
 RESOURCE_ENDPOINT   = '/resource/'     #: Import and export resource representations
 STREAMDATA_ENDPOINT = '/stream/data/'  #: Stream signal data in and out
+SNORQL_ENDPOINT     = '/snorql/'       #: SNORQL browsing of RDF
 
 LOGFORMAT = '%(asctime)s %(levelname)8s %(threadName)s: %(message)s'
 
