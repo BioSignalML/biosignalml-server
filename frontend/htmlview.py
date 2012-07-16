@@ -211,24 +211,26 @@ def build_metadata(uri):
   if uri:
     repo = options.repository
     rec_uri, graph_uri = repo.get_recording_and_graph_uri(uri)
-    objtype = repo.get_type(uri, graph_uri)
-    if   objtype == BSML.Recording:    # repo.has_recording(uri)
+    objtypes = repo.get_types(uri, graph_uri)
+    if   BSML.Recording in objtypes:    # repo.has_recording(uri)
       rec = repo.get_recording(uri)
       ## What about a local cache of opened recordings?? (keyed by uri)
       ## in bsml.recordings module ?? in repo ??
       html.append(property_details(rec, recording_properties))
       # And append info from repo.provenance graph...
-    elif objtype == BSML.Signal:       # repo.has_signal(uri)
+    elif BSML.Signal in objtypes:       # repo.has_signal(uri)
       sig = repo.get_signal(uri)
       html.append(property_details(sig, signal_properties, n=0))
-    elif objtype in (BSML.Event, rdf.EVT.Event):
+    elif BSML.Event in objtypes:
       html.append('event type, time, etc')
-    elif objtype in (rdf.TL.RelativeInstant, rdf.TL.RelativeInterval):
+    elif (rdf.TL.RelativeInstant in objtypes
+       or rdf.TL.RelativeInterval in objtypes):
       html.append('time, etc')
-    elif objtype == BSML.Annotation:
+    elif (BSML.Annotation in objtypes      #  OA.Annotation
+       or BSML.Event in objtypes):
       ann = repo.get_annotation(uri)
       html.append(property_details(ann, annotation_properties))
-    elif objtype == rdf.CNT.ContentAsText:
+    elif rdf.CNT.ContentAsText in objtypes:
       ann = repo.get_annotation_by_content(uri)
       html.append(property_details(ann, annotation_properties))
     else:
