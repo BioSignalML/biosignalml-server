@@ -185,16 +185,20 @@ class Repository(object):
                                             graph = graph,
                                             order = '?s' if ordered else None) ]
 
-  def get_object(self, subj, prop, graph=None):
-  #--------------------------------------------
+  def get_objects(self, subj, prop, graph=None):
+  #---------------------------------------------
+    """
+    Get objects of all statements that match a given subject/predicate.
+    """
+    objects = []
     for r in self._triplestore.select('?o', '<%(subj)s> <%(prop)s> ?o',
                                       params = dict(subj = subj, prop=prop),
                                       graph = graph):
-      if   r['o']['type'] == 'uri':           return Resource(Uri(r['o']['value']))
-      elif r['o']['type'] == 'bnode':         return BlankNode(r['o']['value'])
-      elif r['o']['type'] == 'literal':       return r['o']['value']
-      elif r['o']['type'] == 'typed-literal': return r['o']['value'] ## check datatype and convert...
-    return None
+      if   r['o']['type'] == 'uri':           objects.append(Resource(Uri(r['o']['value'])))
+      elif r['o']['type'] == 'bnode':         objects.append(BlankNode(r['o']['value']))
+      elif r['o']['type'] == 'literal':       objects.append(r['o']['value'])
+      elif r['o']['type'] == 'typed-literal': objects.append(r['o']['value']) ## check datatype and convert...
+    return objects
 
   def make_graph(self, uri, template, where=None, params=None, graph=None, prefixes=None):
   #---------------------------------------------------------------------------------------
@@ -209,9 +213,9 @@ class Repository(object):
     #logging.debug("Statements: %s", ttl)  ###
     return Graph.create_from_string(uri, ttl, Format.TURTLE)
 
-  def get_type(self, uri, graph):
+  def get_types(self, uri, graph):
   #------------------------------
-    return self.get_object(uri, RDF.type, graph)
+    return self.get_objects(uri, RDF.type, graph)
 
 
   def describe(self, uri, graph=None, format=Format.RDFXML):
@@ -304,7 +308,7 @@ class BSMLRepository(Repository):
     #logging.debug('Graph: %s', graph_uri)
     if graph_uri is not None:
       rclass = biosignalml.formats.CLASSES.get(
-                 str(self.get_object(rec_uri, DCTERMS.format, graph=graph_uri)),
+                 str(self.get_objects(rec_uri, DCTERMS.format, graph=graph_uri))[0],
                  Recording)
       graph = self.make_graph(graph_uri, '<%(uri)s> ?p ?o', params=dict(uri=rec_uri), graph=graph_uri)
       return rclass.create_from_graph(rec_uri, graph)
