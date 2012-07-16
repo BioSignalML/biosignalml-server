@@ -15,7 +15,8 @@ import tornado.web
 from tornado.options import options
 
 import biosignalml.rdf as rdf
-from biosignalml import BSML, Annotation
+import biosignalml.model as model
+from biosignalml import BSML, Annotation, Event
 from biosignalml.utils import trimdecimal, chop, xmlescape
 from biosignalml.utils import maketime, datetime_to_isoformat
 
@@ -143,8 +144,33 @@ def recording_info(rec):
   return ''.join(html)
 
 
+def time_display(t):
+#-------------------
+  d = ['%g s' % t.start]
+  if t.duration: d.append('for %g s' % d.duration)
+  return ' '.join(d)
+
+
+def event_info(evt):
+#------------------
+  props = Properties([('Event at:', 'time', time_display),
+                      (' ',         'body', lambda b: b.text)])
+  h = [ ]
+  prompts = props.header()
+  for n, d in enumerate(props.details(evt)):
+    if d is None: d = ''
+    t = '<br/>'.join(list(d)) if hasattr(d, '__iter__') else str(d)
+    p = '<span class="prompt">%s </span>%s' % (prompts[n], xmlescape(t).replace('\n', '<br/>'))
+    if   n == 0: h.append('<div><div class="event_time">%s</div>' % p)
+    elif n == 1: h.append('<span>%s</span></div>' % p)
+  return ''.join(h)
+
+
 def annotation_info(ann):
 #------------------------
+
+  if isinstance(ann, model.Event): return event_info(ann)
+
   props = Properties([('Author',     'annotator'),
                       ('Created',    'annotated', datetime_to_isoformat),
                       ('Annotation', 'body', lambda b: b.text)])
@@ -217,6 +243,21 @@ class Metadata(tornado.web.RequestHandler):  # Tool-tip popup
     self.write({ 'html': build_metadata(self.get_argument('uri', '')) })
 
 
+
+def get_annotation(graph, uri):
+#------------------------------
+  '''
+  Get an Annotation from the repository.
+
+  :param uri: The URI of an Annotation.
+  :rtype: :class:`~biosignalml.Annotation`
+  '''
+  if graph.contains(rdf.Statement(uri, rdf.RDF.type, BSML.Event)):
+    return Event.create_from_graph(uri, graph)
+  else:
+    return Annotation.create_from_graph(uri, graph)
+
+
 class Repository(frontend.BasePage):
 #===================================
 
@@ -255,7 +296,7 @@ class Repository(frontend.BasePage):
                   content = recording_info(recording)
                           + signal_table(self, recording, selectedsig) )
       target = selectedsig if selectedsig else recuri
-      annotations = [ annotation_info(repo.get_annotation(ann))
+      annotations = [ annotation_info(get_annotation(recording.graph, ann))
                        for ann in repo.annotations(target) ]
       if not annotate : annotations.append(annotatelink(target))
       kwds['content'] += self.render_string('annotate.html', uri=target, annotations=annotations)

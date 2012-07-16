@@ -462,3 +462,8 @@ div.annotation p {
   float: left;
   width: 50%;
  }
+
+.event_time {
+  float: left;
+  width: 200px;
+ }
