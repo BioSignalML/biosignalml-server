@@ -49,6 +49,11 @@ class FourStore(TripleStore):
       raise Exception(response.body)
     return response.body
 
+  @staticmethod
+  def map_prefixes(prefixes):
+  #--------------------------
+    return '\n'.join(['PREFIX %s: <%s>' % kv for kv in prefixes.iteritems()] + ['']) if prefixes else ''
+
   def query(self, sparql, format=Format.RDFXML):
   #---------------------------------------------
     ##logging.debug('4s %s: %s', format, sparql)
@@ -70,11 +75,12 @@ class FourStore(TripleStore):
                                  Format.JSON)
                                 )['boolean']
 
-  def select(self, fields, where, params=None, graph=None, distinct=False, order=None, limit=None):
-  #------------------------------------------------------------------------------------------------
+  def select(self, fields, where, params=None, graph=None, distinct=False, order=None, limit=None, prefixes=None):
+  #---------------------------------------------------------------------------------------------------------------
     if params is None: params = {}
     return json.loads(
-      self.query('select%(distinct)s %(fields)s where { %(graph)s { %(where)s } }%(order)s%(limit)s'
+      self.query(self.map_prefixes(prefixes)
+               + 'select%(distinct)s %(fields)s where { %(graph)s { %(where)s } }%(order)s%(limit)s'
                  % dict(distinct=' distinct' if distinct else '',
                         fields=fields,
                         graph=('graph <%s>' % graph) if graph else '',
@@ -84,10 +90,11 @@ class FourStore(TripleStore):
                  Format.JSON)
         ).get('results', {}).get('bindings', [])
 
-  def construct(self, template, where, params=None, graph=None, format=Format.RDFXML):
-  #-----------------------------------------------------------------------------------
+  def construct(self, template, where, params=None, graph=None, format=Format.RDFXML, prefixes=None):
+  #--------------------------------------------------------------------------------------------------
     if params is None: params = {}
-    return self.query('construct { %(tplate)s } where { %(graph)s { %(where)s } }'
+    return self.query(self.map_prefixes(prefixes)
+                    + 'construct { %(tplate)s } where { %(graph)s { %(where)s } }'
                       % dict(tplate=template % params,
                              graph=('graph <%s>' % str(graph)) if graph else '',
                              where=where % params),

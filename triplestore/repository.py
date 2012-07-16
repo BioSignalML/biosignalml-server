@@ -160,9 +160,9 @@ class Repository(object):
     return QueryResults(self, sparql, header, html, abbreviate)
 
 
-  def construct(self, template, where, params=None, graph=None, format=Format.RDFXML):
-  #-----------------------------------------------------------------------------------
-    return self._triplestore.construct(template, where, params, graph, format)
+  def construct(self, template, where, params=None, graph=None, format=Format.RDFXML, prefixes=None):
+  #--------------------------------------------------------------------------------------------------
+    return self._triplestore.construct(template, where, params, graph, format, prefixes)
 
 
   def describe(self, uri, format=Format.RDFXML):
@@ -196,8 +196,8 @@ class Repository(object):
       elif r['o']['type'] == 'typed-literal': return r['o']['value'] ## check datatype and convert...
     return None
 
-  def make_graph(self, uri, template, where=None, params=None, graph=None):
-  #------------------------------------------------------------------------
+  def make_graph(self, uri, template, where=None, params=None, graph=None, prefixes=None):
+  #---------------------------------------------------------------------------------------
     '''
     Construct a RDF graph from a query against the repository/
 
@@ -205,7 +205,7 @@ class Repository(object):
     :rtype: :class:`~biosignalml.rdf.Graph`
     '''
     if where is None: where = template
-    ttl = self.construct(template, where, params, graph, Format.TURTLE)
+    ttl = self.construct(template, where, params, graph, Format.TURTLE, prefixes)
     #logging.debug("Statements: %s", ttl)  ###
     return Graph.create_from_string(uri, ttl, Format.TURTLE)
 

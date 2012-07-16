@@ -27,8 +27,8 @@ class TripleStore(object):
   #---------------------------------------------
     pass
 
-  def select(self, fields, where, graph=None, params=None, order=None, distinct=False, limit=None):
-  #------------------------------------------------------------------------------------------------
+  def select(self, fields, where, graph=None, params=None, order=None, distinct=False, limit=None, prefixes=None):
+  #---------------------------------------------------------------------------------------------------------------
     '''
     Get all items from a graph or repository.
 
@@ -42,6 +42,8 @@ class TripleStore(object):
     :param distinct: Ensure result sets are distinct.
     :param limit: Optionally limit the number of result sets.
     :type limit: str
+    :param prefixes: A dictionary of namespace prefixes to use in the SPARQL query
+    :type prefixes: dict
     :return: A list of dictionaries, keyed by selected field names, where each value
      is a dictionary about the result field, as per the 'bindings' list described in
      http://www.w3.org/TR/rdf-sparql-json-res/.
@@ -49,8 +51,8 @@ class TripleStore(object):
     '''
     pass
 
-  def construct(self, template, where, params=None, graph=None, format=Format.RDFXML):
-  #-----------------------------------------------------------------------------------
+  def construct(self, template, where, params=None, graph=None, format=Format.RDFXML, prefixes=None):
+  #--------------------------------------------------------------------------------------------------
     pass
 
   def describe(self, uri, format=Format.RDFXML):
