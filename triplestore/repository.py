@@ -310,8 +310,8 @@ class BSMLRepository(Repository):
       rclass = biosignalml.formats.CLASSES.get(
                  str(self.get_objects(rec_uri, DCTERMS.format, graph=graph_uri))[0],
                  Recording)
-      graph = self.make_graph(graph_uri, '<%(uri)s> ?p ?o', params=dict(uri=rec_uri), graph=graph_uri)
-      return rclass.create_from_graph(rec_uri, graph)
+      graph = self.make_graph(graph_uri, '?s ?p ?o', graph=graph_uri)
+      return rclass.create_from_graph(rec_uri, graph, signals=False)
     else:
       return None
 
@@ -328,9 +328,8 @@ class BSMLRepository(Repository):
     """
     rec = self.get_recording(uri)
     if rec is not None:
-      for sig_uri in self.get_subjects(BSML.recording, rec.uri, graph=rec.graph.uri, ordered=True):
-        graph = self.make_graph(rec.graph.uri, '<%(uri)s> ?p ?o', params=dict(uri=sig_uri), graph=rec.graph.uri)
-        rec.add_signal(Signal.create_from_graph(sig_uri, graph, units=None))
+      for s in sorted(rec.graph.get_subjects(BSML.recording, rec.uri), cmp=lambda u,v: cmp(str(u.uri),str(v.uri))):
+        rec.add_signal(Signal.create_from_graph(str(s.uri), rec.graph, units=None))
     return rec
 
   def store_recording(self, recording):
