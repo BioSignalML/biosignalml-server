@@ -61,7 +61,7 @@ class Properties(object):
     else:
       return [ p[0] for p in self._properties if p[0][0] != '*']
 
-  def details(self, object, all=False, **args):
+  def details(self, object, all=False, **kwds):
     r = [ ]
     for p in [ p for p in self._properties if (all or p[0][0] != '*')]:
       prop = p[1]
@@ -69,11 +69,10 @@ class Properties(object):
       if v is None:
         meta = getattr(object, 'metadata', None)
         if meta: v = meta.get(prop)
+      args = p[3] if (len(p) > 3) else []
       r.append('' if v is None
-          else (p[2](v, *[ args[a] for a in p[3] ] if (len(p) > 3) else [ ]))
-            if (len(p) > 2)
-          else [ str(s) for s in v ]
-            if isinstance(v, list)
+          else (p[2](v, **{ k: v for k, v in kwds.iteritems() if k in args })) if (len(p) > 2)
+          else [ str(s) for s in v ] if isinstance(v, list)
           else unicode(v)
           )
     return r
@@ -99,13 +98,17 @@ def annotatelink(uri):
   return '<a href="/repository/%s?annotations">Add Annotation</a>' % uri
 
 
-def link(uri, trimlen):
-#----------------------
-  return '<a href="%s">%s</a>' % (resource_to_repository_URI(uri), chop(uri, trimlen))
+def link(uri, trimlen=0, makelink=True):
+#---------------------------------------
+  text = chop(uri, trimlen)
+  if makelink:
+    return '<a href="%s">%s</a>' % (resource_to_repository_URI(uri), text)
+  else:
+    return text
 
 
 signal_properties = Properties([
-                      ('Id',    'uri',   link, ['n']),
+                      ('Id',    'uri',   link, ['trimlen', 'makelink']),
                       ('Name',  'label'),
                       ('Units', 'units', abbreviate),
                       ('Rate',  'rate',  trimdecimal),
@@ -195,7 +198,7 @@ def signal_table(handler, recording, selected=None):
   selectedrow = -1
   for n, sig in enumerate(recording.signals()):
     if str(sig.uri) == selected: selectedrow = n
-    rows.append(signal_properties.details(sig, True, n=lenhdr))
+    rows.append(signal_properties.details(sig, True, trimlen=lenhdr))
   return handler.render_string('table.html',
     header = signal_properties.header(True),
     rows = rows,
@@ -220,7 +223,7 @@ def build_metadata(uri):
       # And append info from repo.provenance graph...
     elif BSML.Signal in objtypes:       # repo.has_signal(uri)
       sig = repo.get_signal(uri)
-      html.append(property_details(sig, signal_properties, n=0))
+      html.append(property_details(sig, signal_properties, makelink=False))
     elif BSML.Event in objtypes:
       html.append('event type, time, etc')
     elif (rdf.TL.RelativeInstant in objtypes
