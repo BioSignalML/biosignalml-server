@@ -47,13 +47,12 @@ def raise_error(handler, code, msg=None):
 class FileWriter(object):
 #========================
 
-  def __init__(self, fname, uri, source, cls):
-  #-------------------------------------------
+  def __init__(self, fname, uri, cls):
+  #----------------------------------
     self.fname = fname
     self.output = open(fname, 'wb')
     self.sha = hashlib.sha512()
     self.uri = uri
-    self.source = source
     self.Recording = cls
 
   def write(self, data):
@@ -231,7 +230,7 @@ class ReST(httpchunked.ChunkedHandler):
 
     try:            os.makedirs(os.path.dirname(file_name))
     except OSError: pass
-    newfile = FileWriter(file_name, rec_uri, name, RecordingClass)
+    newfile = FileWriter(file_name, rec_uri, RecordingClass)
     if not self.have_chunked(newfile, self.finished_put):
       newfile.write(self.request.body)
       self.finished_put(newfile)
