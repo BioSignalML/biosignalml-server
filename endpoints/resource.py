@@ -102,9 +102,10 @@ class ReST(httpchunked.ChunkedHandler):
   #-------------------------
     """
     Parse an Accept header and return a dictionary with
-    mime-type as an item key and its parameters as the value.
+    mime-type as an item key and 'q' parameter as the value.
     """
-    return { k[0].strip(): k[1].strip() if len(k) > 1 else ''
+    return { k[0].strip(): float(k[1].strip()[2:])
+                             if (len(k) > 1 and k[1].strip().startswith('q=')) else 1
                for k in [ a.split(';', 1)
                 for a in self.request.headers.get('Accept', '*/*').split(',') ] }
 
@@ -141,19 +142,18 @@ class ReST(httpchunked.ChunkedHandler):
 ##        self._write_error(404, msg="Recording unknown for '%s'" % uri)
         return
     accept = self._accept_headers()
-    objtype = options.repository.get_type(uri, graph_uri)
-    if objtype == BSML.Recording:
+
+    if BSML.Recording in options.repository.get_types(uri, graph_uri):
       recording = options.repository.get_recording(rec_uri)
-#      ctype = ReST._mimetype.get(str(recording.format), 'application/x-raw')
-      ctype = recording.MIMETYPE
+      ctype = getattr(recording, 'format')
 ## Should we set 'Content-Location' header as well?
 ## (to actual URL of representation returned).
       # only send recording if '*/*' or content type match
-      if ctype in accept or len(accept) == 1 and 'application' in accept: # send file
-        if recording.source is None:
-          self._write_error(404, msg="Missing recording source: '%s'" % source)
+      if accept.get(ctype, 0) > 0: # send file
+        if recording.dataset is None:
+          self._write_error(404, msg="Missing recording dataset: '%s'" % rec_uri)
           return
-        filename = ' '.join([str(f) for f in recording.source])
+        filename = str(recording.dataset)  ### ' '.join([str(f) for f in recording.dataset])   #### Why????
         logging.debug("Sending '%s'", filename)
         try:
           rfile = urllib.urlopen(filename).fp
