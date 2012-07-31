@@ -38,17 +38,19 @@ function Snorql() {
         var graph = queryString.match(/graph=([^&]*)/);
         graph = graph ? decodeURIComponent(graph[1]) : null;
         this._updateGraph(graph, false);
+        var from = '';
+        if (this._graph) from = 'FROM <' + this._graph + '>\n';
         var browse = queryString.match(/browse=([^&]*)/);
         var querytext = null;
         if (browse && browse[1] == 'classes') {
             var resultTitle = 'List of all classes:';
-            var query = 'SELECT DISTINCT ?class\n' +
+            var query = 'SELECT DISTINCT ?class\n' + from +
                     'WHERE { [] a ?class }\n' +
                     'ORDER BY ?class';
         }
         if (browse && browse[1] == 'properties') {
             var resultTitle = 'List of all properties:';
-            var query = 'SELECT DISTINCT ?property\n' +
+            var query = 'SELECT DISTINCT ?property\n' + from +
                     'WHERE { [] ?property [] }\n' +
                     'ORDER BY ?property';
         }
@@ -65,21 +67,21 @@ function Snorql() {
         var match = queryString.match(/property=([^&]*)/);
         if (match) {
             var resultTitle = 'All uses of property ' + decodeURIComponent(match[1]) + ':';
-            var query = 'SELECT DISTINCT ?resource ?value\n' +
+            var query = 'SELECT DISTINCT ?resource ?value\n' + from +
                     'WHERE { ?resource <' + decodeURIComponent(match[1]) + '> ?value }\n' +
                     'ORDER BY ?resource ?value';
         }
         var match = queryString.match(/class=([^&]*)/);
         if (match) {
             var resultTitle = 'All instances of class ' + decodeURIComponent(match[1]) + ':';
-            var query = 'SELECT DISTINCT ?instance\n' +
+            var query = 'SELECT DISTINCT ?instance\n' + from +
                     'WHERE { ?instance a <' + decodeURIComponent(match[1]) + '> }\n' +
                     'ORDER BY ?instance';
         }
         var match = queryString.match(/describe=([^&]*)/);
         if (match) {
             var resultTitle = 'Description of ' + decodeURIComponent(match[1]) + ':';
-            var query = 'SELECT DISTINCT ?property ?hasValue ?isValueOf\n' +
+            var query = 'SELECT DISTINCT ?property ?hasValue ?isValueOf\n' + from +
                     'WHERE {\n' +
                     '  { <' + decodeURIComponent(match[1]) + '> ?property ?hasValue }\n' +
                     '  UNION\n' +
@@ -98,9 +100,9 @@ function Snorql() {
         document.getElementById('querytext').value = querytext;
         this.displayBusyMessage();
         var service = new SPARQL.Service(this._endpoint);
-        if (this._graph) {
-            service.addDefaultGraph(this._graph);
-        }
+        //if (this._graph) {
+        //    service.addNamedGraph(this._graph);
+        //}
 
         // AndyL changed MIME type and success callback depending on query form...
         var dummy = this;
@@ -169,10 +171,10 @@ function Snorql() {
     }
 
     this._updateGraph = function(uri, effect) {
-        if (1 || !this._enableNamedGraphs) {  // ******************* //
+        if (!this._enableNamedGraphs) {
             $('default-graph-section').hide();
             $('named-graph-section').hide();
-            // $('browse-named-graphs-link').hide();
+            $('browse-named-graphs-link').hide();
             return;
         }
         var changed = (uri != this._graph);
@@ -383,7 +385,7 @@ function SPARQLResultFormatter(json, namespaces) {
                 hasNamedGraph = true;
             }
         }
-        if (0 && hasNamedGraph) {  // ************************** //
+        if (hasNamedGraph) {
             var th = document.createElement('th');
             th.appendChild(document.createTextNode(' '));
             tr.insertBefore(th, tr.firstChild);
@@ -408,7 +410,7 @@ function SPARQLResultFormatter(json, namespaces) {
                 namedGraph = binding[varName];
             }
         }
-        if (0 && namedGraph) {  // **********************  //
+        if (namedGraph) {
             var link = document.createElement('a');
             link.href = 'javascript:snorql.switchToGraph(\'' + namedGraph.value + '\')';
             link.appendChild(document.createTextNode('Switch'));
