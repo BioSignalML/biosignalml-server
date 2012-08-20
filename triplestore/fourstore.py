@@ -103,32 +103,38 @@ class FourStore(TripleStore):
     return self.query('describe <%(uri)s>' % { 'uri': uri }, format, prefixes)
 
 
+  def update(self, sparql, prefixes=None):
+  #---------------------------------------
+    ##logging.debug('UPD: %s', sparql)
+    try:
+      return self._request('/update/', 'POST',
+                           body=urllib.urlencode({'update': sparql + self.map_prefixes(prefixes)}),
+                           headers={'Content-type': 'application/x-www-form-urlencoded'})
+    except Exception, msg:
+      logging.error('4store: %s, %s', msg, sparql + self.map_prefixes(prefixes))
+      raise
 
-  def insert(self, graph, triples):
-  #--------------------------------
+  def insert_triples(self, graph, triples, prefixes=None):
+  #-------------------------------------------------------
     if len(triples) == 0: return
     sparql = ('insert data { graph <%(graph)s> { %(triples)s } }'
                 % { 'graph': str(graph),
                     'triples': ' . '.join([' '.join(list(s)) for s in triples ]) })
     ##logging.debug('Insert: %s', sparql)
-    content = self._request('/update/', 'POST',
-                            body=urllib.urlencode({'update': sparql}),
-                            headers={'Content-type': 'application/x-www-form-urlencoded'})
+    content = self.update(sparql, prefixes)
     if 'error' in content: raise Exception(content)
 
-  def delete(self, graph, triples):
-  #--------------------------------
+  def delete_triples(self, graph, triples, prefixes=None):
+  #------------------------\-------------------------------
     if len(triples) == 0: return
     sparql = ('delete data { graph <%(graph)s> { %(triples)s } }'
                 % { 'graph': graph,
                     'triples': ' . '.join([' '.join(list(s)) for s in triples ]) })
-    content = self._request('/update/', 'POST',
-                            body=urllib.urlencode({'update': sparql}),
-                            headers={'Content-type': 'application/x-www-form-urlencoded'})
+    content = self.update(sparql, prefixes)
     if 'error' in content: raise Exception(content)
 
-  def update(self, graph, triples):
-  #--------------------------------
+  def update_triples(self, graph, triples, prefixes=None):
+  #-------------------------------------------------------
     if len(triples) == 0: return
     last = (None, None)
     ##logging.debug('UPDATE: %s', triples)
@@ -136,12 +142,10 @@ class FourStore(TripleStore):
       if (s, p) != last:
         sparql = ('delete { graph <%(g)s> { %(s)s %(p)s ?o } } where { %(s)s %(p)s ?o }'
                     % {'g': str(graph), 's': s, 'p': p} )
-        content = self._request('/update/', 'POST',
-                                body=urllib.urlencode({'update': sparql}),
-                                headers={'Content-type': 'application/x-www-form-urlencoded'})
+        content = self.update(sparql, prefixes)
         if 'error' in content: raise Exception(content)
         last = (s, p)
-    self.insert(graph, triples)  ###### DUPLICATES BECAUSE OF 4STORE BUG...
+    self.insert_triples(graph, triples, prefixes)  ###### DUPLICATES BECAUSE OF 4STORE BUG...
 
 
   def extend_graph(self, graph, rdf, format=Format.RDFXML):
