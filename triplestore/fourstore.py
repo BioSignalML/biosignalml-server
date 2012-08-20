@@ -54,55 +54,54 @@ class FourStore(TripleStore):
   #--------------------------
     return '\n'.join(['PREFIX %s: <%s>' % kv for kv in prefixes.iteritems()] + ['']) if prefixes else ''
 
-  def query(self, sparql, format=Format.RDFXML):
-  #---------------------------------------------
     ##logging.debug('4s %s: %s', format, sparql)
+  def query(self, sparql, format=Format.RDFXML, prefixes=None):
+  #------------------------------------------------------------
     try:
       return self._request('/sparql/', 'POST',
-                           body=urllib.urlencode({'query': sparql}),
+                           body=urllib.urlencode({'query': self.map_prefixes(prefixes) + sparql}),
                            headers={'Content-type': 'application/x-www-form-urlencoded',
                                     'Accept': Format.mimetype(format)} )
     except Exception, msg:
-      logging.error('4store: %s, %s', msg, sparql)
+      logging.error('4store: %s, %s', msg, self.map_prefixes(prefixes) + sparql)
       raise
 
-  def ask(self, where, params=None, graph=None):
-  #---------------------------------------------
+  def ask(self, where, params=None, graph=None, prefixes=None):
+  #------------------------------------------------------------
     if params is None: params = {}
     return json.loads(self.query('ask where { %(graph)s { %(where)s } }'
                                  % dict(graph=('graph <%s>' % str(graph)) if graph else '',
                                         where=where % params),
-                                 Format.JSON)
+                                 Format.JSON, prefixes)
                                 )['boolean']
 
   def select(self, fields, where, params=None, graph=None, distinct=False, order=None, limit=None, prefixes=None):
   #---------------------------------------------------------------------------------------------------------------
     if params is None: params = {}
     return json.loads(
-      self.query(self.map_prefixes(prefixes)
-               + 'select%(distinct)s %(fields)s where { %(graph)s { %(where)s } }%(order)s%(limit)s'
+      self.query('select%(distinct)s %(fields)s where { %(graph)s { %(where)s } }%(order)s%(limit)s'
                  % dict(distinct=' distinct' if distinct else '',
                         fields=fields,
                         graph=('graph <%s>' % graph) if graph else '',
                         where=where % params,
                         order=(' order by %s' % order) if order else '',
                         limit=(' limit %s' % limit) if limit else ''),
-                 Format.JSON)
+                 Format.JSON, prefixes)
         ).get('results', {}).get('bindings', [])
 
   def construct(self, template, where, params=None, graph=None, format=Format.RDFXML, prefixes=None):
   #--------------------------------------------------------------------------------------------------
     if params is None: params = {}
-    return self.query(self.map_prefixes(prefixes)
-                    + 'construct { %(tplate)s } where { %(graph)s { %(where)s } }'
+    return self.query('construct { %(tplate)s } where { %(graph)s { %(where)s } }'
                       % dict(tplate=template % params,
                              graph=('graph <%s>' % str(graph)) if graph else '',
                              where=where % params),
-                      format)
+                      format, prefixes)
 
-  def describe(self, uri, format=Format.RDFXML):
-  #-----------------------------------------------
-    return self.query('describe <%(uri)s>' % { 'uri': uri }, format)
+  def describe(self, uri, format=Format.RDFXML, prefixes=None):
+  #------------------------------------------------------------
+    return self.query('describe <%(uri)s>' % { 'uri': uri }, format, prefixes)
+
 
 
   def insert(self, graph, triples):
