@@ -50,14 +50,14 @@ def _values(predicate, rtype):
 
 SEARCH_RELNS  = ['AND', 'AND NOT', 'OR', ]
 
-SEARCH_FIELDS = [ { 'prompt': 'having text',
+SEARCH_FIELDS = [ { 'prompt': 'Text',
                     'property': 'text:stem',
                     'tests':  ['matching'],
                     'sparql': '?s %(property)s "%(value)s" ; ?p ?o .',
                     'values': [ '' ],
                     'stemtext': True,
                     },
-                  { 'prompt': 'with units',
+                  { 'prompt': 'Units',
                     'property': 'bsml:units',
                     'tests':  ['equal', 'not equal'],
                     'sparql': [ '?s %(property)s %(value)s .',                   # equal
@@ -71,12 +71,20 @@ SEARCH_FIELDS = [ { 'prompt': 'having text',
 ##                    'tests':  ['of type'],
 ##                    'values': ['Uniform', 'Irregular'],
 ##                  },
-                  { 'prompt': 'having rate',
+                  { 'prompt': 'Sample rate',
                     'property': 'bsml:rate',
                     'tests':  ['=', '!=', '<', '<=', '>', '>='],
                     'values': [ ],
                     'type':   float,
                     'sparql': '?s %(property)s ?o . FILTER (?o %(test)s %(value)s)',
+                  },
+                  { 'prompt': 'Event type',
+                    'property': 'bsml:eventType',
+                    'tests':  ['equal', 'not equal'],
+                    'sparql': [ '?s %(property)s %(value)s .',                   # equal
+                                '?s %(property)s ?o . FILTER (?o != %(value)s)', # not equal
+                              ],
+                    'values': [ ]
                   },
                 ]
 
@@ -364,3 +372,61 @@ select ?graph ?rec ?tl ?evt ?desc ?at where {
 
 
 """
+
+"""
+select ?rec ?res ?rtype ?age where {
+  graph ?graph {
+    ?res a ?rtype .
+    ?res pb:age 64 .
+    { ?rec a bsml:Recording .
+       { ?res ?p1 ?rec }
+      union
+       { ?rec ?p2 ?res } } 
+    }
+  }
+
+
+## Following hangs 4store...
+
+select ?rec ?res ?rtype ?u where {
+  graph ?graph {
+    ?res a ?rtype .
+    ?res bsml:units ?u .
+    { ?rec a bsml:Recording .
+       { ?res ?p1 ?rec }
+      union
+       { ?rec ?p2 ?res } } 
+    }
+  } limit 20
+
+## This is OK:
+
+select ?rec ?res ?rtype where {
+  graph ?graph {
+    ?res a ?rtype .
+    ?res bsml:units uome:Millivolt .
+    { ?rec a bsml:Recording .
+       { ?res ?p1 ?rec }
+      union
+       { ?rec ?p2 ?res } } 
+
+    }
+  } limit 20
+
+also:
+
+select distinct ?rec ?res ?rtype where {
+  graph ?graph {
+    ?res a ?rtype .
+    ?res bsml:units uome:Millivolt .
+    { ?rec a bsml:Recording .
+       { ?res ?p1 ?rec }
+      union
+       { ?rec ?p2 ?res } } 
+
+    }
+  } limit 20
+
+
+"""
+
