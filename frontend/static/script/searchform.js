@@ -43,15 +43,16 @@ function got_type() {
   $(this.nextElementSibling
    .nextElementSibling).replaceWith(search_values(fld).addClass('fld3')) ;
   if ($(this).parent().is('.col2 > .group:last-child')
-   && $(this).parent().parent().children('.group').length <= 3)
-   $(this.nextElementSibling
-         .nextElementSibling
-         .nextElementSibling)
-    .replaceWith(
+   && $(this).parent().parent().children('.group').length <= 3) {
+    $(this.nextElementSibling
+          .nextElementSibling
+          .nextElementSibling)
+      .replaceWith(
         group_relns.clone()
                    .addClass('fld4')
-                   .focus(save_value)
-                   .change(change_group_reln)) ;
+                   .focus(save_value)) ;
+    $('.fld4').change(change_group_reln) ;
+    }
   }
  else {
   $(this.nextElementSibling).replaceWith('<span class="fld2"></span>') ;
@@ -200,9 +201,7 @@ $(document).ready(function() {
            var data = JSON.parse(text) ;
            fields = data.fields ;
            group = $('<span class="group"></span>')
-             .append(type_list().addClass('fld1')
-//             .change(got_type)
-                    )
+             .append(type_list().addClass('fld1'))
              .append('<span></span>')
              .append('<span></span>')
              .append('<span></span>') ;
@@ -228,6 +227,7 @@ $(document).ready(function() {
    $('div.search div.line:first-child').clone(true)
     .insertAfter('div.search div.line:last-child') ;
    $('div.search div.line:last-child > .col2 > span.group').replaceWith(group.clone()) ;
+   $('.fld1').change(got_type) ;
    if ($('div.search div.line').length == 5) $(this).hide() ;
    }
   return false ;
