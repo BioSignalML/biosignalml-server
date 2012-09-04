@@ -324,7 +324,15 @@ Signal.prototype =
     }
   }
 
-
+/**
+ * Creates a segment of a signal.
+ *
+ * @constructor
+ * @this {SignalSegment}
+ * @param {number} start The start time of the segment.
+ * @param {number} period The segment's duration.
+ * @param {array} data The data points the segment.
+ */
 function SignalSegment(start, period, data)
 //=========================================
 {
