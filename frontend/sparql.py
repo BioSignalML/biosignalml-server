@@ -21,7 +21,8 @@ from forms import Button, Field
 import frontend
 
 namespaces = {
-  'bsml': str(BSML.URI),
+  'bsml':  str(BSML.URI),
+  'pbank': "http://www.biosignalml.org/ontologies/examples/physiobank#",
   }
 
 namespaces.update(NAMESPACES)
