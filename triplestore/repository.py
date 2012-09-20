@@ -209,7 +209,7 @@ class Repository(object):
     :rtype: :class:`~biosignalml.rdf.Graph`
     '''
     if where is None: where = template
-    ttl = self.construct(template, where, params, graph, Format.TURTLE, prefixes)
+    ttl = self.construct(template, where, params=params, graph=graph, format=Format.TURTLE, prefixes=prefixes)
     #logging.debug("Statements: %s", ttl)  ###
     return Graph.create_from_string(uri, ttl, Format.TURTLE)
 
