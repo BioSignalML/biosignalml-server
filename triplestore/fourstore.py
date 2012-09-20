@@ -17,7 +17,10 @@ import tornado.httpclient
 
 from biosignalml.rdf import Format
 
-from triplestore import TripleStore
+try:                                     # Allow standalone use
+  from triplestore import TripleStore
+except ImportError:
+  TripleStore = object
 
 
 class StoreException(Exception):
@@ -26,6 +29,10 @@ class StoreException(Exception):
 
 class FourStore(TripleStore):
 #============================
+
+  def __init__(self, href):
+  #------------------------
+    self._href = href
 
   def _request(self, endpoint, method, **kwds):
   #--------------------------------------------
@@ -54,9 +61,9 @@ class FourStore(TripleStore):
   #--------------------------
     return '\n'.join(['PREFIX %s: <%s>' % kv for kv in prefixes.iteritems()] + ['']) if prefixes else ''
 
-    ##logging.debug('4s %s: %s', format, sparql)
   def query(self, sparql, format=Format.RDFXML, prefixes=None):
   #------------------------------------------------------------
+    #logging.debug('4s %s: %s', format, sparql)
     try:
       return self._request('/sparql/', 'POST',
                            body=urllib.urlencode({'query': self.map_prefixes(prefixes) + sparql}),
