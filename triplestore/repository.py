@@ -75,7 +75,7 @@ class Repository(object):
     """
     return [ Uri(r['r']['value']) for r in self._triplestore.select(
       '?r',
-      '''graph <%(pgraph)s> { ?g a <%(gtype)s> MINUS { ?p <%(preceded)s> ?g }}
+      '''graph <%(pgraph)s> { ?g a <%(gtype)s> MINUS { [] <%(preceded)s> ?g }}
          graph ?g { ?r a <%(rtype)s> }''',
       params=dict(pgraph=self._provenance.uri,
                   gtype=RDFG.Graph,
@@ -97,8 +97,8 @@ class Repository(object):
     """
     for r in self._triplestore.select(
       '?r ?g',
-      '''graph <%(pgraph)s> { ?g a <%(gtype)s> MINUS { ?p <%(preceded)s> ?g }}
-         graph ?g { ?r a <%(rtype)s> . <%(obj)s> a ?t }''',
+      '''graph <%(pgraph)s> { ?g a <%(gtype)s> MINUS { [] <%(preceded)s> ?g }}
+         graph ?g { ?r a <%(rtype)s> . <%(obj)s> a [] }''',
       params=dict(pgraph=self._provenance.uri,
                   gtype=RDFG.Graph,
                   preceded=PRV.precededBy,
@@ -109,8 +109,8 @@ class Repository(object):
   def has_current_resource(self, uri, rtype):
   #------------------------------------------
     return self._triplestore.ask(
-      '''graph <%(pgraph)s> { ?g a <%(gtype)s> MINUS { ?p <%(preceded)s> ?g }}
-         graph ?g { ?r a <%(rtype)s> . <%(obj)s> a ?t }''',
+      '''graph <%(pgraph)s> { ?g a <%(gtype)s> MINUS { [] <%(preceded)s> ?g }}
+         graph ?g { <%(obj)s> a <%(rtype)s> }''',
       params=dict(pgraph=self._provenance.uri,
                   gtype=RDFG.Graph,
                   preceded=PRV.precededBy,
