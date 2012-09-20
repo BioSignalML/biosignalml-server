@@ -373,6 +373,26 @@ class BSMLRepository(Repository):
 #      return r
 #    else: return None
 
+
+  def get_event(self, uri, graph_uri=None):
+  #-----------------------------------------
+    '''
+    Get an Event from the repository.
+
+    :param uri: The URI of an Eventt.
+    :param graph_uri: An optional URI of the graph to query.
+    :rtype: :class:`~biosignalml.Event`
+    '''
+    if graph_uri is None: rec_uri, graph_uri = self.get_recording_and_graph_uri(uri)
+    graph = self.make_graph(graph_uri, '<%(uri)s> ?p ?o',
+                            where = '<%(uri)s> a  bsml:Event . <%(uri)s> ?p ?o',
+                            params = dict(uri=uri),
+                            prefixes = dict(bsml=BSML.NS.prefix),
+                            graph = graph_uri
+                            )
+    return Event.create_from_graph(uri, graph, eventtype=None)  # eventtype set from graph...
+
+
   def get_annotation(self, uri, graph_uri=None):
   #---------------------------------------------
     '''
@@ -392,16 +412,18 @@ class BSMLRepository(Repository):
 #       params = dict(g=graph_uri, u=uri),
 #       prefixes = dict(oa = OA.prefix),
 #       ) )
+#    logging.debug('GU: %s', graph_uri)
 
-    graph = self.make_graph(uri, '?s ?p ?o', where='graph <%s> { ?s ?p ?o }' % graph_uri)
+    if graph_uri is None: return None
+    graph = self.make_graph(uri, '?s ?p ?o', graph=graph_uri)
+    #logging.debug("Graph for %s: %s", uri, graph)
+    if len(graph) == 0: return None
 
-
-    if len(graph) == 0:
-      return None
-    elif graph.contains(Statement(uri, RDF.type, BSML.Event)):
-      return Event.create_from_graph(uri, graph)
-    else:
-      return Annotation.create_from_graph(uri, graph)
+#    if True:  ##  graph.contains(Statement(Uri(uri), RDF.type, BSML.Event)):
+#      logging.debug("Getting event...")
+#      return Event.create_from_graph(uri, graph)
+#    else:
+    return Annotation.create_from_graph(uri, graph)
 
   def get_annotation_by_content(self, uri, graph_uri=None):
   #--------------------------------------------------------
