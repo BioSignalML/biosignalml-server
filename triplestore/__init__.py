@@ -17,7 +17,7 @@ class TripleStore(object):
 
   def __init__(self, href):
   #------------------------
-    self._href = href
+    pass
 
   def query(self, sparql, format=Format.RDFXML):
   #---------------------------------------------
