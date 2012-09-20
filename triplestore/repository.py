@@ -328,8 +328,9 @@ class BSMLRepository(Repository):
     """
     rec = self.get_recording(uri)
     if rec is not None:
-      for s in sorted(rec.graph.get_subjects(BSML.recording, rec.uri), cmp=lambda u,v: cmp(str(u.uri),str(v.uri))):
-        rec.add_signal(Signal.create_from_graph(str(s.uri), rec.graph, units=None))
+      for r in rec.graph.query("select ?s where { ?s a <%s> . ?s <%s> <%s> } order by ?s"
+                               % (BSML.Signal, BSML.recording, rec.uri)):
+        rec.add_signal(rec.SignalClass.create_from_graph(str(r['s']), rec.graph, units=None))
     return rec
 
   def store_recording(self, recording):
