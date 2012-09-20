@@ -356,15 +356,11 @@ class BSMLRepository(Repository):
     :param graph_uri: An optional URI of the graph to query.
     :rtype: :class:`~biosignalml.Signal`
     '''
-    rec_uri, graph_uri = self.get_recording_and_graph_uri(uri)
+    if graph_uri is None: rec_uri, graph_uri = self.get_recording_and_graph_uri(uri)
     graph = self.make_graph(graph_uri, '<%(uri)s> ?p ?o',
-                            where = ' <%(uri)s> <%(reln)s> <%(rec)s> .'
-                                  + ' <%(uri)s> a  <%(stype)s> .'
-                                  + ' <%(uri)s> ?p ?o',
-                            params = dict(uri=uri,
-                                          rec=rec_uri,
-                                          stype=BSML.Signal,
-                                          reln=BSML.recording),
+                            where = '<%(uri)s> a  bsml:Signal . <%(uri)s> ?p ?o',
+                            params = dict(uri=uri),
+                            prefixes = dict(bsml=BSML.NS.prefix),
                             graph = graph_uri
                             )
     return Signal.create_from_graph(uri, graph, units=None)  # units set from graph...
