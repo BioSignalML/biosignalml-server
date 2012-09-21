@@ -28,7 +28,6 @@ class sparql(tornado.web.RequestHandler):
     else:                    self.set_status(504)  # gateway timeout
     self.finish()
     self.ioloop.stop()
-    self.ioloop.close()
     self.http_client.close()
 
   def do_query(self, body=None):
