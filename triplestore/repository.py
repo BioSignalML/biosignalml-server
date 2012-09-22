@@ -243,7 +243,7 @@ class Repository(object):
           self._urns.add(str(node))
           for stmt in Graph.create_from_string(self._base, ttl, Format.TURTLE):
             self.append(stmt)
-            print '[%s, %s, %s]' % (stmt.subject, stmt.predicate, stmt.object)
+            ##print '[%s, %s, %s]' % (stmt.subject, stmt.predicate, stmt.object)
             if node != stmt.subject: self.add_urn(stmt.subject)
             if node != stmt.object: self.add_urn(stmt.object)
 
