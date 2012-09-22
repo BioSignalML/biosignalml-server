@@ -162,7 +162,31 @@ class FourStore(TripleStore):
     self.insert_triples(graph, triples, prefixes)  ###### DUPLICATES BECAUSE OF 4STORE BUG...
 
 
+
   def extend_graph(self, graph, rdf, format=Format.RDFXML):
+  #--------------------------------------------------------
+    #logging.debug('Extend <%s>: %s', graph, rdf)
+    import uuid
+    boundary = str(uuid.uuid4())
+    body = [ ]
+    body.append('--' + boundary)
+    body.append('Content-Disposition: form-data; name="graph-uri"')
+    body.append('')
+    body.append(str(graph))
+    body.append('--' + boundary)
+    body.append('Content-Disposition: form-data; name="res-file"')  # ; filename="xxx"
+    body.append('Content-Type: %s' % Format.mimetype(format))
+    body.append('')
+    body.append(rdf)
+    body.append('--' + boundary + '--')
+    body.append('')
+    self._request(self._endpoints[2], 'POST',
+                  body='\r\n'.join(body),
+                  headers={'Content-Type': 'multipart/form-data; boundary=%s' % boundary})
+##'Content-Length: %d' % len(body)
+
+
+  def extend_graph4s(self, graph, rdf, format=Format.RDFXML):
   #--------------------------------------------------------
     #logging.debug('Extend <%s>: %s', graph, rdf)
     self._request(self._endpoints[2], 'POST',
@@ -172,16 +196,16 @@ class FourStore(TripleStore):
                                         }),
                   headers={'Content-type': 'application/x-www-form-urlencoded'})
 
-  def replace_graph(self, graph, rdf, format=Format.RDFXML):
+  def replace_graph4s(self, graph, rdf, format=Format.RDFXML):
   #-----------------------------------------------------------
     #logging.debug('Replace <%s>: %s', graph, rdf)
     self._request(self._endpoints[2] + str(graph), 'PUT', body=rdf, headers={'Content-type': Format.mimetype(format)})
 
-  def delete_graph(self, graph):
+  def delete_graph4s(self, graph):
   #-----------------------------
     #logging.debug('Delete <%s>', graph)
-
     self._request(self._endpoints[2] + str(graph), 'DELETE')
+    # 'clear graph <%s>' % graph
 
   def fulltext(self):
   #------------------
