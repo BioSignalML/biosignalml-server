@@ -26,7 +26,6 @@ from biosignalml.rdf import RDF, DCTERMS, RDFG, PRV, OA
 from biosignalml.rdf import Uri, Node, Resource, BlankNode, Graph, Statement
 from biosignalml.rdf import Format
 
-from fourstore import FourStore as TripleStore
 from provenance import Provenance
 
 
@@ -38,10 +37,10 @@ class Repository(object):
   :param base_uri:
   :param store_uri:
   '''
-  def __init__(self, base_uri, store_uri):
-  #---------------------------------------
+  def __init__(self, base_uri, triplestore):
+  #-----------------------------------------
     self.uri = base_uri
-    self._triplestore = TripleStore(store_uri)
+    self._triplestore = triplestore
     self._provenance = Provenance(self.uri + '/provenance')
 
   def __del__(self):

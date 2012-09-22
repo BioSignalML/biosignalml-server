@@ -21,6 +21,7 @@ from tornado.options import define
 ##import rpdb2; rpdb2.start_embedded_debugger('test')
 
 import triplestore.repository as repository
+import triplestore.fourstore as fourstore
 import frontend.webdb as webdb
 
 
@@ -37,6 +38,7 @@ DEFAULTS  = { 'uri': 'http://devel.biosignalml.org',
               'database': './database/repository.db',
               'recordings': './recordings/',
               'triplestore': 'http://localhost:8083',
+              'sparql_endpoints': 'sparql/ update/ data/',
               'resource_path': RESOURCE_ENDPOINT,
 
               'log_file': './log/biosignalml.log',
@@ -98,7 +100,9 @@ def init_server():
   define('database',
     webdb.Database(os.path.join(server_base, options.repository['database'])))
   define('repository',
-    repository.BSMLRepository(options.repository['uri'], options.repository['triplestore']))
+    repository.BSMLRepository(options.repository['uri'],
+                              fourstore.FourStore(options.repository['triplestore'],
+                                                  options.repository['sparql_endpoints'].split())))
   define('resource_prefix', options.repository['uri'] + options.repository['resource_path'])
   define('debug',      (options.logging['log_level'] == 'DEBUG'))
   tornado.options.host = options.repository['host']

@@ -15,8 +15,8 @@ from biosignalml.rdf import Format
 class TripleStore(object):
 #=========================
 
-  def __init__(self, href):
-  #------------------------
+  def __init__(self, href, endpoints):
+  #-----------------------------------
     pass
 
   def query(self, sparql, format=Format.RDFXML):

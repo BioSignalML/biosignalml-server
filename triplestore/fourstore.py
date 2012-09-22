@@ -29,22 +29,30 @@ class StoreException(Exception):
 
 class FourStore(TripleStore):
 #============================
+  """
+  A SPARQL endpoint to a RDF store.
 
-  def __init__(self, href):
-  #------------------------
+  :param href: The URL of the store.
+  :param endpoints: A list with the relative paths to Query,
+                    Update, and Graph endpoints.
+  :type endpoints: list
+  """
+  def __init__(self, href, endpoints):
+  #-----------------------------------
     self._href = href
+    self._endpoints = endpoints
 
   def _request(self, endpoint, method, **kwds):
   #--------------------------------------------
     ioloop = tornado.ioloop.IOLoop()
     client = tornado.httpclient.AsyncHTTPClient(ioloop)
-    self._reponse = None
+    self._response = None
     def callback(response):
       self._response = response
       ioloop.stop()
     client.fetch(self._href + endpoint,
                  callback,
-                 method=method, connect_timeout=1,
+                 method=method, connect_timeout=20,
                  **kwds)
     ioloop.start()
     response = self._response
@@ -64,7 +72,7 @@ class FourStore(TripleStore):
   #------------------------------------------------------------
     #logging.debug('4s %s: %s', format, sparql)
     try:
-      return self._request('/sparql/', 'POST',
+      return self._request(self._endpoints[0], 'POST',
                            body=urllib.urlencode({'query': self.map_prefixes(prefixes) + sparql}),
                            headers={'Content-type': 'application/x-www-form-urlencoded',
                                     'Accept': Format.mimetype(format)} )
@@ -113,7 +121,7 @@ class FourStore(TripleStore):
   #---------------------------------------
     ##logging.debug('UPD: %s', sparql)
     try:
-      return self._request('/update/', 'POST',
+      return self._request(self._endpoints[1], 'POST',
                            body=urllib.urlencode({'update': sparql + self.map_prefixes(prefixes)}),
                            headers={'Content-type': 'application/x-www-form-urlencoded'})
     except Exception, msg:
@@ -157,7 +165,7 @@ class FourStore(TripleStore):
   def extend_graph(self, graph, rdf, format=Format.RDFXML):
   #--------------------------------------------------------
     #logging.debug('Extend <%s>: %s', graph, rdf)
-    self._request('/data/', 'POST',
+    self._request(self._endpoints[2], 'POST',
                   body=urllib.urlencode({'data': rdf,
                                          'graph': str(graph),
                                          'mime-type': Format.mimetype(format),
@@ -167,13 +175,13 @@ class FourStore(TripleStore):
   def replace_graph(self, graph, rdf, format=Format.RDFXML):
   #-----------------------------------------------------------
     #logging.debug('Replace <%s>: %s', graph, rdf)
-    self._request('/data/' + str(graph), 'PUT', body=rdf, headers={'Content-type': Format.mimetype(format)})
+    self._request(self._endpoints[2] + str(graph), 'PUT', body=rdf, headers={'Content-type': Format.mimetype(format)})
 
   def delete_graph(self, graph):
   #-----------------------------
     #logging.debug('Delete <%s>', graph)
-    self._request('/data/' + str(graph), 'DELETE')
 
+    self._request(self._endpoints[2] + str(graph), 'DELETE')
 
   def fulltext(self):
   #------------------
