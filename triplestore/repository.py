@@ -22,7 +22,7 @@ import biosignalml.formats
 from biosignalml import BSML, Recording, Signal, Event, Annotation
 from biosignalml.utils import xmlescape
 
-from biosignalml.rdf import RDF, DCTERMS, RDFG, PRV
+from biosignalml.rdf import RDF, DCTERMS, PRV
 from biosignalml.rdf import Uri, Node, Resource, BlankNode, Graph, Statement
 from biosignalml.rdf import Format
 
@@ -55,31 +55,28 @@ class Repository(object):
 
   def graph_has_provenance(self, graph):
   #-------------------------------------
-    ''' Check a URI is that of a graph for which we have provenance.'''
+    ''' Check a URI is that of a recording graph for which we have provenance.'''
     return self._triplestore.ask(
-      '''graph <%(pgraph)s> { <%(obj)s> a <%(gtype)s> }
+      '''graph <%(pgraph)s> { <%(obj)s> a bsml:RecordingGraph }
          graph <%(obj)s> { ?s ?p ?o }''',
-      params=dict(pgraph=self._provenance.uri,
-                  gtype=RDFG.Graph,
-                  preceded=PRV.precededBy,
-                  obj=graph))
+      params=dict(pgraph=self._provenance.uri, obj=graph),
+      prefixes=dict(bsml=BSML.prefix))
+
 
   def get_current_resources(self, rtype):
   #--------------------------------------
     """
-    Return a list of URI's in a given class that are in graphs which have provenance.
+    Return a list of URI's in a given class that are in recording graphs which have provenance.
 
     :param rtype: The class of resource to find.
     :rtype: list[:class:`~biosignalml.rdf.Uri`]
     """
     return [ Uri(r['r']['value']) for r in self._triplestore.select(
       '?r',
-      '''graph <%(pgraph)s> { ?g a <%(gtype)s> MINUS { [] <%(preceded)s> ?g }}
+      '''graph <%(pgraph)s> { ?g a bsml:RecordingGraph MINUS { [] prv:precededBy ?g }}
          graph ?g { ?r a <%(rtype)s> }''',
-      params=dict(pgraph=self._provenance.uri,
-                  gtype=RDFG.Graph,
-                  preceded=PRV.precededBy,
-                  rtype=rtype),
+      params=dict(pgraph=self._provenance.uri, rtype=rtype),
+      prefixes=dict(bsml=BSML.prefix, prv=PRV.prefix),
       distinct=True,
       order='?r')
       ]
@@ -96,25 +93,19 @@ class Repository(object):
     """
     for r in self._triplestore.select(
       '?r ?g',
-      '''graph <%(pgraph)s> { ?g a <%(gtype)s> MINUS { [] <%(preceded)s> ?g }}
+      '''graph <%(pgraph)s> { ?g a bsml:RecordingGraph MINUS { [] prv:precededBy ?g }}
          graph ?g { ?r a <%(rtype)s> . <%(obj)s> a [] }''',
-      params=dict(pgraph=self._provenance.uri,
-                  gtype=RDFG.Graph,
-                  preceded=PRV.precededBy,
-                  rtype=rtype,
-                  obj=uri)): return (Uri(r['r']['value']), Uri(r['g']['value']))
+      params=dict(pgraph=self._provenance.uri, rtype=rtype, obj=uri),
+      prefixes=dict(bsml=BSML.prefix, prv=PRV.prefix)
+      ): return (Uri(r['r']['value']), Uri(r['g']['value']))
     return (None, None)
 
   def has_current_resource(self, uri, rtype):
   #------------------------------------------
     return self._triplestore.ask(
-      '''graph <%(pgraph)s> { ?g a <%(gtype)s> MINUS { [] <%(preceded)s> ?g }}
+      '''graph <%(pgraph)s> { ?g a bsml:RecordingGraph MINUS { [] prv:precededBy ?g }}
          graph ?g { <%(obj)s> a <%(rtype)s> }''',
-      params=dict(pgraph=self._provenance.uri,
-                  gtype=RDFG.Graph,
-                  preceded=PRV.precededBy,
-                  rtype=rtype,
-                  obj=uri))
+      params=dict(pgraph=self._provenance.uri, rtype=rtype, obj=uri))
 
 
   def update(self, uri, triples):
