@@ -129,6 +129,13 @@ recording_properties = Properties([
                          ('Submitted', 'dateSubmitted', datetime_to_isoformat),
                        ])
 
+event_properties = Properties([
+                          ('Recording', 'recording'),
+                          ('Type',      'eventtype'),
+                          ('Time',      'time'),
+                          ('Duration',  'duration'),
+                        ])
+
 annotation_properties = Properties([
                           ('About',      'target'),
                           ('Created',    'annotated', datetime_to_isoformat),
@@ -151,43 +158,46 @@ def recording_info(rec):
 
 def time_display(t):
 #-------------------
-  d = ['%g s' % t.start]
-  if t.duration: d.append('for %g s' % d.duration)
+  d = ['%gs' % t.start]
+  if t.duration: d.append('to %gs' % t.end)
   return ' '.join(d)
 
 
 def event_info(evt):
 #------------------
-  props = Properties([('Event at:', 'time', time_display),
-                      (' ',         'body', lambda b: b.text)])
+  props = Properties([('Time:',  'time', time_display),
+                      ('Event:', 'tags', lambda t: abbreviate(t[0]) if t else ''),
+                      ('Event:', 'body', lambda b: b.text)])
   h = [ ]
   prompts = props.header()
+  h.append('<div>')
   for n, d in enumerate(props.details(evt)):
-    if d is None: d = ''
-    t = '<br/>'.join(list(d)) if hasattr(d, '__iter__') else str(d)
-    p = '<span class="prompt">%s </span>%s' % (prompts[n], xmlescape(t).replace('\n', '<br/>'))
-    if   n == 0: h.append('<div><div class="event_time">%s</div>' % p)
-    elif n == 1: h.append('<span>%s</span></div>' % p)
+    if d:
+      t = '<br/>'.join(list(d)) if hasattr(d, '__iter__') else str(d)
+      p = '<span class="prompt">%s </span>%s' % (prompts[n], xmlescape(t).replace('\n', '<br/>'))
+      if n == 0: h.append('<div class="rside">%s</div>' % p)
+      else: h.append('<div>%s</div>' % p)
+  h.append('</div>')
   return ''.join(h)
 
 
 def annotation_info(ann):
 #------------------------
 
-  if isinstance(ann, model.Event): return event_info(ann)
+  if getattr(ann, 'time') is not None: return event_info(ann)
 
-  props = Properties([('Author',     'annotator'),
-                      ('Created',    'annotated', datetime_to_isoformat),
-                      ('Annotation', 'body', lambda b: b.text)])
+  props = Properties([('Annotation', 'body', lambda b: b.text),
+                      ('Author',     'annotator'),
+                      ('Created',    'annotated', datetime_to_isoformat)])
   h = [ ]
   prompts = props.header()
   for n, d in enumerate(props.details(ann)):
     if d is None: d = ''
     t = '<br/>'.join(list(d)) if hasattr(d, '__iter__') else str(d)
-    p = '<span class="prompt">%s: </span>%s' % (prompts[n], xmlescape(t).replace('\n', '<br/>'))
-    if   n == 0: h.append('<div><div class="half">%s</div>' % p)
-    elif n == 1: h.append('<span>%s</span></div>' % p)
-    else:        h.append('<p>%s</p>' % p)
+    p = '<span class="prompt">%s: </span><pre>%s</pre>' % (prompts[n], xmlescape(t))
+    if   n == 0: h.append('<p>%s</p>' % p)
+    elif n == 1 and d: h.append('<div><div class="half">%s</div>' % p)
+    elif n == 2 and len(h) > 1: h.append('<span>%s</span></div>' % p)
   return ''.join(h)
 
 
@@ -226,15 +236,18 @@ def build_metadata(uri):
     elif BSML.Signal in objtypes:       # repo.has_signal(uri)
       sig = repo.get_signal(uri)
       html.append(property_details(sig, signal_properties, makelink=False))
-    elif BSML.Event in objtypes:
-      html.append('event type, time, etc')
+#    elif BSML.Event in objtypes:
+#      html.append('event type, time, etc')
     elif (rdf.TL.RelativeInstant in objtypes
        or rdf.TL.RelativeInterval in objtypes):
       html.append('time, etc')
-    elif (BSML.Annotation in objtypes      #  OA.Annotation
-       or BSML.Event in objtypes):
+    elif BSML.Annotation in objtypes:   #  OA.Annotation
       ann = repo.get_annotation(uri)
+      #html.append(annotation_info(ann))
       html.append(property_details(ann, annotation_properties))
+    elif BSML.Event in objtypes:
+      evt = repo.get_event(uri)
+      html.append(property_details(evt, event_properties, makelink=False))
     elif rdf.CNT.ContentAsText in objtypes:
       ann = repo.get_annotation_by_content(uri)
       html.append(property_details(ann, annotation_properties))
@@ -259,10 +272,10 @@ def get_annotation(graph, uri):
   :param uri: The URI of an Annotation.
   :rtype: :class:`~biosignalml.Annotation`
   '''
-  if graph.contains(rdf.Statement(uri, rdf.RDF.type, BSML.Event)):
-    return Event.create_from_graph(uri, graph)
-  else:
-    return Annotation.create_from_graph(uri, graph)
+#  if graph.contains(rdf.Statement(uri, rdf.RDF.type, BSML.Event)):
+#    return Event.create_from_graph(uri, graph)
+#  else:
+  return Annotation.create_from_graph(uri, graph)
 
 
 class Repository(frontend.BasePage):
