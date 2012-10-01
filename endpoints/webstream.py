@@ -87,7 +87,7 @@ class StreamDataSocket(StreamServer):
         sig = self._repo.get_signal(uri)
         rec.add_signal(sig)
         #print sig.graph.serialise()
-        recclass.initialise_class(rec, str(rec.source))
+        recclass.initialise_class(rec)
         self._sigs.append(sig)
 
   def got_block(self, block):
@@ -103,8 +103,8 @@ class StreamDataSocket(StreamServer):
           rec = self._repo.get_recording_with_signals(uri)
           recclass = formats.CLASSES.get(str(rec.format))
           if recclass:
-            recclass.initialise_class(rec, str(rec.source))
             self._sigs = rec.signals()
+            recclass.initialise_class(rec)
         else:
           self._add_signal(uri)
         start = block.header.get('start')
@@ -145,7 +145,7 @@ class StreamDataSocket(StreamServer):
         if str(rec.format) != str(BSML.BSML_HDF5):
           raise stream.StreamException("Signal can not be appended to -- wrong format")
         recclass = formats.CLASSES.get(str(rec.format))
-        recclass.initialise_class(rec, str(rec.source))
+        recclass.initialise_class(rec, mode='a')  ## Create if not present, else open
         if sd.rate: ts = UniformTimeSeries(sd.data, rate=sd.rate)
         else:       ts = TimeSeries(sd.clock, sd.data)
         rec.get_signal(sd.uri).append(ts)
