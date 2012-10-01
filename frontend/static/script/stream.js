@@ -275,30 +275,28 @@ StreamParser.prototype =
   }
 
 
-
-function makeblob(s)      // Make a Blob from a string
-/*================*/      // FF 14 will implement Blob(s)
+function hasFullWebSockets()
+/*========================*/
 {
-  if (window.BlobBuilder) {
-    bb = new BlobBuilder() ;
+  if (window.WebSocket) {
+    browser = navigator.userAgent || "Unknown" ;
+    if (browser.indexOf("Firefox") > -1) {
+      i = browser.indexOf("Firefox") ;
+      return (parseFloat(browser.substr(i + 8)) >= 11.0) ;
+      }
+    else if (browser.indexOf("Chrome") > -1) {
+      i = browser.indexOf("Chrome") ;
+      return (parseFloat(browser.substr(i + 7)) >= 16.0) ;
+      }
+    else if (browser.indexOf("Safari") > -1) {
+      i = browser.indexOf("Version") ;
+      return (parseFloat(browser.substr(i + 8)) >= 6.0) ;
+      }
+    else
+      return (browser != "Unknown") ;
     }
-  else if (window.MozBlobBuilder) {
-    bb = new MozBlobBuilder() ;     // Replace with Blob in FF 14 ??
-    }
-  else if (window.WebKitBlobBuilder) {
-    bb = new WebKitBlobBuilder() ;
-    }
-  else if (window.MSBlobBuilder) {
-    bb = new MSBlobBuilder() ;
-    }
-  else {
-    alert('BlobBuilder Not Supported');
-    return;
-    }
-  bb.append(s) ;
-  return bb.getBlob() ;
+  return false ;
   }
-
 
 function getSignal(uri, processor, start, duration, datatype)
 /*=========================================================*/
@@ -308,14 +306,11 @@ function getSignal(uri, processor, start, duration, datatype)
   sp = new StreamParser() ;
   sp.receiver = processor ;
 
-  if (window.WebSocket) {
+  if (hasFullWebSockets()) {
     ws = new WebSocket(websocket, protocol);
     }
-  else if (window.MozWebSocket) {
-    ws = MozWebSocket(websocket, protocol);
-    }
   else {
-    alert('WebSocket Not Supported');
+    alert('WebSocket Standard not supported in browser');
     return;
     }
   ws.binaryType = "arraybuffer" ;
@@ -347,6 +342,7 @@ function getSignal(uri, processor, start, duration, datatype)
     var s = '#d1V'
              + h.length.toString() + h
              + '0\n##\n' ;
-    ws.send(makeblob(s)) ;
+    ws.send(new Blob([ s ])) ;
+//    ws.send(makeblob(s)) ;
     } ;
   }
