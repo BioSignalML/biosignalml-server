@@ -96,6 +96,7 @@ class StreamDataSocket(StreamServer):
     if   block.type == stream.BlockType.DATA_REQ:
       try:
         uri = block.header.get('uri')
+        ## Need to return 404 if unknown URI... (not a Recording or Signal)
         self._sigs = [ ]
         if isinstance(uri, list):
           for s in uri: self._add_signal(s)
@@ -145,7 +146,12 @@ class StreamDataSocket(StreamServer):
         if str(rec.format) != str(BSML.BSML_HDF5):
           raise stream.StreamException("Signal can not be appended to -- wrong format")
         recclass = formats.CLASSES.get(str(rec.format))
+
+        #####  Pass parameters as keywords....
         recclass.initialise_class(rec, mode='a')  ## Create if not present, else open
+        # This will create, so must ensure that path is in our recording's area...
+        ####   To be completed.... *************************************************
+
         if sd.rate: ts = UniformTimeSeries(sd.data, rate=sd.rate)
         else:       ts = TimeSeries(sd.clock, sd.data)
         rec.get_signal(sd.uri).append(ts)
