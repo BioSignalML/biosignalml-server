@@ -270,7 +270,7 @@ class ReST(httpchunked.ChunkedHandler):
   #-----------------------------
     logging.debug('POST: %s', self.request.headers)
     rec_uri = self._get_names(name)[0]
-    if source: self.write("<html><body><p>POST: %s</p></body></html>" % rec_uri)
+    if rec_uri: self.write("<html><body><p>POST: %s</p></body></html>" % rec_uri)
 
 
   def delete(self, name, **kwds):
