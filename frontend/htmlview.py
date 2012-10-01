@@ -29,7 +29,9 @@ import user
 
 SNORQL_ENDPOINT = '/snorql/'      ##### Needs to come from ../server.py
 
-PREFIXES = { 'bsml':  BSML.URI }
+PREFIXES = { 'bsml':     BSML.URI,
+             'pbterms': 'http://www.biosignalml.org/ontologies/examples/physiobank#',
+           }
 PREFIXES.update(rdf.NAMESPACES)
 
 
