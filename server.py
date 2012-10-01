@@ -22,7 +22,7 @@ from tornado.options import define
 
 from biosignalml.rdf.sparqlstore import Virtuoso, FourStore
 
-import triplestore.repository as repository
+import biosignalml.repository as repository
 import frontend.webdb as webdb
 
 

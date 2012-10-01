@@ -168,7 +168,7 @@ if __name__ == '__main__':
 
   import sys
 
-  from triplestore import repository
+  import biosignalml.repository as repository
 
   def print_object(obj):
   #=====================
