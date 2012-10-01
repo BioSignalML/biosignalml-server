@@ -296,7 +296,7 @@ class Repository(frontend.BasePage):
         recuri = str(recording.uri)
       else:
         selectedsig = None
-      kwds = dict(title = recuri, style = 'signal',
+      kwds = dict(bodytitle = recuri, style = 'signal',
                   tree = self._xmltree(repo.recordings(), prefix, frontend.REPOSITORY, name),
                   content = recording_info(recording)
                           + signal_table(self, recording, selectedsig) )

@@ -37,9 +37,10 @@
   </div>  
   {% if message %}<div id="message">{{ message }}</div>{% end %}
   <div id="content">
-   <div class="title"><h1>{{ title }}</h1></div>
+   {% if title %}<div class="title"><h1>{{ title }}</h1></div>{% end %}
    {% if globals().get('tree') %}{% raw tree %}{% end %} 
    <div id="contentbody">
+     {% if bodytitle %}<div class="title"><h2>{{ bodytitle }}</h2></div>{% end %}
      {% if not globals().get('bottom', 0) %}
        {% block content %}{% end %}
      {% end %}

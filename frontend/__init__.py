@@ -80,7 +80,7 @@ class MenuModule(tornado.web.UIModule):
 class BasePage(tornado.web.RequestHandler):
 #==========================================
   def render(self, template, **kwds):
-    kwargs = { 'title': '', 'content': '',
+    kwargs = { 'title': '', 'bodytitle': '', 'content': '',
                'stylesheets': [ ], 'scripts': [ ],
                'refresh': 0, 'alert': '', 'message': '',
                'keypress': None, 'level': self.userlevel(),
