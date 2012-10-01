@@ -119,7 +119,7 @@ class StreamDataSocket(StreamServer):
         for sig in self._sigs:
           for d in sig.read(interval=sig.recording.interval(*interval) if interval else None,
                             segment=segment,
-                            points=block.header.get('maxsize', 0)):
+                            maxpoints=block.header.get('maxsize', 0)):
             keywords = dtypes.copy()
             if isinstance(d.dataseries, UniformTimeSeries):
               keywords['rate'] = d.dataseries.rate
