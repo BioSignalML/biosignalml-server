@@ -252,7 +252,7 @@ def build_metadata(uri):
       ann = repo.get_annotation_by_content(uri)
       html.append(property_details(ann, annotation_properties))
     else:
-      html.append(str(objtype))
+      html.append('<br/>'.join([str(o) for o in objtypes]))
   html.append('</div>')
   return ''.join(html)
 
