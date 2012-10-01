@@ -40,6 +40,7 @@ def raise_error(handler, code, msg=None):
 #========================================
   handler.set_status(code)
   handler.set_header('Content-Type', 'text/xml')
+  ### Return JSON...
   handler.write(('<bsml>\n <error>%s</error>\n</bsml>\n' % xmlescape(msg)) if msg else '')
   handler.finish()
 
@@ -124,7 +125,10 @@ class ReST(httpchunked.ChunkedHandler):
 
 
   def get(self, name, **kwds):
-  #----------------------------
+  #---------------------------
+
+    # If the resource is a named graph then do we return the graph as RDF?
+
     uri, fragment = self._get_names(name)
     rec_uri, graph_uri = options.repository.get_recording_and_graph_uri(uri)
     logging.debug('GET: name=%s, req=%s, uri=%s, rec=%s, graph=%s',
@@ -144,6 +148,7 @@ class ReST(httpchunked.ChunkedHandler):
 
     if BSML.Recording in options.repository.get_types(uri, graph_uri):
       recording = options.repository.get_recording(rec_uri)
+      ## logging.debug('REC %s: %s', recording, accept)  #####################
       ctype = getattr(recording, 'format')
 ## Should we set 'Content-Location' header as well?
 ## (to actual URL of representation returned).
@@ -169,6 +174,10 @@ class ReST(httpchunked.ChunkedHandler):
         except Exception, msg:
           self._write_error(500, msg="Error serving recording: %s" % msg)
         return
+    # Check for extension...
+    # Check Q value
+    # Send HTML if requested...
+
     # Either not a Recording or ctype not in accept header, so send RDF
     if   'text/turtle' in accept or 'application/x-turtle' in accept: format = rdf.Format.TURTLE
     elif 'application/json' in accept:                                format = rdf.Format.JSON
@@ -213,6 +222,9 @@ class ReST(httpchunked.ChunkedHandler):
     ctype = self.request.headers.get('Content-Type')
     if ctype is None:
       ctype = ReST._extns.get(extn, 'application/x-raw')
+
+    ## PUT of RDF in RDFXML, RDF/JSON and Turtle formats...
+
     if not ctype.startswith('application/x-'):
       self._write_error(415, msg="Invalid Content-Type: '%s'" % ctype)
       return
@@ -226,8 +238,8 @@ class ReST(httpchunked.ChunkedHandler):
 
     ## Provenance will take care of multiple versions but need to check user can replace....
       return
-
-    try:            os.makedirs(os.path.dirname(file_name))
+    ## Also check u = rec_uri...
+    try: os.makedirs(os.path.dirname(file_name))
     except OSError: pass
     newfile = FileWriter(file_name, rec_uri, RecordingClass)
     if not self.have_chunked(newfile, self.finished_put):
@@ -241,8 +253,6 @@ class ReST(httpchunked.ChunkedHandler):
     recording = newfile.Recording.open(newfile.uri, fname=newfile.fname, digest=newfile.sha.hexdigest())
     options.repository.store_recording(recording)
     recording.close()
-
-
 
     # Or do we return HTML? RDF/XML of provenance? And include location in provenance...
     # OR a <status>Added...</status> message ???
@@ -296,8 +306,12 @@ class ReST(httpchunked.ChunkedHandler):
     except IOError:
       pass
     ## But if multiple files in the recording?? eg. SDF, WFDB, ...
+# Instead of deleting the graph we could add a provenance entry to say the record was deleted
+# that isn't of type rdfg:Graph and is prv:precededBy the recording's graph...
+    options.repository.remove_graph(recording.graph)
+# With versioning we don't want to just remove latest version...
+# Best to do as above -- make the graph a predecessor of a non-bsml:RecordingGraph.
 
-    options.repository.remove_graph(rec_uri)
     logging.debug("Deleted '%s' (%s)", rec_uri, recording.dataset)
 
     self.set_header('Content-Type', 'text/xml')
