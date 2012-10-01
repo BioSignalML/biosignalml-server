@@ -237,7 +237,7 @@ class ReST(httpchunked.ChunkedHandler):
     logging.debug('URI: %s, FILE: %s', rec_uri, file_name)
 
     ## Provenance will take care of multiple versions but need to check user can replace....
-      return
+
     ## Also check u = rec_uri...
     try: os.makedirs(os.path.dirname(file_name))
     except OSError: pass
