@@ -377,11 +377,10 @@ class BSMLRepository(Repository):
     graph = self.make_graph(graph_uri, '<%(uri)s> ?p ?o',
                             where = '<%(uri)s> a  bsml:Event . <%(uri)s> ?p ?o',
                             params = dict(uri=uri),
-                            prefixes = dict(bsml=BSML.NS.prefix),
+                            prefixes = dict(bsml=BSML.prefix),
                             graph = graph_uri
                             )
     return Event.create_from_graph(uri, graph, eventtype=None)  # eventtype set from graph...
-
 
   def get_annotation(self, uri, graph_uri=None):
   #---------------------------------------------
@@ -392,27 +391,13 @@ class BSMLRepository(Repository):
     :rtype: :class:`~biosignalml.Annotation`
     '''
     if graph_uri is None: rec_uri, graph_uri = self.get_recording_and_graph_uri(uri)
-#    graph = self.make_graph(uri, '<%(u)s> ?p ?o',
-#                            where = 'graph <%(g)s> { <%(u)s> a oa:Annotation . <%(u)s> ?p ?o }',
-#                            params = dict(g=graph_uri, u=uri),
-#                            prefixes = dict(oa = OA.prefix),
-#                            )
-#    graph.add_statements(self.make_graph(uri, '?b ?p ?o',
-#       where = 'graph <%(g)s> { <%(u)s> a oa:Annotation . <%(u)s> oa:hasBody ?b . ?b ?p ?o }',
-#       params = dict(g=graph_uri, u=uri),
-#       prefixes = dict(oa = OA.prefix),
-#       ) )
-#    logging.debug('GU: %s', graph_uri)
-
     if graph_uri is None: return None
-    graph = self.make_graph(uri, '?s ?p ?o', graph=graph_uri)
-    #logging.debug("Graph for %s: %s", uri, graph)
-    if len(graph) == 0: return None
-
-#    if True:  ##  graph.contains(Statement(Uri(uri), RDF.type, BSML.Event)):
-#      logging.debug("Getting event...")
-#      return Event.create_from_graph(uri, graph)
-#    else:
+    graph = self.make_graph(uri, '<%(uri)s> ?p ?o',
+                            where = '<%(uri)s> a bsml:Annotation . <%(uri)s> ?p ?o',
+                            params = dict(uri=uri),
+                            prefixes = dict(bsml=BSML.prefix),
+                            graph = graph_uri
+                            )
     return Annotation.create_from_graph(uri, graph)
 
 #  def get_annotation_by_content(self, uri, graph_uri=None):
@@ -438,20 +423,13 @@ class BSMLRepository(Repository):
     :param uri: The URI of the subject.
     :rtype: list of URIs to oa:Annotations
     '''
-    return [ ]
-#    if graph_uri is None: rec_uri, graph_uri = self.get_recording_and_graph_uri(uri)
-#    return [ (r['a']['value'])
-#      for r in self._triplestore.select('?a',
-#        '''graph <%(g)s> { ?a a oa:Annotation .
-#                             { ?a oa:hasTarget <%(u)s> }
-#                           UNION
-#                             { ?a oa:hasTarget ?sp .
-#                               ?sp a oa:SpecificResource .
-#                               ?sp oa:hasSource <%(u)s> } .
-#                           ?a oa:annotated ?tm }''',
-#        params = dict(g=graph_uri, u=uri),
-#        prefixes = dict(oa = OA.prefix),
-#        order = '?a ?tm') ]
+    if graph_uri is None: rec_uri, graph_uri = self.get_recording_and_graph_uri(uri)
+    return [ (r['a']['value'])
+      for r in self._triplestore.select('?a',
+        '?a a bsml:Annotation . ?a bsml:about <%s> . optional { ?a dct:created ?tm }' % uri,
+        graph = graph_uri,
+        prefixes = dict(bsml=BSML.prefix, dct=DCTERMS.prefix),
+        order = '?a ?tm') ]
 
 
 class SparqlHead(object):

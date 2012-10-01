@@ -140,10 +140,10 @@ event_properties = Properties([
                         ])
 
 annotation_properties = Properties([
-                          ('About',      'target'),
-                          ('Created',    'annotated', datetime_to_isoformat),
-                          ('Author',     'annotator'),
-                          ('Annotation', 'body', lambda b: b.text),
+                          ('About',      'about'),
+                          ('Created',    'created', datetime_to_isoformat),
+                          ('Author',     'creator'),
+                          ('Annotation', 'comment'),
                         ])
 
 
@@ -170,7 +170,7 @@ def event_info(evt):
 #------------------
   props = Properties([('Time:',  'time', time_display),
                       ('Event:', 'tags', lambda t: abbreviate(t[0]) if t else ''),
-                      ('Event:', 'body', lambda b: b.text)])
+                      ('Event:', 'comment')])
   h = [ ]
   prompts = props.header()
   h.append('<div>')
@@ -186,12 +186,11 @@ def event_info(evt):
 
 def annotation_info(ann):
 #------------------------
-
   if getattr(ann, 'time') is not None: return event_info(ann)
 
-  props = Properties([('Annotation', 'body', lambda b: b.text),
-                      ('Author',     'annotator'),
-                      ('Created',    'annotated', datetime_to_isoformat)])
+  props = Properties([('Annotation', 'comment'),
+                      ('Author',     'creator'),
+                      ('Created',    'created', datetime_to_isoformat)])
   h = [ ]
   prompts = props.header()
   for n, d in enumerate(props.details(ann)):
@@ -244,16 +243,13 @@ def build_metadata(uri):
     elif (rdf.TL.RelativeInstant in objtypes
        or rdf.TL.RelativeInterval in objtypes):
       html.append('time, etc')
-    elif BSML.Annotation in objtypes:   #  OA.Annotation
+    elif BSML.Annotation in objtypes:
       ann = repo.get_annotation(uri)
       #html.append(annotation_info(ann))
       html.append(property_details(ann, annotation_properties))
     elif BSML.Event in objtypes:
       evt = repo.get_event(uri)
       html.append(property_details(evt, event_properties, makelink=False))
-    elif rdf.CNT.ContentAsText in objtypes:
-      ann = repo.get_annotation_by_content(uri)
-      html.append(property_details(ann, annotation_properties))
     else:
       html.append('<br/>'.join([str(o) for o in objtypes]))
   html.append('</div>')
@@ -264,21 +260,6 @@ class Metadata(tornado.web.RequestHandler):  # Tool-tip popup
 #==========================================
   def post(self):
     self.write({ 'html': build_metadata(self.get_argument('uri', '')) })
-
-
-
-def get_annotation(graph, uri):
-#------------------------------
-  '''
-  Get an Annotation from the repository.
-
-  :param uri: The URI of an Annotation.
-  :rtype: :class:`~biosignalml.Annotation`
-  '''
-#  if graph.contains(rdf.Statement(uri, rdf.RDF.type, BSML.Event)):
-#    return Event.create_from_graph(uri, graph)
-#  else:
-  return Annotation.create_from_graph(uri, graph)
 
 
 class Repository(frontend.BasePage):
@@ -321,13 +302,14 @@ class Repository(frontend.BasePage):
  ## Is sending tree each time, that then has JScript setting up tooltips
  ## a cause of connection closed problems...???
 
+####      print recording.graph.serialise(format=rdf.Format.TURTLE, base=recording.uri, prefixes=PREFIXES)
 
       kwds = dict(bodytitle = recuri, style = 'signal',
                   tree = self._xmltree(repo.recordings(), prefix, frontend.REPOSITORY, name),
                   content = recording_info(recording)
                           + signal_table(self, recording, selectedsig) )
       target = selectedsig if selectedsig else recuri
-      annotations = [ annotation_info(get_annotation(recording.graph, ann))
+      annotations = [ annotation_info(repo.get_annotation(ann, recording.graph.uri))
                        for ann in repo.annotations(target) ]
       if not annotate: annotations.append(annotatelink(target))
       kwds['content'] += self.render_string('annotate.html', uri=target, annotations=annotations)
@@ -353,12 +335,12 @@ class Repository(frontend.BasePage):
 
   @tornado.web.authenticated
   def post(self, name=''):
-    body = self.get_argument('annotation', '').strip()
-    if self.get_argument('action') == 'Annotate' and body:
+    text = self.get_argument('annotation', '').strip()
+    if self.get_argument('action') == 'Annotate' and text:
       repo = options.repository
       target = self.get_argument('target')
       recording = repo.get_recording(target)
-      ann = Annotation.Note(recording.make_uri(prefix='annotation'), target,
-                            '%s/user/%s' % (repo.uri, self.current_user), body)
+      ann = Annotation.Note(recording.make_uri(prefix='annotation'), target, text,
+                            creator='%s/user/%s' % (repo.uri, self.current_user))
       repo.extend_graph(recording.graph.uri, ann.metadata_as_string())
     self._show_contents(name, False)
