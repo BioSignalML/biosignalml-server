@@ -238,7 +238,7 @@ class ReST(httpchunked.ChunkedHandler):
   def finished_put(self, newfile):
   #-------------------------------
     newfile.output.close()
-    logging.debug("Imported %s -> %s (%s)", newfile.source, newfile.uri, newfile.fname)
+    logging.debug("Imported %s -> %s (%s)", newfile.dataset, newfile.uri, newfile.fname)
     recording = newfile.Recording.open(newfile.uri, fname=newfile.fname, digest=newfile.sha.hexdigest())
     options.repository.store_recording(recording)
     recording.close()
@@ -278,7 +278,7 @@ class ReST(httpchunked.ChunkedHandler):
     rec_uri, fragment = self._get_names(name)
     if rec_uri is None: return
     recording = options.repository.get_recording(rec_uri)
-    if recording.source is None:
+    if recording.dataset is None:
       self._write_error(404, msg="Recording '%s' is not in repository" % rec_uri)
       return
     if fragment:
@@ -286,14 +286,14 @@ class ReST(httpchunked.ChunkedHandler):
       return
 
     try:
-      file_name = urllib.urlopen(str(recording.source)).fp.name
+      file_name = urllib.urlopen(str(recording.dataset)).fp.name
       if file_name != '<socket>': os.unlink(file_name)
     except IOError:
       pass
     ## But if multiple files in the recording?? eg. SDF, WFDB, ...
 
     options.repository.remove_graph(rec_uri)
-    logging.debug("Deleted '%s' (%s)", rec_uri, recording.source)
+    logging.debug("Deleted '%s' (%s)", rec_uri, recording.dataset)
 
     self.set_header('Content-Type', 'text/xml')
     sel.set_status(200)
