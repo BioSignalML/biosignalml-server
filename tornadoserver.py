@@ -36,6 +36,8 @@ import frontend.forms
 import frontend.sparql
 import frontend.search
 import frontend.htmlview
+
+
 class Snorql(tornado.web.StaticFileHandler):
 #===========================================
 
