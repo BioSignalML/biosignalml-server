@@ -210,7 +210,7 @@ def signal_table(handler, recording, selected=None):
   selectedrow = -1
   for n, sig in enumerate(recording.signals()):
     if str(sig.uri) == selected: selectedrow = n
-    rows.append(signal_properties.details(sig, True, trimlen=lenhdr))
+    rows.append(signal_properties.details(sig, True, trimlen=lenhdr, graph=recording.graph.uri))
   return handler.render_string('table.html',
     header = signal_properties.header(True),
     rows = rows,
