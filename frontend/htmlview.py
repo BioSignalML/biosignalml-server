@@ -88,10 +88,12 @@ def property_details(object, properties, **args):
   return '<p>' + '</p><p>'.join(r) + '</p>'
 
 
-def rdflink(uri):
-#----------------
-  return ('<a href="%s">RDF</a> <a href="%s?describe=%s">SNORQL</a>'
-         % (uri, SNORQL_ENDPOINT, urllib.quote_plus(str(uri))) )
+def rdflink(uri, graph=None):
+#----------------------------
+  if graph is not None: g = '&graph=' + urllib.quote_plus(str(graph))
+  else:                 g = ''
+  return ('<a href="%s">RDF</a> <a href="%s?describe=%s%s">SNORQL</a>'
+         % (uri, SNORQL_ENDPOINT, urllib.quote_plus(str(uri)), g) )
 
 def annotatelink(uri):
 #---------------------
@@ -113,7 +115,7 @@ signal_properties = Properties([
                       ('Units', 'units', abbreviate),
                       ('Rate',  'rate',  trimdecimal),
 ##                      ('*Annotations', 'uri', annotatelink),
-                      ('*RDF',         'uri', rdflink),
+                      ('*RDF',  'uri',   rdflink, ['graph']),
                     ])
 
 recording_properties = Properties([
@@ -139,7 +141,7 @@ def recording_info(rec):
 #-----------------------
   html = [ '<div id="recording" class="treespace">' ]
   html.append('<div class="block">')
-  html.append(rdflink(rec.uri))
+  html.append(rdflink(rec.uri, rec.graph.uri))
 ##  html.append(annotatelink(rec.uri))
   html.append('</div>')
   html.append(property_details(rec, recording_properties))
