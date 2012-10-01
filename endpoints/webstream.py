@@ -76,7 +76,7 @@ class StreamEchoSocket(StreamServer):
 class StreamDataSocket(StreamServer):
 #====================================
 
-  MAXPOINTS = 4096 ### ?????
+  MAXPOINTS = 50000 ## 4096 ### ?????
 
   def _add_signal(self, uri):
   #--------------------------
