@@ -70,7 +70,7 @@ function getSignalStream(uri, blockprocess)
   stream = 'ws://' + window.document.location.host + '/stream/data/' ;
   protocol = 'biosignalml-ssf';
   streamparser = new StreamParser() ;
-  sp.receiver = blockprocess ;
+  streamparser.receiver = blockprocess ;
 
   if (window.WebSocket) {
     ws = new WebSocket(stream, protocol);
