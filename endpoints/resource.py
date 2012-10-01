@@ -224,8 +224,7 @@ class ReST(httpchunked.ChunkedHandler):
                                 str(uuid.uuid1()) + '.' + RecordingClass.EXTENSIONS[0]))
     logging.debug('URI: %s, FILE: %s', rec_uri, file_name)
 
-    if options.repository.check_type(rec_uri, BSML.Recording):
-      self._write_error(409, msg="Recording '%s' is already in repository" % rec_uri)
+    ## Provenance will take care of multiple versions but need to check user can replace....
       return
 
     try:            os.makedirs(os.path.dirname(file_name))
