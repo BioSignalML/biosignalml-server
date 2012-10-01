@@ -13,7 +13,7 @@ import logging
 import tornado.web
 
 REPOSITORY = '/repository/'       #  Prefix to repository objects 
-SESSION_TIMEOUT = 1800 # seconds  ## num(config.config['idletime'])
+SESSION_TIMEOUT = 86400 ### 1800 # seconds  ## num(config.config['idletime'])
 
 
 class SubTree(tornado.web.UIModule):
