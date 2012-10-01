@@ -226,6 +226,7 @@ def build_metadata(uri):
   #logging.debug('Get metadata for: %s', uri)
   html = [ '<div class="metadata">' ]
   if uri:
+    uri = uri.rsplit('#')[0]
     repo = options.repository
     rec_uri, graph_uri = repo.get_recording_and_graph_uri(uri)
     objtypes = repo.get_types(uri, graph_uri)
@@ -284,7 +285,7 @@ class Repository(frontend.BasePage):
     prefix = options.resource_prefix[:-1]
     if name:
       recuri = (name if name.startswith('http://') or name.startswith('file://')
-               else '%s/%s' % (prefix, name))
+               else '%s/%s' % (prefix, name)).rsplit('#')[0]
       #logging.debug('RECORDING: %s', recuri)
       recording = repo.get_recording_with_signals(recuri)
       if recording is None:
