@@ -34,7 +34,6 @@ class SubTree(tornado.web.UIModule):
         details = t[0]
         if depth < len(selected) and details[0] == selected[depth]:
           html.append(' class="selected"')
-        html.append(' id="%s"' % details[1])
         html.append('>')
         html.append(SubTree.treeaction(details[0],
           prefix + details[1].replace(':', '%3A'), details[2]))
