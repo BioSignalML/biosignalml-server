@@ -46,7 +46,12 @@ class StreamServer(WebSocketHandler):
   def on_message(self, msg):
   #-------------------------
     # self.request.headers ### will get headers sent with request, incl. cookies...
-    self._parser.process(bytearray(msg))
+    try:
+      bytes = bytearray(msg)
+    except TypeError:
+      bytes = bytearray(str(msg))
+    logging.debug('RAW: %s', bytes)
+    self._parser.process(bytes)
 
   def send_block(self, block, check=stream.Checksum.STRICT):
   #---------------------------------------------------------
