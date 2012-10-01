@@ -13,7 +13,7 @@ import logging
 import tornado.web
 
 REPOSITORY = '/repository/'       #  Prefix to repository objects 
-SESSION_TIMEOUT = 1800 # seconds  ## num(config.config['idletime'])
+SESSION_TIMEOUT = 86400 ### 1800 # seconds  ## num(config.config['idletime'])
 
 
 class SubTree(tornado.web.UIModule):
@@ -34,7 +34,6 @@ class SubTree(tornado.web.UIModule):
         details = t[0]
         if depth < len(selected) and details[0] == selected[depth]:
           html.append(' class="selected"')
-        html.append(' id="%s"' % details[1])
         html.append('>')
         html.append(SubTree.treeaction(details[0],
           prefix + details[1].replace(':', '%3A'), details[2]))
@@ -80,7 +79,7 @@ class MenuModule(tornado.web.UIModule):
 class BasePage(tornado.web.RequestHandler):
 #==========================================
   def render(self, template, **kwds):
-    kwargs = { 'title': '', 'content': '',
+    kwargs = { 'title': '', 'bodytitle': '', 'content': '',
                'stylesheets': [ ], 'scripts': [ ],
                'refresh': 0, 'alert': '', 'message': '',
                'keypress': None, 'level': self.userlevel(),

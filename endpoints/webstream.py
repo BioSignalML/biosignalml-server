@@ -17,7 +17,7 @@ import biosignalml.transports.stream as stream
 
 from biosignalml      import BSML
 from biosignalml.rdf  import Uri
-from biosignalml.data import UniformTimeSeries
+from biosignalml.data import TimeSeries, UniformTimeSeries
 import biosignalml.formats as formats
 
 
@@ -46,7 +46,12 @@ class StreamServer(WebSocketHandler):
   def on_message(self, msg):
   #-------------------------
     # self.request.headers ### will get headers sent with request, incl. cookies...
-    self._parser.process(bytearray(msg))
+    try:
+      bytes = bytearray(msg)
+    except TypeError:
+      bytes = bytearray(str(msg))
+    logging.debug('RAW: %s', bytes)
+    self._parser.process(bytes)
 
   def send_block(self, block, check=stream.Checksum.STRICT):
   #---------------------------------------------------------
@@ -71,7 +76,7 @@ class StreamEchoSocket(StreamServer):
 class StreamDataSocket(StreamServer):
 #====================================
 
-  MAXPOINTS = 4096 ### ?????
+  MAXPOINTS = 50000 ## 4096 ### ?????
 
   def _add_signal(self, uri):
   #--------------------------
@@ -82,7 +87,7 @@ class StreamDataSocket(StreamServer):
         sig = self._repo.get_signal(uri)
         rec.add_signal(sig)
         #print sig.graph.serialise()
-        recclass.initialise_class(rec, str(rec.source))
+        recclass.initialise_class(rec)
         self._sigs.append(sig)
 
   def got_block(self, block):
@@ -91,6 +96,7 @@ class StreamDataSocket(StreamServer):
     if   block.type == stream.BlockType.DATA_REQ:
       try:
         uri = block.header.get('uri')
+        ## Need to return 404 if unknown URI... (not a Recording or Signal)
         self._sigs = [ ]
         if isinstance(uri, list):
           for s in uri: self._add_signal(s)
@@ -98,8 +104,8 @@ class StreamDataSocket(StreamServer):
           rec = self._repo.get_recording_with_signals(uri)
           recclass = formats.CLASSES.get(str(rec.format))
           if recclass:
-            recclass.initialise_class(rec, str(rec.source))
-            self._sigs = rec.signals()
+            recclass.initialise_class(rec)
+            self._sigs = [ s for s in rec.signals() if s.rate ]   #### Only uniformly sampled, no annotation signals....
         else:
           self._add_signal(uri)
         start = block.header.get('start')
@@ -114,7 +120,7 @@ class StreamDataSocket(StreamServer):
         for sig in self._sigs:
           for d in sig.read(interval=sig.recording.interval(*interval) if interval else None,
                             segment=segment,
-                            points=block.header.get('maxsize', 0)):
+                            maxpoints=block.header.get('maxsize', 0)):
             keywords = dtypes.copy()
             if isinstance(d.dataseries, UniformTimeSeries):
               keywords['rate'] = d.dataseries.rate
@@ -140,8 +146,15 @@ class StreamDataSocket(StreamServer):
         if str(rec.format) != str(BSML.BSML_HDF5):
           raise stream.StreamException("Signal can not be appended to -- wrong format")
         recclass = formats.CLASSES.get(str(rec.format))
-        recclass.initialise_class(rec, str(rec.source))
-        rec.get_signal(sd.uri).append(sd.data)
+
+        #####  Pass parameters as keywords....
+        recclass.initialise_class(rec, mode='a')  ## Create if not present, else open
+        # This will create, so must ensure that path is in our recording's area...
+        ####   To be completed.... *************************************************
+
+        if sd.rate: ts = UniformTimeSeries(sd.data, rate=sd.rate)
+        else:       ts = TimeSeries(sd.clock, sd.data)
+        rec.get_signal(sd.uri).append(ts)
       except Exception, msg:
         self.send_block(stream.ErrorBlock(0, block, str(msg)))
         if options.debug: raise

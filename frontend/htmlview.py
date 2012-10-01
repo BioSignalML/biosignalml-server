@@ -52,6 +52,7 @@ def abbreviate(u):
 
 class Properties(object):
 #========================
+
   def __init__(self, properties):
     self._properties = properties
 
@@ -88,10 +89,12 @@ def property_details(object, properties, **args):
   return '<p>' + '</p><p>'.join(r) + '</p>'
 
 
-def rdflink(uri):
-#----------------
-  return ('<a href="%s">RDF</a> <a href="%s?describe=%s">SNORQL</a>'
-         % (uri, SNORQL_ENDPOINT, urllib.quote_plus(str(uri))) )
+def rdflink(uri, graph=None):
+#----------------------------
+  if graph is not None: g = '&graph=' + urllib.quote_plus(str(graph))
+  else:                 g = ''
+  return ('<a href="%s">RDF</a> <a href="%s?describe=%s%s">SNORQL</a>'
+         % (uri, SNORQL_ENDPOINT, urllib.quote_plus(str(uri)), g) )
 
 def annotatelink(uri):
 #---------------------
@@ -113,7 +116,7 @@ signal_properties = Properties([
                       ('Units', 'units', abbreviate),
                       ('Rate',  'rate',  trimdecimal),
 ##                      ('*Annotations', 'uri', annotatelink),
-                      ('*RDF',         'uri', rdflink),
+                      ('*RDF',  'uri',   rdflink, ['graph']),
                     ])
 
 recording_properties = Properties([
@@ -127,6 +130,13 @@ recording_properties = Properties([
                          ('Submitted', 'dateSubmitted', datetime_to_isoformat),
                        ])
 
+event_properties = Properties([
+                          ('Recording', 'recording'),
+                          ('Type',      'eventtype'),
+                          ('Time',      'time'),
+                          ('Duration',  'duration'),
+                        ])
+
 annotation_properties = Properties([
                           ('About',      'target'),
                           ('Created',    'annotated', datetime_to_isoformat),
@@ -139,7 +149,7 @@ def recording_info(rec):
 #-----------------------
   html = [ '<div id="recording" class="treespace">' ]
   html.append('<div class="block">')
-  html.append(rdflink(rec.uri))
+  html.append(rdflink(rec.uri, rec.graph.uri))
 ##  html.append(annotatelink(rec.uri))
   html.append('</div>')
   html.append(property_details(rec, recording_properties))
@@ -149,43 +159,46 @@ def recording_info(rec):
 
 def time_display(t):
 #-------------------
-  d = ['%g s' % t.start]
-  if t.duration: d.append('for %g s' % d.duration)
+  d = ['%gs' % t.start]
+  if t.duration: d.append('to %gs' % t.end)
   return ' '.join(d)
 
 
 def event_info(evt):
 #------------------
-  props = Properties([('Event at:', 'time', time_display),
-                      (' ',         'body', lambda b: b.text)])
+  props = Properties([('Time:',  'time', time_display),
+                      ('Event:', 'tags', lambda t: abbreviate(t[0]) if t else ''),
+                      ('Event:', 'body', lambda b: b.text)])
   h = [ ]
   prompts = props.header()
+  h.append('<div>')
   for n, d in enumerate(props.details(evt)):
-    if d is None: d = ''
-    t = '<br/>'.join(list(d)) if hasattr(d, '__iter__') else str(d)
-    p = '<span class="prompt">%s </span>%s' % (prompts[n], xmlescape(t).replace('\n', '<br/>'))
-    if   n == 0: h.append('<div><div class="event_time">%s</div>' % p)
-    elif n == 1: h.append('<span>%s</span></div>' % p)
+    if d:
+      t = '<br/>'.join(list(d)) if hasattr(d, '__iter__') else str(d)
+      p = '<span class="prompt">%s </span>%s' % (prompts[n], xmlescape(t).replace('\n', '<br/>'))
+      if n == 0: h.append('<div class="rside">%s</div>' % p)
+      else: h.append('<div>%s</div>' % p)
+  h.append('</div>')
   return ''.join(h)
 
 
 def annotation_info(ann):
 #------------------------
 
-  if isinstance(ann, model.Event): return event_info(ann)
+  if getattr(ann, 'time') is not None: return event_info(ann)
 
-  props = Properties([('Author',     'annotator'),
-                      ('Created',    'annotated', datetime_to_isoformat),
-                      ('Annotation', 'body', lambda b: b.text)])
+  props = Properties([('Annotation', 'body', lambda b: b.text),
+                      ('Author',     'annotator'),
+                      ('Created',    'annotated', datetime_to_isoformat)])
   h = [ ]
   prompts = props.header()
   for n, d in enumerate(props.details(ann)):
     if d is None: d = ''
     t = '<br/>'.join(list(d)) if hasattr(d, '__iter__') else str(d)
-    p = '<span class="prompt">%s: </span>%s' % (prompts[n], xmlescape(t).replace('\n', '<br/>'))
-    if   n == 0: h.append('<div><div class="half">%s</div>' % p)
-    elif n == 1: h.append('<span>%s</span></div>' % p)
-    else:        h.append('<p>%s</p>' % p)
+    p = '<span class="prompt">%s: </span><pre>%s</pre>' % (prompts[n], xmlescape(t))
+    if   n == 0: h.append('<p>%s</p>' % p)
+    elif n == 1 and d: h.append('<div><div class="half">%s</div>' % p)
+    elif n == 2 and len(h) > 1: h.append('<span>%s</span></div>' % p)
   return ''.join(h)
 
 
@@ -198,7 +211,7 @@ def signal_table(handler, recording, selected=None):
   selectedrow = -1
   for n, sig in enumerate(recording.signals()):
     if str(sig.uri) == selected: selectedrow = n
-    rows.append(signal_properties.details(sig, True, trimlen=lenhdr))
+    rows.append(signal_properties.details(sig, True, trimlen=lenhdr, graph=recording.graph.uri))
   return handler.render_string('table.html',
     header = signal_properties.header(True),
     rows = rows,
@@ -224,20 +237,23 @@ def build_metadata(uri):
     elif BSML.Signal in objtypes:       # repo.has_signal(uri)
       sig = repo.get_signal(uri)
       html.append(property_details(sig, signal_properties, makelink=False))
-    elif BSML.Event in objtypes:
-      html.append('event type, time, etc')
+#    elif BSML.Event in objtypes:
+#      html.append('event type, time, etc')
     elif (rdf.TL.RelativeInstant in objtypes
        or rdf.TL.RelativeInterval in objtypes):
       html.append('time, etc')
-    elif (BSML.Annotation in objtypes      #  OA.Annotation
-       or BSML.Event in objtypes):
+    elif BSML.Annotation in objtypes:   #  OA.Annotation
       ann = repo.get_annotation(uri)
+      #html.append(annotation_info(ann))
       html.append(property_details(ann, annotation_properties))
+    elif BSML.Event in objtypes:
+      evt = repo.get_event(uri)
+      html.append(property_details(evt, event_properties, makelink=False))
     elif rdf.CNT.ContentAsText in objtypes:
       ann = repo.get_annotation_by_content(uri)
       html.append(property_details(ann, annotation_properties))
     else:
-      html.append(str(objtype))
+      html.append('<br/>'.join([str(o) for o in objtypes]))
   html.append('</div>')
   return ''.join(html)
 
@@ -257,10 +273,10 @@ def get_annotation(graph, uri):
   :param uri: The URI of an Annotation.
   :rtype: :class:`~biosignalml.Annotation`
   '''
-  if graph.contains(rdf.Statement(uri, rdf.RDF.type, BSML.Event)):
-    return Event.create_from_graph(uri, graph)
-  else:
-    return Annotation.create_from_graph(uri, graph)
+#  if graph.contains(rdf.Statement(uri, rdf.RDF.type, BSML.Event)):
+#    return Event.create_from_graph(uri, graph)
+#  else:
+  return Annotation.create_from_graph(uri, graph)
 
 
 class Repository(frontend.BasePage):
@@ -296,14 +312,22 @@ class Repository(frontend.BasePage):
         recuri = str(recording.uri)
       else:
         selectedsig = None
-      kwds = dict(title = recuri, style = 'signal',
+
+      # By now we should have all of recording's RDF as a Graph so we
+      # can use this to get events, annotations, etc, etc
+
+ ## Is sending tree each time, that then has JScript setting up tooltips
+ ## a cause of connection closed problems...???
+
+
+      kwds = dict(bodytitle = recuri, style = 'signal',
                   tree = self._xmltree(repo.recordings(), prefix, frontend.REPOSITORY, name),
                   content = recording_info(recording)
                           + signal_table(self, recording, selectedsig) )
       target = selectedsig if selectedsig else recuri
       annotations = [ annotation_info(get_annotation(recording.graph, ann))
                        for ann in repo.annotations(target) ]
-      if not annotate : annotations.append(annotatelink(target))
+      if not annotate: annotations.append(annotatelink(target))
       kwds['content'] += self.render_string('annotate.html', uri=target, annotations=annotations)
       if annotate:
         self.render('tform.html',

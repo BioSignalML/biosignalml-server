@@ -70,7 +70,7 @@ function getSignalStream(uri, blockprocess)
   stream = 'ws://' + window.document.location.host + '/stream/data/' ;
   protocol = 'biosignalml-ssf';
   streamparser = new StreamParser() ;
-  sp.receiver = blockprocess ;
+  streamparser.receiver = blockprocess ;
 
   if (window.WebSocket) {
     ws = new WebSocket(stream, protocol);
@@ -98,7 +98,7 @@ function getSignalStream(uri, blockprocess)
     } ;
 
   ws.onopen = function() {
-    h = $.toJSON({uri: uri, start: 0.0, duration: 10.0, dtype: '<f4'}) ;  // Float32Array
+    h = JSON.stringify({uri: uri, start: 0.0, duration: 10.0, dtype: '<f4'}) ;  // Float32Array
     s = '#d1M' + h.length.toString() + h + '0\n##\n' ;
     ws.send(makeblob(s)) ;
     } ;
