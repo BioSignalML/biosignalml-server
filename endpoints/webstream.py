@@ -17,7 +17,7 @@ import biosignalml.transports.stream as stream
 
 from biosignalml      import BSML
 from biosignalml.rdf  import Uri
-from biosignalml.data import UniformTimeSeries
+from biosignalml.data import TimeSeries, UniformTimeSeries
 import biosignalml.formats as formats
 
 
@@ -141,7 +141,9 @@ class StreamDataSocket(StreamServer):
           raise stream.StreamException("Signal can not be appended to -- wrong format")
         recclass = formats.CLASSES.get(str(rec.format))
         recclass.initialise_class(rec, str(rec.source))
-        rec.get_signal(sd.uri).append(sd.data)
+        if sd.rate: ts = UniformTimeSeries(sd.data, rate=sd.rate)
+        else:       ts = TimeSeries(sd.clock, sd.data)
+        rec.get_signal(sd.uri).append(ts)
       except Exception, msg:
         self.send_block(stream.ErrorBlock(0, block, str(msg)))
         if options.debug: raise
