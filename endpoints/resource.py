@@ -268,6 +268,9 @@ class ReST(httpchunked.ChunkedHandler):
   def post(self, name, **kwds):
   #-----------------------------
     logging.debug('POST: %s', self.request.headers)
+
+    self._write_error(501, msg="POST not implemented...")
+
     rec_uri = self._get_names(name)[0]
     if rec_uri: self.write("<html><body><p>POST: %s</p></body></html>" % rec_uri)
 
@@ -283,6 +286,9 @@ class ReST(httpchunked.ChunkedHandler):
     if fragment:
       self._write_error(404, msg="Cannot delete fragment of '%s'" % rec_uri)
       return
+
+    self._write_error(501, msg="DELETE not fully implemented...")
+    return
 
     try:
       file_name = urllib.urlopen(str(recording.dataset)).fp.name
