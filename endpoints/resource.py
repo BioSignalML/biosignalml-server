@@ -58,7 +58,7 @@ class FileWriter(object):
   def write(self, data):
   #---------------------
     logging.debug('Writing %d bytes', len(data))
-    self._sha.update(data)
+    self.sha.update(data)
     try:
       self._output.write(data)
     except IOError, msg:
@@ -239,7 +239,7 @@ class ReST(httpchunked.ChunkedHandler):
   #-------------------------------
     newfile.output.close()
     logging.debug("Imported %s -> %s (%s)", newfile.source, newfile.uri, newfile.fname)
-    recording = newfile.Recording.open(newfile.uri, fname=newfile.fname, digest=newfile._sha.hexdigest())
+    recording = newfile.Recording.open(newfile.uri, fname=newfile.fname, digest=newfile.sha.hexdigest())
     options.repository.store_recording(recording)
     recording.close()
 
