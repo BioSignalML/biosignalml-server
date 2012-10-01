@@ -52,6 +52,7 @@ def abbreviate(u):
 
 class Properties(object):
 #========================
+
   def __init__(self, properties):
     self._properties = properties
 
@@ -311,6 +312,14 @@ class Repository(frontend.BasePage):
         recuri = str(recording.uri)
       else:
         selectedsig = None
+
+      # By now we should have all of recording's RDF as a Graph so we
+      # can use this to get events, annotations, etc, etc
+
+ ## Is sending tree each time, that then has JScript setting up tooltips
+ ## a cause of connection closed problems...???
+
+
       kwds = dict(bodytitle = recuri, style = 'signal',
                   tree = self._xmltree(repo.recordings(), prefix, frontend.REPOSITORY, name),
                   content = recording_info(recording)
@@ -318,7 +327,7 @@ class Repository(frontend.BasePage):
       target = selectedsig if selectedsig else recuri
       annotations = [ annotation_info(get_annotation(recording.graph, ann))
                        for ann in repo.annotations(target) ]
-      if not annotate : annotations.append(annotatelink(target))
+      if not annotate: annotations.append(annotatelink(target))
       kwds['content'] += self.render_string('annotate.html', uri=target, annotations=annotations)
       if annotate:
         self.render('tform.html',
