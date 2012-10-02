@@ -39,7 +39,8 @@ def search(sparql):
 #==================
   if not sparql: return ''
   body = ['<div id="sparqlresult"><table class="results">']
-  results = options.repository.query(sparql, header=True, html=True, abbreviate=True)
+  results = options.repository.query(sparql, header=True, abbreviate=True,
+                                     htmlbase=str(options.repository.uri))
   for n, r in enumerate(results):
     if n == 0:
       if isinstance(r, list):

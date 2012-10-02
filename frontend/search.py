@@ -266,7 +266,8 @@ class Search(frontend.BasePage):
       sparql.append('filter(?g != <%s>)' % options.repository.provenance_uri())
       sparql.append('} }')
       subjects = set()
-      for r in options.repository.query('\n'.join(sparql), html=True, abbreviate=True):
+      for r in options.repository.query('\n'.join(sparql), abbreviate=True,
+                                        htmlbase=str(options.repository.uri)):
         #logging.debug('R: %s', r)
         if r[0].get('value'):
           subjects.add((r[0]['value'], r[0]['html'], r[1]['html'] if r[1]['html'] else ''))
