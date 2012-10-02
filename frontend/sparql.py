@@ -92,3 +92,14 @@ class Query(frontend.BasePage):
   def post(self):
     query = self.get_argument('query', '')
     self.render(query, search(query))
+
+
+  ## The following results in an error from Virtuoso...
+  '''select * where {
+     graph <http://devel.biosignalml.org/provenance> {
+       ?graph a bsml:RecordingGraph MINUS { [] prv:precededBy ?graph }
+       }
+    graph ?graph {
+      ?subject a ?object
+      }
+    } limit 20'''
