@@ -310,7 +310,7 @@ class Repository(frontend.BasePage):
                   content = recording_info(recording)
                           + signal_table(self, recording, selectedsig) )
       target = selectedsig if selectedsig else recuri
-      annotations = [ annotation_info(repo.get_annotation(ann, recording.graph.uri))
+      annotations = [ annotation_info(repo.get_annotation(ann, recording.graph_uri))
                        for ann in repo.annotations(target) ]
       if not annotate: annotations.append(annotatelink(target))
       kwds['content'] += self.render_string('annotate.html', uri=target, annotations=annotations)
