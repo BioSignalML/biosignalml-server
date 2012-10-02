@@ -34,7 +34,7 @@ class sparql(tornado.web.RequestHandler):
     self.ioloop = ioloop.IOLoop()
     self.http_client = httpclient.AsyncHTTPClient(self.ioloop)
     self.http_client.fetch(
-      options.repository._triplestore._href + self.request.uri,
+      options.repository._sparqlstore._href + self.request.uri,
       self.request_handler,
       method = self.request.method,
       headers = self.request.headers,

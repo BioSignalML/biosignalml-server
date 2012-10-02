@@ -105,7 +105,7 @@ def init_server():
   elif options.repository['sparql_store'] == 'Virtuoso':  SparqlStore = Virtuoso
   else: raise ValueError("Unknown type of SPARQL store")
   define('repository',
-    repository.BSMLRepository(options.repository['uri'], SparqlStore(options.repository['sparql_server'])))
+    repository.BSMLStore(options.repository['uri'], SparqlStore(options.repository['sparql_server'])))
 
   define('resource_prefix', options.repository['uri'] + options.repository['resource_path'])
   define('debug',      (options.logging['log_level'] == 'DEBUG'))

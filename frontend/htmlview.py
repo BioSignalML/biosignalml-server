@@ -228,7 +228,7 @@ def build_metadata(uri):
   if uri:
     uri = uri.rsplit('#')[0]
     repo = options.repository
-    rec_uri, graph_uri = repo.get_recording_and_graph_uri(uri)
+    graph_uri = repo.get_recording_and_graph_uri(uri)[0]
     objtypes = repo.get_types(uri, graph_uri)
     if   BSML.Recording in objtypes:    # repo.has_recording(uri)
       rec = repo.get_recording(uri)
@@ -306,7 +306,7 @@ class Repository(frontend.BasePage):
 ####      print recording.graph.serialise(format=rdf.Format.TURTLE, base=recording.uri, prefixes=PREFIXES)
 
       kwds = dict(bodytitle = recuri, style = 'signal',
-                  tree = self._xmltree(repo.recordings(), prefix, frontend.REPOSITORY, name),
+                  tree = self._xmltree([r[1] for r in repo.recordings()], prefix, frontend.REPOSITORY, name),
                   content = recording_info(recording)
                           + signal_table(self, recording, selectedsig) )
       target = selectedsig if selectedsig else recuri
@@ -328,7 +328,7 @@ class Repository(frontend.BasePage):
     else:
       self.render('tpage.html',
         title = 'Recordings in repository:',
-        tree = self._xmltree(repo.recordings(), prefix, frontend.REPOSITORY))
+        tree = self._xmltree([r[1] for r in repo.recordings()], prefix, frontend.REPOSITORY))
 
   @tornado.web.authenticated
   def get(self, name=''):
