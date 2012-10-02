@@ -79,12 +79,11 @@ class Query(frontend.BasePage):
   def get(self):
     p = [ ]
     p.append(prologue())
-    p.append('PREFIX text: <http://4store.org/fulltext#>')
     p.append('')
     p.append('select * where {')
+    p.append('  graph <http://devel.biosignalml.org/provenance> { ?graph a bsml:RecordingGraph }')
     p.append('  graph ?graph {')
     p.append('    ?subject ?predicate ?object')
-    p.append('    filter (?predicate != text:stem && ?graph != <system:config>)')
     p.append('    }')
     p.append('  } limit 20')
     self.render('\n'.join(p)) # Default namespace prefixes and query
