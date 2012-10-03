@@ -151,7 +151,7 @@ def recording_info(rec):
 #-----------------------
   html = [ '<div id="recording" class="treespace">' ]
   html.append('<div class="block">')
-  html.append(rdflink(rec.uri, rec.graph.uri))
+  html.append(rdflink(rec.uri, rec.graph_uri))
 ##  html.append(annotatelink(rec.uri))
   html.append('</div>')
   html.append(property_details(rec, recording_properties))
