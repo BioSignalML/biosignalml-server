@@ -17,20 +17,19 @@ if __name__ == '__main__':
   #oldgraphs = [ r['g']['value'] for r in graphs if (r['g']['value']).startswith('http://devel.biosignalml.org/provenance/') ]
 
   graphs = json.loads(
-             store.query("""select distinct ?g where { graph <http://devel.biosignalml.org/provenance> {
+             store.query("""select distinct ?g where {
+                             graph <http://devel.biosignalml.org/provenance> {
                               ?g dct:subject <http://devel.biosignalml.org/resource/physiobank/mitdb/100>
-                              } } order by ?g""", format=Format.JSON)
+                              }
+                            } order by ?g""", format=Format.JSON)
              ).get('results', {}).get('bindings', [])
 
 
   oldgraphs = [ r['g']['value'] for r in graphs ]
 
   print '\n'.join(oldgraphs)
-
-#  for g in oldgraphs:
-#    store.delete_graph(g)
-
-
+  for g in oldgraphs:
+    store.delete_graph(g)
 
   d1 = """WITH <http://devel.biosignalml.org/provenance>
           DELETE { ?x ?p ?v } WHERE {
@@ -59,7 +58,8 @@ if __name__ == '__main__':
             }
           }"""
 
-  for r in json.loads(store.query(s2, format=Format.JSON)
-             ).get('results', {}).get('bindings', []): print r
+#  for r in json.loads(store.query(s2, format=Format.JSON)
+#             ).get('results', {}).get('bindings', []): print r
 
+  print store.query(d1)
   print store.query(d2)
