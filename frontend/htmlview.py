@@ -302,11 +302,11 @@ class Repository(frontend.BasePage):
       if recording is None:
         self.send_error(404) # 'Unknown recording...')
         return
+
+      selectedsig = None
       if str(recording.uri) != recuri:
-        selectedsig = recuri
+        if repo.has_signal(recuri): selectedsig = recuri
         recuri = str(recording.uri)
-      else:
-        selectedsig = None
 
       # By now we should have all of recording's RDF as a Graph so we
       # can use this to get events, annotations, etc, etc
@@ -321,6 +321,7 @@ class Repository(frontend.BasePage):
                   content = recording_info(recording)
                           + signal_table(self, recording, selectedsig) )
       target = selectedsig if selectedsig else recuri
+
       annotations = [ annotation_info(repo.get_annotation(ann, recording.graph_uri))
                        for ann in repo.annotations(target) ]
       if not annotate: annotations.append(annotatelink(target))
