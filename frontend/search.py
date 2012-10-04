@@ -257,8 +257,7 @@ class Search(frontend.BasePage):
       sparql = [ ]
       sparql.append(PREFIXES)
       sparql.append('')
-      # Redland 'distinct' is buggy..
-      sparql.append('select ?s ?t where { graph ?g {')
+      sparql.append('select distinct ?s ?t where { graph ?g {')
       sparql.append(query)
       sparql.append('?s rdf:type ?t .')   ##  % stype)
       sparql.append('filter(?g != <%s>)' % options.repository._provenance_uri)  # Call method ??
