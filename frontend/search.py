@@ -51,11 +51,10 @@ def _values(predicate, rtype):
 SEARCH_RELNS  = ['AND', 'AND NOT', 'OR', ]
 
 SEARCH_FIELDS = [ { 'prompt': 'Text',
-                    'property': 'text:stem',
-                    'tests':  ['matching'],
-                    'sparql': '?s %(property)s "%(value)s" ; ?p ?o .',
+                    'property': 'bif:contains',
+                    'tests':  ['containing'],
+                    'sparql': "?s ?p ?o . ?o %(property)s \'%(value)s\' .",
                     'values': [ '' ],
-                    'stemtext': True,
                     },
                   { 'prompt': 'Units',
                     'property': 'bsml:units',
@@ -257,7 +256,6 @@ class Search(frontend.BasePage):
     #-----------------------------
       sparql = [ ]
       sparql.append(PREFIXES)
-      sparql.append('PREFIX text: <http://4store.org/fulltext#>')
       sparql.append('')
       # Redland 'distinct' is buggy..
       sparql.append('select ?s ?t where { graph ?g {')
