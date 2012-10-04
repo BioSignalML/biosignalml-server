@@ -263,7 +263,7 @@ class Search(frontend.BasePage):
       sparql.append('select ?s ?t where { graph ?g {')
       sparql.append(query)
       sparql.append('?s rdf:type ?t .')   ##  % stype)
-      sparql.append('filter(?g != <%s>)' % options.repository.provenance_uri())
+      sparql.append('filter(?g != <%s>)' % options.repository._provenance_uri)  # Call method ??
       sparql.append('} }')
       subjects = set()
       for r in options.repository.query('\n'.join(sparql), abbreviate=True,
