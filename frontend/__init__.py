@@ -9,11 +9,34 @@
 ######################################################
 
 import logging
+import urllib
 
 import tornado.web
 
+
 REPOSITORY = '/repository/'       #  Prefix to repository objects 
+SNORQL_ENDPOINT = '/snorql/'      ##### Needs to come from ../server.py
+
 SESSION_TIMEOUT = 86400 ### 1800 # seconds  ## num(config.config['idletime'])
+
+
+# Provide useful utility functions
+def rdf_link(uri):
+#-----------------
+  return '<a href="%s">RDF</a>' % uri
+
+def snorql_link(uri, graph=None):
+#--------------------------------
+  if graph is not None: g = '&graph=' + urllib.quote_plus(str(graph))
+  else:                 g = ''
+  return ('<a href="%s?describe=%s%s" target="_blank">SNORQL</a>'
+         % (SNORQL_ENDPOINT, urllib.quote_plus(str(uri)), g) )
+
+def make_link(uri, graph=None):
+#------------------------------
+  if graph is not None: g = '&graph=' + urllib.quote_plus(str(graph))
+  else:                 g = ''
+  return rdf_link(uri) + ' ' + snorql_link(uri, graph)
 
 
 class SubTree(tornado.web.UIModule):

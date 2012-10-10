@@ -10,7 +10,6 @@
 
 
 import logging
-import urllib
 import tornado.web
 from tornado.options import options
 
@@ -26,8 +25,6 @@ import mktree
 import menu
 import user
 
-
-SNORQL_ENDPOINT = '/snorql/'      ##### Needs to come from ../server.py
 
 PREFIXES = { 'bsml':     BSML.URI,
              'pbterms': 'http://www.biosignalml.org/ontologies/examples/physiobank#',
@@ -91,24 +88,6 @@ def property_details(object, properties, **args):
   return '<p>' + '</p><p>'.join(r) + '</p>'
 
 
-def rdf_link(uri):
-#-----------------
-  return '<a href="%s">RDF</a>' % uri
-
-def snorql_link(uri, graph=None):
-#--------------------------------
-  if graph is not None: g = '&graph=' + urllib.quote_plus(str(graph))
-  else:                 g = ''
-  return ('<a href="%s?describe=%s%s" target="_blank">SNORQL</a>'
-         % (SNORQL_ENDPOINT, urllib.quote_plus(str(uri)), g) )
-
-def make_link(uri, graph=None):
-#------------------------------
-  if graph is not None: g = '&graph=' + urllib.quote_plus(str(graph))
-  else:                 g = ''
-  return rdf_link(uri) + ' ' + snorql_link(uri, graph)
-
-
 def annotatelink(uri):
 #---------------------
   return '<a href="/repository/%s?annotations">Add Annotation</a>' % uri
@@ -129,7 +108,7 @@ signal_properties = Properties([
                       ('Units', 'units', abbreviate),
                       ('Rate',  'rate',  trimdecimal),
 ##                      ('*Annotations', 'uri', annotatelink),
-                      ('*RDF',  'uri',   make_link, ['graph']),
+                      ('*RDF',  'uri',   frontend.make_link, ['graph']),
                     ])
 
 recording_properties = Properties([
@@ -162,7 +141,7 @@ def recording_info(rec):
 #-----------------------
   html = [ '<div id="recording" class="treespace">' ]
   html.append('<div class="block">')
-  html.append(make_link(rec.uri, rec.graph_uri))
+  html.append(frontend.make_link(rec.uri, rec.graph_uri))
 ##  html.append(annotatelink(rec.uri))
   html.append('</div>')
   html.append(property_details(rec, recording_properties))

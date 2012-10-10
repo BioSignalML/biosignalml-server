@@ -263,6 +263,11 @@ class Search(frontend.BasePage):
       sparql.append('filter(?g != <%s>)' % options.repository._provenance_uri)  # Call method ??
       sparql.append('} }')
       subjects = set()
+
+
+      ##logging.debug('SEARCH: %s', '\n'.join(sparql))
+
+      # Provenance....
       for r in options.repository.query('\n'.join(sparql), abbreviate=True,
                                         htmlbase=str(options.repository.uri)):
         #logging.debug('R: %s', r)
@@ -312,8 +317,8 @@ class Search(frontend.BasePage):
     sigs.sort()
     html = [ '<div>' ]
     for n, s in enumerate(sigs):
-      html.append('<div class="result%s" id="%s">%s %s</div>'
-                             % (' odd' if n%2 else '', s[0], s[1], s[2]))
+      html.append('<div class="result%s" id="%s">%s %s  SNORQL: %s</div>'
+                             % (' odd' if n%2 else '', s[0], s[1], s[2], frontend.snorql_link(s[0])))
     html.append('</div>')
     self.write( { 'html': '\n'.join(html) } )
 
