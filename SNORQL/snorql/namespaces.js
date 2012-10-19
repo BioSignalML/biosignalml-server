@@ -3,7 +3,7 @@ var D2R_namespacePrefixes = {
     rdfs: 'http://www.w3.org/2000/01/rdf-schema#',
     rdfg: 'http://www.w3.org/2004/03/trix/rdfg-1/',
     owl: 'http://www.w3.org/2002/07/owl#',
-    dcterms: 'http://purl.org/dc/terms/',
+    dct: 'http://purl.org/dc/terms/',
     xsd: 'http://www.w3.org/2001/XMLSchema#',
     cnt: 'http://www.w3.org/2011/content#',
     oa:  'http://www.w3.org/ns/openannotation/core/',

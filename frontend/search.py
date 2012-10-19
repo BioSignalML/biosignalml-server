@@ -365,7 +365,7 @@ select ?graph ?rec ?tl ?evt ?desc ?at where {
     ?rec a bsml:Recording ;
          tl:timeline ?tl .
     ?evt a evt:Event ;
-         dcterms:description ?desc ;
+         dct:description ?desc ;
          tl:time ?tim .
     ?tim a tl:RelativeInstant ;
          tl:timeline ?tl ;
