@@ -55,7 +55,7 @@ def search(sparql):
         return '<div class="search">%s</div>' % xmlescape(str(r)).replace('\n', '<br/>')
     else:
       body.append('<tr class="odd">' if odd else '<tr>')
-      for d in r: body.append('<td>%s</td>' % d['html'])
+      for d in r.itervalues(): body.append('<td>%s</td>' % d)
       body.append('</tr>\n')
       odd = not odd
   body.append('</table></div>\n')
