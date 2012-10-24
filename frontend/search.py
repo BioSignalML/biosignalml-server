@@ -16,6 +16,8 @@ import tornado.web
 import tornado.escape
 from tornado.options import options
 
+import biosignalml.rdf as rdf
+
 import sparql
 import frontend
 
@@ -28,21 +30,20 @@ PREFIXES = sparql.prologue()
 def _values(predicate, rtype):
 #=============================
   values = [ ]
-  # Redland 'distinct' is buggy, so we get everything and filter and sort ourselves.
   sparql = PREFIXES + "\n\nselect distinct ?v where { ?s %s ?v }" % predicate
-  #logging.debug('SP: %s', sparql)
   results = options.repository.query(sparql)
   for r in results:
-    v = r[0].get('value')
+    v = r['v']
     if v:
-      if r[0]['type'] == 'uri':
-        values.append(tornado.escape.xhtml_escape(results.abbreviate_uri(v)))
-      elif rtype == str:
+      if isinstance(v, rdf.Uri):
+        uri = results.abbreviate_uri(v)
+        if uri == str(v): uri = '<%s>' % uri
+        values.append(tornado.escape.xhtml_escape(uri))
+      elif isinstance(v, str):
         values.append(tornado.escape.xhtml_escape(unicode(v)))
       else:
-        try:               values.append(rtype(str(v)))
+        try:               values.append(str(v))
         except ValueError: values.append('')
-  values = list(set(values))
   values.sort()
   return values
 
@@ -261,17 +262,15 @@ class Search(frontend.BasePage):
       sparql.append('?s rdf:type ?t .')   ##  % stype)
       sparql.append('filter(?g != <%s>)' % options.repository._provenance_uri)  # Call method ??
       sparql.append('} }')
-      subjects = set()
-
 
       ##logging.debug('SEARCH: %s', '\n'.join(sparql))
-
+      subjects = set()
       # Provenance....
       for r in options.repository.query('\n'.join(sparql), abbreviate=True,
                                         htmlbase=str(options.repository.uri)):
-        #logging.debug('R: %s', r)
-        if r[0].get('value'):
-          subjects.add((r[0]['value'], r[0]['html'], r[1]['html'] if r[1]['html'] else ''))
+        # logging.debug('R: %s', r)
+        if r.get('error'): return set([('', r['error'], '')])
+        subjects.add((r['s'][0], r['s'][1], r['t'][1] if r['t'][0] is not None else ''))
       return subjects
 
 ##############################################
