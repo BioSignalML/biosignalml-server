@@ -12,7 +12,6 @@
 import logging
 import copy
 
-import Stemmer
 import tornado.web
 import tornado.escape
 from tornado.options import options
@@ -285,8 +284,6 @@ class Search(frontend.BasePage):
       elif op == 'AND NOT': return s1.difference(s2)
       else:                 return s1
 
-    stemmer = Stemmer.Stemmer('en', 0)
-
     def termsearch(term):
     #--------------------
       field = SEARCH_FIELDS[term[0]]
@@ -296,7 +293,7 @@ class Search(frontend.BasePage):
         if isinstance(sparql, list): sparql = sparql[term[1]]
       else:
         test = ''
-      v = stemmer.stemWord(term[2]).lower() if field.get('stemtext') else term[2]
+      v = term[2]
       return sparql_find('bsml:Signal',
                          sparql % { 'property': field['property'], 'test': test, 'value': v })
 
