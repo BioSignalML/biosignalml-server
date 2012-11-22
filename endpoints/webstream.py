@@ -133,8 +133,8 @@ class StreamDataSocket(StreamServer):
             self.send_block(stream.SignalData(str(sig.uri), d.starttime, d.dataseries.data, **keywords).streamblock())
       except Exception, msg:
         if str(msg) != "Stream is closed":
-          self.send_block(stream.ErrorBlock(0, block, str(msg)))
-          if options.debug: raise
+          self.send_block(stream.ErrorBlock(block, str(msg)))
+          ##if options.debug: raise
       finally:
         self.close()     ## All done with data request
 
@@ -160,7 +160,7 @@ class StreamDataSocket(StreamServer):
         else:       ts = TimeSeries(sd.clock, sd.data)
         rec.get_signal(sd.uri).append(ts)
       except Exception, msg:
-        self.send_block(stream.ErrorBlock(0, block, str(msg)))
+        self.send_block(stream.ErrorBlock(block, str(msg)))
         if options.debug: raise
 
 
