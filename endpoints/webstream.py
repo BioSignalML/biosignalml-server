@@ -89,6 +89,10 @@ class StreamDataSocket(StreamServer):
         #print sig.graph.serialise()
         recclass.initialise_class(rec)
         self._sigs.append(sig)
+      else:
+        raise IOError('No format for: %s' % uri)
+    else:
+      raise IOError('Unknown signal: %s' % uri)
 
   def got_block(self, block):
   #--------------------------
