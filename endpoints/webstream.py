@@ -109,6 +109,7 @@ class StreamDataSocket(StreamServer):
           recclass = formats.CLASSES.get(str(rec.format))
           if recclass:
             recclass.initialise_class(rec)
+##########
             self._sigs = [ s for s in rec.signals() if s.rate ]   #### Only uniformly sampled, no annotation signals....
         else:
           self._add_signal(uri)
@@ -121,16 +122,33 @@ class StreamDataSocket(StreamServer):
         if offset is None and count is None: segment = None
         else:                                segment = (offset, count)
         dtypes = { 'dtype': block.header.get('dtype'), 'ctype': block.header.get('ctype') }
-        for sig in self._sigs:
-          for d in sig.read(interval=sig.recording.interval(*interval) if interval else None,
-                            segment=segment,
-                            maxpoints=block.header.get('maxsize', 0)):
-            keywords = dtypes.copy()
-            if isinstance(d.dataseries, UniformTimeSeries):
-              keywords['rate'] = d.dataseries.rate
-            else:
-              keywords['clock'] = d.dataseries.times
-            self.send_block(stream.SignalData(str(sig.uri), d.starttime, d.dataseries.data, **keywords).streamblock())
+
+        self.send_block(stream.InfoBlock(uris=[str(sig.uri) for sig in self._sigs]))
+
+        # Interleave signal blocks...
+        ### What if signal has multiple channels? What does read() return??
+        ###
+        data = [ sig.read(interval=sig.recording.interval(*interval) if interval else None,
+                          segment=segment, maxpoints=block.header.get('maxsize', 0))
+                   for sig in self._sigs ]
+        active = len(data)
+        while active > 0:
+          for n, sigdata in enumerate(data):
+            if sigdata is not None:
+              try:
+                d = sigdata.next()
+                siguri = str(self._sigs[n].uri)
+                keywords = dtypes.copy()
+                keywords['info'] = n
+                if isinstance(d.dataseries, UniformTimeSeries):
+                  keywords['rate'] = d.dataseries.rate
+                else:
+                  keywords['clock'] = d.dataseries.times
+                logging.debug("Send block for %s", siguri)
+                self.send_block(stream.SignalData(siguri, d.starttime, d.dataseries.data, **keywords).streamblock())
+              except StopIteration:
+                data[n] = None
+                active -= 1
       except Exception, msg:
         if str(msg) != "Stream is closed":
           self.send_block(stream.ErrorBlock(block, str(msg)))
