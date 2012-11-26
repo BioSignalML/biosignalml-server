@@ -263,8 +263,10 @@ class ReST(httpchunked.ChunkedHandler):
   def finished_put(self, newfile):
   #-------------------------------
     newfile.output.close()
-    logging.debug("Imported %s -> %s (%s)", newfile.dataset, newfile.uri, newfile.fname)
-    recording = newfile.Recording.open(newfile.uri, fname=newfile.fname, digest=newfile.sha.hexdigest())
+    logging.debug("Imported %s -> %s", newfile.uri, newfile.fname)
+    ## We've streamed a file to somewhere on our file system
+    ## Now open the file and put metadata into triplestore
+    recording = newfile.Recording(newfile.uri, dataset=newfile.fname, digest=newfile.sha.hexdigest())
     options.repository.store_recording(recording)
     recording.close()
 
