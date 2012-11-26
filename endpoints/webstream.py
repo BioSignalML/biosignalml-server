@@ -123,7 +123,9 @@ class StreamDataSocket(StreamServer):
         else:                                segment = (offset, count)
         dtypes = { 'dtype': block.header.get('dtype'), 'ctype': block.header.get('ctype') }
 
-        self.send_block(stream.InfoBlock(uris  = [str(sig.uri) for sig in self._sigs],
+        self.send_block(stream.InfoBlock(channels = len(self._sigs),
+                                         signals = [str(sig.uri) for sig in self._sigs],
+                                         units = [str(sig.units) for sig in self._sigs],
                                          rates = [sig.rate for sig in self._sigs] ))
 
         # Interleave signal blocks...
