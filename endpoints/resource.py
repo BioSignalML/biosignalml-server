@@ -151,7 +151,7 @@ class ReST(httpchunked.ChunkedHandler):
       if name == '':
         graph_uri = options.repository.uri
         uri = ''
-      elif options.repository.graph_has_provenance(uri):
+      elif options.repository.has_provenance(uri):
         graph_uri = uri
         uri = ''
       else:
