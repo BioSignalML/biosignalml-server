@@ -193,6 +193,13 @@ class StreamDataSocket(StreamServer):
         self.send_block(stream.ErrorBlock(block, str(msg)))
         if options.debug: raise
 
+    elif block.type == stream.BlockType.RDF:
+      ## Or do we just use REST services? Or SPARQL??
+      uri = self._last_info['recording']
+      graph_uri = self._repo.get_recording_and_graph_uri(uri)[0]
+      mimetype = block.header.get('mimetype')
+      options.repository.extend_graph(graph_uri, unicode(block.content), format=mimetype)
+
     elif block.type == stream.BlockType.DATA:
       # Got 'D' segment(s), uri is that of signal, that should have a recording link
       # look signal's uri up to get its Recording and hence format/source
