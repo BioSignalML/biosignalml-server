@@ -8,6 +8,7 @@
 #
 ######################################################
 
+import uuid
 import logging
 
 from tornado.options import options
@@ -31,6 +32,7 @@ class StreamServer(WebSocketHandler):
     WebSocketHandler.__init__(self, *args, **kwds)
     self._parser = stream.BlockParser(self.got_block, check=stream.Checksum.CHECK)
     self._repo = options.repository
+    self._last_info = None
 
   def select_subprotocol(self, protocols):
   #---------------------------------------
@@ -159,27 +161,61 @@ class StreamDataSocket(StreamServer):
       finally:
         self.close()     ## All done with data request
 
+    elif block.type == stream.BlockType.INFO:
+      self._last_info = block.header
+      try:
+        uri = self._last_info['recording']
+        fname = self._last_info.get('dataset')
+        if fname is None:
+          fname = options.recordings + 'streamed/' + str(uuid.uuid1()) + '.h5'
+        ## '/streamed/' should come from configuration
+
+        ## We support HDF5, user can use resource endpoint to PUT their EDF file...
+        recording = formats.hdf5.HDF5Recording(uri, dataset=fname)
+        # This will create, so must ensure that path is in our recording's area...
+
+        units = self._last_info.get('units')
+        rates = self._last_info.get('rates')
+        if self._last_info.get('signals'):
+          for n, s in enumerate(self._last_info['signals']):
+            recording.new_signal(siguri, units[n] if units else None,
+                                 rate=(rates[n] if rates else None) )
+        else:
+          signals = [ ]
+          for n in xrange(self._last_info['channels']):
+            signals.append(str(recording.new_signal(None, units[n] if units else None,
+                                 id=n, rate=(rates[n] if rates else None)).uri))
+          self._last_info['signals'] = signals
+        options.repository.store_recording(recording)
+        recording.close()
+
+      except Exception, msg:
+        self.send_block(stream.ErrorBlock(block, str(msg)))
+        if options.debug: raise
+
     elif block.type == stream.BlockType.DATA:
       # Got 'D' segment(s), uri is that of signal, that should have a recording link
       # look signal's uri up to get its Recording and hence format/source
       try:
         sd = block.signaldata()
-        rec_uri = self._repo.get_recording_graph_uri(sd.uri)
+        if not sd.uri and sd.info is not None:
+          sd.uri = self._last_info['signals'][sd.info]
+        elif sd.uri not in self._last_info['signals']:
+          raise stream.StreamException("Signal '%s' not in Info header" % sd.uri)
+
+        rec_uri = self._repo.get_recording_and_graph_uri(sd.uri)[1]
         if rec_uri is None or not self._repo.has_signal_in_recording(sd.uri, rec_uri):
           raise stream.StreamException("Unknown signal '%s'" % sd.uri)
-        rec = self._repo.get_recording_with_signals(rec_uri)
-        if str(rec.format) != str(BSML.BSML_HDF5):
-          raise stream.StreamException("Signal can not be appended to -- wrong format")
-        recclass = formats.CLASSES.get(str(rec.format))
 
-        #####  Pass parameters as keywords....
-        recclass.initialise_class(rec, mode='a')  ## Create if not present, else open
-        # This will create, so must ensure that path is in our recording's area...
-        ####   To be completed.... *************************************************
+        rec = self._repo.get_recording_with_signals(rec_uri)
+        if str(rec.format) != formats.hdf5.HDF5Recording.MIMETYPE:
+          raise stream.StreamException("Signal can not be appended to -- not HDF5")
 
         if sd.rate: ts = UniformTimeSeries(sd.data, rate=sd.rate)
         else:       ts = TimeSeries(sd.clock, sd.data)
         rec.get_signal(sd.uri).append(ts)
+        rec.close()
+
       except Exception, msg:
         self.send_block(stream.ErrorBlock(block, str(msg)))
         if options.debug: raise
