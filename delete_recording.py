@@ -9,13 +9,12 @@ from biosignalml.repository import BSMLStore
 if __name__ == '__main__':
 #=========================
 
-  store = Virtuoso('http://localhost:8890')
-
   if len(sys.argv) < 3:
     print "Usage: %s repository recording_uri" % sys.argv[0]
     exit(1)
 
   (repo, recording) = tuple(sys.argv[1:3])
+  store = Virtuoso('http://localhost:8890')
 
   for g in [ r['g']['value'] for r in json.loads(
                store.query("""select distinct ?g where {
