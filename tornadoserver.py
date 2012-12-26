@@ -27,6 +27,7 @@ server.init_server()  # Setup globals
 
 import endpoints.provenance as provenance
 import endpoints.webstream as webstream
+import endpoints.metadata  as metadata
 import endpoints.resource  as resource
 import endpoints.sparql    as sparql
 
@@ -57,6 +58,7 @@ application = tornado.web.Application([
       {'path': os.path.join(os.path.dirname(__file__), 'SNORQL/snorql') }),
     ( '/stream/echo/',                    webstream.StreamEchoSocket),
     ( server.RESOURCE_ENDPOINT + '(.*)',  resource.ReST),
+    ('/metadata/(.*)',                    metadata.MetaData),
     ('/provenance/(.*)',                  provenance.ProvenanceRDF),
     ('/provenance',                       provenance.ProvenanceRDF),
     ( '/sparql/',                         sparql.sparql),
