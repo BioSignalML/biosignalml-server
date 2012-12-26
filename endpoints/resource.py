@@ -135,14 +135,12 @@ class ReST(httpchunked.ChunkedHandler):
     if ':' in head and head.split(':', 1)[0] in KnownSchemes:
       return (uri, fragment)
     else:
-      return (options.resource_prefix + head, fragment)
+      return (options.repository_uri + head, fragment)
 
 
   def get(self, name, **kwds):
   #---------------------------
-
     # If the resource is a named graph then do we return the graph as RDF?
-
     uri, fragment = self._get_names(name)
     graph_uri, rec_uri = options.repository.get_graph_and_recording_uri(uri)
     logging.debug('GET: name=%s, req=%s, uri=%s, rec=%s, graph=%s',
