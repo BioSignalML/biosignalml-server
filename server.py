@@ -40,8 +40,6 @@ DEFAULTS  = { 'uri': 'http://devel.biosignalml.org',
               'recordings': './recordings/',
               'sparql_store': 'Virtuoso',
               'sparql_server': 'http://localhost:8890',
-              'resource_path': RESOURCE_ENDPOINT,
-
               'log_file': './log/biosignalml.log',
               'log_level': 'DEBUG', # 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
             }
@@ -104,10 +102,10 @@ def init_server():
   if   options.repository['sparql_store'] == 'FourStore': SparqlStore = FourStore
   elif options.repository['sparql_store'] == 'Virtuoso':  SparqlStore = Virtuoso
   else: raise ValueError("Unknown type of SPARQL store")
+  define('repository_uri', options.repository['uri'])
+  define('resource_prefix', options.repository['uri'] + RESOURCE_ENDPOINT)
   define('repository',
     repository.BSMLStore(options.repository['uri'], SparqlStore(options.repository['sparql_server'])))
-
-  define('resource_prefix', options.repository['uri'] + options.repository['resource_path'])
   define('debug',      (options.logging['log_level'] == 'DEBUG'))
   tornado.options.host = options.repository['host']
   tornado.options.port = int(options.repository['port'])
