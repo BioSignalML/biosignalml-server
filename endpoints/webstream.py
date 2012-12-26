@@ -219,7 +219,7 @@ class StreamDataSocket(StreamServer):
           raise stream.StreamException("Signal can not be appended to -- not HDF5")
 
         if sd.rate: ts = UniformTimeSeries(sd.data, rate=sd.rate)
-        else:       ts = TimeSeries(sd.clock, sd.data)
+        else:       ts = TimeSeries(sd.data, sd.clock)
         rec.get_signal(sd.uri).append(ts)
         rec.close()
 
