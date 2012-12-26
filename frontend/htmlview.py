@@ -218,7 +218,7 @@ def build_metadata(uri):
   if uri:
     uri = uri.rsplit('#')[0]
     repo = options.repository
-    graph_uri = repo.get_recording_and_graph_uri(uri)[0]
+    graph_uri = repo.get_graph_and_recording_uri(uri)[0]
     objtypes = repo.get_types(uri, graph_uri)
     if   BSML.Recording in objtypes:    # repo.has_recording(uri)
       rec = repo.get_recording(uri)

@@ -144,7 +144,7 @@ class ReST(httpchunked.ChunkedHandler):
     # If the resource is a named graph then do we return the graph as RDF?
 
     uri, fragment = self._get_names(name)
-    rec_uri, graph_uri = options.repository.get_recording_and_graph_uri(uri)
+    graph_uri, rec_uri = options.repository.get_graph_and_recording_uri(uri)
     logging.debug('GET: name=%s, req=%s, uri=%s, rec=%s, graph=%s',
                         name, self.request.uri, uri, rec_uri, graph_uri)
     if graph_uri is None:

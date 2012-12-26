@@ -196,7 +196,7 @@ class StreamDataSocket(StreamServer):
     elif block.type == stream.BlockType.RDF:
       ## Or do we just use REST services? Or SPARQL??
       uri = self._last_info['recording']
-      graph_uri = self._repo.get_recording_and_graph_uri(uri)[0]
+      graph_uri = self._repo.get_graph_and_recording_uri(uri)[0]
       mimetype = block.header.get('mimetype')
       options.repository.extend_graph(graph_uri, unicode(block.content), format=mimetype)
 
@@ -210,7 +210,7 @@ class StreamDataSocket(StreamServer):
         elif sd.uri not in self._last_info['signals']:
           raise stream.StreamException("Signal '%s' not in Info header" % sd.uri)
 
-        rec_uri = self._repo.get_recording_and_graph_uri(sd.uri)[1]
+        rec_uri = self._repo.get_graph_and_recording_uri(sd.uri)[1]
         if rec_uri is None or not self._repo.has_signal_in_recording(sd.uri, rec_uri):
           raise stream.StreamException("Unknown signal '%s'" % sd.uri)
 
