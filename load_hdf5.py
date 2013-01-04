@@ -2,7 +2,7 @@
 #
 #  BioSignalML Management in Python
 #
-#  Copyright (c) 2010-2012  David Brooks
+#  Copyright (c) 2010-2013  David Brooks
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -21,7 +21,9 @@
 import os, sys
 import logging
 
-from biosignalml.formats.hdf5.h5recording import H5Recording
+from biosignalml import BSML
+import biosignalml.rdf as rdf
+from biosignalml.formats.hdf5 import H5Recording
 from biosignalml.rdf.sparqlstore import Virtuoso
 from biosignalml.repository import BSMLStore
 
@@ -32,17 +34,26 @@ if __name__ == '__main__':
   logging.basicConfig(format='%(asctime)s: %(message)s')
   logging.getLogger().setLevel('DEBUG')
 
-  system = 'devel'
+  if len(sys.argv) < 3:
+    print "Usage: %s REPOSITORY_URI BIOSIGNALML_HDF5_FILE" % sys.argv[0]
+    sys.exit(1)
 
-  store = BSMLStore('http://%s.biosignalml.org' % system,
+  store = BSMLStore(sys.argv[1],
 #                     FourStore('http://localhost:8083'))
                      Virtuoso('http://localhost:8890'))
 
-  rec = H5Recording.open(sys.argv[1])
-# set dataset attribute... (or is this something repository manages??)
+  rec = H5Recording.open(sys.argv[2])
 
-  rdf, format = rec.get_metadata()
-  if rdf:
-    graph = store.add_recording_graph(rec.uri, rdf, 'file://' + os.path.abspath(__file__), format)
-    print '<%s> stored in <%s>' % (rec.uri, graph)
+  statements, format = rec.get_metadata()
+  if statements is None: raise ValueError("No metadata in source file")
+
+  # rec.dataset = ....  From repo? Parameter?? Default to filename's full path??
+  #                     Move/rename/copy file ??
+  dataset = 'file://' + os.path.abspath(sys.argv[2])
+
+  graph = rdf.Graph.create_from_string(rec.uri, statements, format)
+  graph.append(rdf.Statement(rec.uri, BSML.dataset, dataset))
+  graph_uri = store.add_recording_graph(rec.uri, graph.serialise(), 'file://' + os.path.abspath(__file__))
+
+  print '<%s> stored in <%s>' % (rec.uri, graph_uri)
 
