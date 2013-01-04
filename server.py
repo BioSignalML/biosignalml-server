@@ -104,8 +104,9 @@ def init_server():
   else: raise ValueError("Unknown type of SPARQL store")
   define('repository_uri', options.repository['uri'])
   define('resource_prefix', options.repository['uri'] + RESOURCE_ENDPOINT)
-  define('repository',
-    repository.BSMLStore(options.repository['uri'], SparqlStore(options.repository['sparql_server'])))
+  sparqlstore = SparqlStore(options.repository['sparql_server'])
+  define('sparql_store', sparqlstore)
+  define('repository', repository.BSMLStore(options.repository['uri'], sparqlstore))
   define('debug',      (options.logging['log_level'] == 'DEBUG'))
   tornado.options.host = options.repository['host']
   tornado.options.port = int(options.repository['port'])
