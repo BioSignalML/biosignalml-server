@@ -19,6 +19,7 @@ import biosignalml.transports.stream as stream
 from biosignalml      import BSML
 from biosignalml.rdf  import Uri
 from biosignalml.data import TimeSeries, UniformTimeSeries
+from biosignalml.units.convert import UnitConvertor
 import biosignalml.formats as formats
 
 
@@ -125,17 +126,26 @@ class StreamDataSocket(StreamServer):
         else:                                segment = (offset, count)
         dtypes = { 'dtype': block.header.get('dtype'), 'ctype': block.header.get('ctype') }
 
+        unit_convertor = UnitConvertor(options.sparql_store)
+        conversions = []
+        requested_units = block.header.get('units')
+        if requested_units is not None:
+          units = len(self._sigs)*[requested_units]
+          unit_conversion = [ unit_convertor.mapping(sig.units, requested_units) for sig in self._sigs ]
+        else:
+          units = [str(sig.units) for sig in self._sigs],
+
         self.send_block(stream.InfoBlock(channels = len(self._sigs),
                                          signals = [str(sig.uri) for sig in self._sigs],
-                                         units = [str(sig.units) for sig in self._sigs],
-                                         rates = [sig.rate for sig in self._sigs] ))
-
+                                         rates = [sig.rate for sig in self._sigs],
+                                         units = units ))
         # Interleave signal blocks...
         ### What if signal has multiple channels? What does read() return??
         ###
         data = [ sig.read(interval=sig.recording.interval(*interval) if interval else None,
                           segment=segment, maxpoints=block.header.get('maxsize', 0))
                    for sig in self._sigs ]
+
         active = len(data)
         while active > 0:
           for n, sigdata in enumerate(data):
@@ -149,15 +159,17 @@ class StreamDataSocket(StreamServer):
                   keywords['rate'] = d.dataseries.rate
                 else:
                   keywords['clock'] = d.dataseries.times
+                if requested_units is not None: datablock = unit_conversion[n](d.dataseries.data)
+                else:                           datablock = d.dataseries.data
                 logging.debug("Send block for %s", siguri)
-                self.send_block(stream.SignalData(siguri, d.starttime, d.dataseries.data, **keywords).streamblock())
+                self.send_block(stream.SignalData(siguri, d.starttime, datablock, **keywords).streamblock())
               except StopIteration:
                 data[n] = None
                 active -= 1
       except Exception, msg:
         if str(msg) != "Stream is closed":
           self.send_block(stream.ErrorBlock(block, str(msg)))
-          ##if options.debug: raise
+          if options.debug: raise
       finally:
         self.close()     ## All done with data request
 
@@ -226,9 +238,6 @@ class StreamDataSocket(StreamServer):
       except Exception, msg:
         self.send_block(stream.ErrorBlock(block, str(msg)))
         if options.debug: raise
-
-
-
 
 
 if __name__ == '__main__':
