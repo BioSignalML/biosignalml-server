@@ -72,7 +72,7 @@ class Properties(object):
       args = p[3] if (len(p) > 3) else []
       r.append('' if v is None
           else (p[2](v, **{ k: v for k, v in kwds.iteritems() if k in args })) if (len(p) > 2)
-          else [ str(s) for s in v ] if isinstance(v, list)
+          else [ str(s) for s in v ] if hasattr(v, '__iter__')
           else unicode(v)
           )
     return r
@@ -83,7 +83,7 @@ def property_details(object, properties, **args):
   prompts = properties.header()
   for n, d in enumerate(properties.details(object, **args)):
     if d:
-      t = '<br/>'.join(list(d)) if hasattr(d, '__iter__') else str(d)
+      t = ', '.join(d) if isinstance(d, list) else str(d)
       r.append('<span class="emphasised">%s: </span>%s' % (prompts[n], xmlescape(t).replace('\n', '<br/>')))
   return '<p>' + '</p><p>'.join(r) + '</p>'
 
