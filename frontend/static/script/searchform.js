@@ -133,7 +133,7 @@ function get_data() {   // When form is submitted
 function setup_result_click() {
  $('.result').click(function () {
   $('.result').css('background-color', 'white') ;
-  $(this).css('background-color', 'blue') ;
+  $(this).css('background-color', 'lightcyan') ;
   $("div#spinner").html("<img src='./static/img/ajax-loader.gif'>") ;
   $.ajax({
    url: '/comet/search/related',
