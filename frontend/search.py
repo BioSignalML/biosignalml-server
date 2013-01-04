@@ -252,6 +252,23 @@ class Search(frontend.BasePage):
 #
 # This goes into repository.model....
 
+    def make_html(results, value):
+    #-----------------------------
+      if  isinstance(value, rdf.Uri):
+        value = str(value)
+        if results.base and value.startswith(results.base): uri = value[len(results.base):]
+        else:                                               uri = results.abbreviate_uri(value)
+        (LT, GT) = ('&lt;', '&gt;') if value == uri else ('', '')
+        if not value.startswith(str(options.repository.uri)):
+          return (value, '%s%s%s' % (LT, uri, GT))
+        else:
+          return (value, '%s<a href="%s" uri="%s" class="cluetip" target="_blank">%s</a>%s'
+                % (LT, '/repository/' + value, value, uri, GT))
+####  ########### '/repository/' is web-server path to view objects in repository
+#        elif value.startswith('http://physionet.org/'): ########### ... URI to a Signal, Recording, etc...
+      return (value, xmlescape(str(value)))
+
+
     def sparql_find(stype, query):
     #-----------------------------
       sparql = [ ]
@@ -262,15 +279,16 @@ class Search(frontend.BasePage):
       sparql.append('?s rdf:type ?t .')   ##  % stype)
       sparql.append('filter(?g != <%s>)' % options.repository._provenance_uri)  # Call method ??
       sparql.append('} }')
-
       ##logging.debug('SEARCH: %s', '\n'.join(sparql))
       subjects = set()
       # Provenance....
-      for r in options.repository.query('\n'.join(sparql), abbreviate=True,
-                                        htmlbase=str(options.repository.uri)):
+      resultset = options.repository.query('\n'.join(sparql))
+      for r in resultset:
         # logging.debug('R: %s', r)
         if r.get('error'): return set([('', r['error'], '')])
-        subjects.add((r['s'][0], r['s'][1], r['t'][1] if r['t'][0] is not None else ''))
+        s = make_html(resultset, r['s'])
+        t = make_html(resultset, r['t'])
+        subjects.add((s[0], s[1], t[1] if t[0] is not None else ''))
       return subjects
 
 ##############################################
