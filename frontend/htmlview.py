@@ -112,14 +112,14 @@ signal_properties = Properties([
                     ])
 
 recording_properties = Properties([
-                         ('Desc',      'description'),
-                         ('Created',   'starttime'),
-                         ('Duration',  'duration', maketime),
-                         ('Format',    'format', abbreviate),
-                         ('Study',     'investigation'),
-                         ('Comments',  'comment'),
-                         ('Source',    'source'),
-                         ('Submitted', 'dateSubmitted', datetime_to_isoformat),
+                         ('Description', 'description'),
+                         ('Created',     'starttime'),
+                         ('Duration',    'duration', maketime),
+                         ('Format',      'format', abbreviate),
+                         ('Study',       'investigation'),
+                         ('Comments',    'comment'),
+                         ('Source',      'source'),
+                         ('Submitted',   'dateSubmitted', datetime_to_isoformat),
                        ])
 
 event_properties = Properties([
@@ -202,7 +202,7 @@ def signal_table(handler, recording, selected=None):
   selectedrow = -1
   for n, sig in enumerate(recording.signals()):
     if str(sig.uri) == selected: selectedrow = n
-    rows.append(signal_properties.details(sig, True, trimlen=lenhdr, graph=recording.graph.uri))
+    rows.append(signal_properties.details(sig, True, trimlen=lenhdr, graph=recording.graph_uri))
   return handler.render_string('table.html',
     header = signal_properties.header(True),
     rows = rows,
