@@ -75,7 +75,7 @@ class Query(frontend.BasePage):
       content = results
       )
 
-  @tornado.web.authenticated
+##  @tornado.web.authenticated
   def get(self):
     p = [ ]
     p.append(prologue())
@@ -88,7 +88,7 @@ class Query(frontend.BasePage):
     p.append('  } limit 20')
     self.render('\n'.join(p)) # Default namespace prefixes and query
 
-  @tornado.web.authenticated
+##  @tornado.web.authenticated
   def post(self):
     query = self.get_argument('query', '')
     self.render(query, search(query))

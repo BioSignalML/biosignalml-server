@@ -321,11 +321,11 @@ class Repository(frontend.BasePage):
         title = 'Recordings in repository:',
         tree = self._xmltree([r[1] for r in repo.recordings()], prefix, frontend.REPOSITORY))
 
-  @tornado.web.authenticated
+##  @tornado.web.authenticated
   def get(self, name=''):
     self._show_contents(name, 'annotations' in self.request.query)
 
-  @tornado.web.authenticated
+##  @tornado.web.authenticated
   def post(self, name=''):
     text = self.get_argument('annotation', '').strip()
     if self.get_argument('action') == 'Annotate' and text:

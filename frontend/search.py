@@ -181,7 +181,8 @@ class SearchGroup(object):
 
 class Related(tornado.web.RequestHandler):
 #=========================================
-  @tornado.web.authenticated
+
+##  @tornado.web.authenticated
   def post(self):
     related = [ ]
     clicked = self.get_argument('id', '')
@@ -192,7 +193,7 @@ class Related(tornado.web.RequestHandler):
 class Search(frontend.BasePage):
 #===============================
 
-  @tornado.web.authenticated
+##  @tornado.web.authenticated
   def get(self):
     self.render('search.html', title = 'Query repository')
 
@@ -209,7 +210,7 @@ class Search(frontend.BasePage):
 #                   """ % (xmlescape(searchtext), ''.join(xml))
 
 
-  @tornado.web.authenticated
+##  @tornado.web.authenticated
   def post(self):
     data = self.request.arguments
     #logging.debug('DATA: %s', data)

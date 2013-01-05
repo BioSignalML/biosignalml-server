@@ -38,6 +38,7 @@ LOGOUTMENU = ("Logout", "/logout")
 def getmenu(level):
 #==================
   menu = [ ]
-  if level >= user.VIEWER: menu.extend(VIEWERMENU(level))
-  menu.append(LOGOUTMENU if (level > 0) else LOGINMENU)
+#  if level >= user.VIEWER: menu.extend(VIEWERMENU(level))
+  menu.extend(VIEWERMENU(level))
+#  menu.append(LOGOUTMENU if (level > 0) else LOGINMENU)
   return menu
