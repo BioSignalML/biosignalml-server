@@ -59,6 +59,18 @@ def raise_error(handler, code, msg=None):
   handler.finish()
 
 
+def parse_accept(headers):
+#-------------------------
+  """
+  Parse an Accept header and return a dictionary with
+  mime-type as an item key and 'q' parameter as the value.
+  """
+  return { k[0].strip(): float(k[1].strip()[2:])
+                           if (len(k) > 1 and k[1].strip().startswith('q=')) else 1
+             for k in [ a.split(';', 1)
+              for a in headers.get('Accept', '*/*').split(',') ] }
+
+
 class FileWriter(object):
 #========================
 
@@ -112,17 +124,6 @@ class ReST(httpchunked.ChunkedHandler):
   #----------------------------------------
     raise_error(self, status, msg)
 
-  def _accept_headers(self):
-  #-------------------------
-    """
-    Parse an Accept header and return a dictionary with
-    mime-type as an item key and 'q' parameter as the value.
-    """
-    return { k[0].strip(): float(k[1].strip()[2:])
-                             if (len(k) > 1 and k[1].strip().startswith('q=')) else 1
-               for k in [ a.split(';', 1)
-                for a in self.request.headers.get('Accept', '*/*').split(',') ] }
-
   def _get_names(self, name):
   #--------------------------
     tail = name.rsplit('#', 1)
@@ -156,7 +157,7 @@ class ReST(httpchunked.ChunkedHandler):
         self.send_error(404)
 ##        self._write_error(404, msg="Recording unknown for '%s'" % uri)
         return
-    accept = self._accept_headers()
+    accept = parse_accept(self.request.headers)
 
     if BSML.Recording in options.repository.get_types(uri, graph_uri):
       recording = options.repository.get_recording(rec_uri)
