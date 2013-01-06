@@ -323,6 +323,8 @@ class Repository(frontend.BasePage):
 
 ##  @tornado.web.authenticated
   def get(self, name=''):
+    if self.request.path.startswith('/repository/http:'):
+      name = self.request.path[12:]
     self._show_contents(name, 'annotations' in self.request.query)
 
 ##  @tornado.web.authenticated
