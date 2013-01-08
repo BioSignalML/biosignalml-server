@@ -85,6 +85,14 @@ SEARCH_FIELDS = [ { 'prompt': 'Text',
                               ],
                     'values': [ ]
                   },
+                  { 'prompt': 'Tagged',
+                    'property': 'bsml:tag',
+                    'tests':  ['equal', 'not equal'],
+                    'sparql': [ '?s %(property)s %(value)s .',                   # equal
+                                '?s %(property)s ?o . FILTER (?o != %(value)s)', # not equal
+                              ],
+                    'values': [ ]
+                    },
                 ]
 
 # Build search template that is sent as JSON to web browser.
