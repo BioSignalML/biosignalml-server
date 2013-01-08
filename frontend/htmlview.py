@@ -277,7 +277,7 @@ class Repository(frontend.BasePage):
       recuri = (name if name.startswith('http://') or name.startswith('file://')
                else '%s/%s' % (prefix, name)).rsplit('#')[0]
       #logging.debug('RECORDING: %s', recuri)
-      recording = repo.get_recording_with_signals(recuri)
+      recording = repo.get_recording_with_signals(recuri, open_dataset=False)
       if recording is None:
         self.send_error(404) # 'Unknown recording...')
         return
