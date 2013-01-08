@@ -275,7 +275,7 @@ class Search(frontend.BasePage):
       sparql = [ ]
       sparql.append(PREFIXES)
       sparql.append('')
-      sparql.append('select distinct ?s ?t where { graph ?g {')
+      sparql.append('select distinct ?g ?s ?t where { graph ?g {')
       sparql.append(query)
       sparql.append('?s rdf:type ?t .')   ##  % stype)
       sparql.append('filter(?g != <%s>)' % options.repository._provenance_uri)  # Call method ??
@@ -289,7 +289,7 @@ class Search(frontend.BasePage):
         if r.get('error'): return set([('', r['error'], '')])
         s = make_html(resultset, r['s'])
         t = make_html(resultset, r['t'])
-        subjects.add((s[0], s[1], t[1] if t[0] is not None else ''))
+        subjects.add((s[0], s[1], t[1] if t[0] is not None else '', str(r['g'])))
       return subjects
 
 ##############################################
@@ -332,8 +332,8 @@ class Search(frontend.BasePage):
     sigs.sort()
     html = [ '<div>' ]
     for n, s in enumerate(sigs):
-      html.append('<div class="result%s" id="%s">%s %s  SNORQL: %s</div>'
-                             % (' odd' if n%2 else '', s[0], s[1], s[2], frontend.snorql_link(s[0])))
+      html.append('<div class="result%s" id="%s">%s %s %s</div>'
+                             % (' odd' if n%2 else '', s[0], s[1], s[2], frontend.snorql_link(s[0], s[3])))
     html.append('</div>')
     self.write( { 'html': '\n'.join(html) } )
 
