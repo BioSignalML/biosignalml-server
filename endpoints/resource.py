@@ -277,7 +277,7 @@ class ReST(httpchunked.ChunkedHandler):
     ## Otherwise return Created()
 
     self.set_header('Content-Type', 'text/xml')
-    self.set_status(200)
+    self.set_status(201)      # Created
     location = str(recording.uri)
     self.set_header('Location', location)
     #self.set_header('Location', str(recording.uri))
