@@ -12,24 +12,15 @@
 ## Partially based on Tools/scripts/dutree.py from Python sources.
 
 
-def maketree(uris, prefix):
-#==========================
-  namestart = len(prefix) + 1
+def maketree(uris):
+#==================
   tree = {}
   for u in uris:
     uri = str(u)
-    if   uri.startswith(prefix):
-      path = uri[namestart:]
-      components = path.split('/')
-    elif uri.startswith('http://') or uri.startswith('file://'):
-      path = uri
-      components = path.rsplit('/', uri.count('/') - 2)
-    else:
-      path = uri
-      components = path.split('/')
+    components = uri.rsplit('/', uri.count('/') - 2)
     if components[0] == '':  components[0] = '/'
     if components[-1] == '': del components[-1]
-    else:                    components[-1] = (components[-1], path, uri)
+    else:                    components[-1] = (components[-1], uri)
     tree = addpath(components, tree)
   return sort(tree)
 

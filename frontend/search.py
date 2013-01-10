@@ -203,6 +203,7 @@ class Search(frontend.BasePage):
 
 ##  @tornado.web.authenticated
   def get(self):
+  #-------------
     self.render('search.html', title = 'Query repository')
 
 ## Simple text search v's advanced...
@@ -220,6 +221,7 @@ class Search(frontend.BasePage):
 
 ##  @tornado.web.authenticated
   def post(self):
+  #--------------
     data = self.request.arguments
     #logging.debug('DATA: %s', data)
     # check data.get('action', '') == 'Search'
@@ -265,25 +267,32 @@ class Search(frontend.BasePage):
     #-----------------------------
       if  isinstance(value, rdf.Uri):
         value = str(value)
-        if results.base and value.startswith(results.base): uri = value[len(results.base):]
-        else:                                               uri = results.abbreviate_uri(value)
-        (LT, GT) = ('&lt;', '&gt;') if value == uri else ('', '')
+        (LT, GT) = ('&lt;', '&gt;')
+        if results.base and value.startswith(results.base):
+          uri = value[len(results.base):]
+        else:
+          uri = results.abbreviate_uri(value)
+          if uri != value: (LT, GT) = ('', '')
         if not value.startswith(str(options.repository.uri)):
           return (value, '%s%s%s' % (LT, uri, GT))
         else:
-          return (value, '%s<a href="%s" uri="%s" class="cluetip" target="_blank">%s</a>%s'
-                % (LT, '/repository/' + value, value, uri, GT))
+          return (value, '%s<a href="%s" class="cluetip" target="_blank">%s</a>%s'
+                % (LT, value, uri, GT))
 ####  ########### '/repository/' is web-server path to view objects in repository
 #        elif value.startswith('http://physionet.org/'): ########### ... URI to a Signal, Recording, etc...
       return (value, xmlescape(str(value)))
 
+
+## Following gets the recording, but what if annotation is about something else?
+## eg. a signal, event, annotation...
 
     def sparql_find(stype, query):
     #-----------------------------
       sparql = [ ]
       sparql.append(PREFIXES)
       sparql.append('')
-      sparql.append('select distinct ?g ?s ?t where { graph ?g {')
+      sparql.append('select distinct ?g ?r ?s ?t where { graph ?g {')
+      sparql.append('?r rdf:type bsml:Recording .')
       sparql.append(query)
       sparql.append('?s rdf:type ?t .')   ##  % stype)
       sparql.append('filter(?g != <%s>)' % options.repository._provenance_uri)  # Call method ??
@@ -295,9 +304,10 @@ class Search(frontend.BasePage):
       for r in resultset:
         # logging.debug('R: %s', r)
         if r.get('error'): return set([('', r['error'], '')])
+        rec = make_html(resultset, r['r'])
         s = make_html(resultset, r['s'])
         t = make_html(resultset, r['t'])
-        subjects.add((s[0], s[1], t[1] if t[0] is not None else '', str(r['g'])))
+        subjects.add((s[0], s[1], t[1] if t[0] is not None else '', str(r['g']), rec[1] ))
       return subjects
 
 ##############################################
@@ -340,8 +350,8 @@ class Search(frontend.BasePage):
     sigs.sort()
     html = [ '<div>' ]
     for n, s in enumerate(sigs):
-      html.append('<div class="result%s" id="%s">%s %s %s</div>'
-                             % (' odd' if n%2 else '', s[0], s[1], s[2], frontend.snorql_link(s[0], s[3])))
+      html.append('<div class="result%s" id="%s">%s %s %s %s</div>'
+                             % (' odd' if n%2 else '', s[0], s[4], s[1], s[2], frontend.snorql_link(s[0], s[3])))
     html.append('</div>')
     self.write( { 'html': '\n'.join(html) } )
 

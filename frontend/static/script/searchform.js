@@ -136,7 +136,7 @@ function setup_result_click() {
   $(this).css('background-color', 'lightcyan') ;
   $("div#spinner").html("<img src='./static/img/ajax-loader.gif'>") ;
   $.ajax({
-   url: '/comet/search/related',
+   url: '/frontend/search/related',
    type: 'POST',
    data: { 'id': this.id, '_xsrf': getCookie("_xsrf") },
    complete:
@@ -166,7 +166,7 @@ function setup_result_click() {
 
 function enable_cluetips() {
   $('a.cluetip').each(function () {  // Enable tooltips on <a> elements
-    $(this).attr('rel', '/comet/metadata').cluetip({
+    $(this).attr('rel', '/frontend/metadata').cluetip({
       // splitTitle: '|',
       clickThrough: true,
       titleAttribute: 'uri',
@@ -190,7 +190,7 @@ $(document).ready(function() {
 
  $("div#spinner").html("<img src='./static/img/ajax-loader.gif'>") ;
  $.ajax({
-   url: '/comet/search/setup',
+   url: '/frontend/search/setup',
    type: 'POST',
    data: { '_xsrf': getCookie("_xsrf") },
    complete:
@@ -244,7 +244,7 @@ $(document).ready(function() {
    $("div#spinner").html("<img src='./static/img/ajax-loader.gif'>") ;
    searchdata['_xsrf'] = getCookie("_xsrf") ;
    $.ajax({
-    url: '/comet/search/query',
+    url: '/frontend/search/query',
     type: 'POST',
     data: searchdata,
     complete:

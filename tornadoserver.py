@@ -51,60 +51,56 @@ class Snorql(tornado.web.StaticFileHandler):
   #----------------------------------
     return url_path if url_path else 'index.html'
 
-
 def ContentNegotiate(*args, **kwds):
 #===================================
   request = args[1]
   accept = resource.parse_accept(request.headers)
-  print accept
-
-
   if (accept.get('application/rdf+xml', 0) > 0.9
    or accept.get('text/turtle', 0) == 1):
-    HandlerClass = resource.ReST
-
+    HandlerClass = metadata.MetaData
   elif (accept.get('text/html', 0) == 1
    or accept.get('application/xhtml+xml', 0) == 1
    or len(accept) == 1 and accept.get('*/*', 0) == 1):
-    name = '%s%%3A//%s%s' % (request.protocol, request.host, request.uri)
-    request.uri = '/repository/%s://%s%s' % (request.protocol, request.host, request.uri)
-    request.path = '/repository/%s://%s%s' % (request.protocol, request.host, request.path)
     HandlerClass = frontend.htmlview.Repository
-
   else:
-    HandlerClass = resource.ReST
-
+    HandlerClass = metadata.MetaData
   handler = HandlerClass(*args, **kwds)
-  print handler
+  if request.path in ['', '/']: handler.full_uri = ''
+  else:                         handler.full_uri = '%s://%s%s' % (request.protocol,
+                                                                  request.host, request.uri)
+  #logging.debug('full URI %s', handler.full_uri)
   if len(accept) > 1: handler.set_header('Vary', 'Accept') # Let caches know we've used Accept header
   return handler
 
 
 application = tornado.web.Application([
-    ( server.STREAMDATA_ENDPOINT,         webstream.StreamDataSocket),
+    ( server.STREAMDATA_ENDPOINT + '(.*)', webstream.StreamDataSocket),
+    ( '/stream/echo/',                    webstream.StreamEchoSocket),
+
+##    ('(' + server.RESOURCE_ENDPOINT + '.*)',  resource.ReST),
+## This is supposedly reserved but we have existing recordings here...
+
+    ('/metadata/.*',                      metadata.MetaData),
+    ('/provenance/(.*)',                  provenance.ProvenanceRDF),
     ( server.SNORQL_ENDPOINT + '(.*)',    Snorql,
       {'path': os.path.join(os.path.dirname(__file__), 'SNORQL/snorql') }),
-    ( '/stream/echo/',                    webstream.StreamEchoSocket),
-    ('(' + server.RESOURCE_ENDPOINT + '.*)',  resource.ReST),
-    ('/metadata/(.*)',                    metadata.MetaData),
-    ('/provenance/(.*)',                  provenance.ProvenanceRDF),
-    ('/provenance',                       provenance.ProvenanceRDF),
     ( '/sparql/',                         sparql.sparql),
-    ('/comet/metadata',                   frontend.htmlview.Metadata), # For tooltip popups
-    ('/repository/(.*)',                  frontend.htmlview.Repository),
-    ('/repository',                       frontend.htmlview.Repository),
-    ('/',                                 frontend.htmlview.Repository),
-    ('/logout',                           frontend.user.Logout),
-    ('/login',                            frontend.user.Login),
-    ('/search',                           frontend.search.Search),
-    ('/comet/search/query',               frontend.search.Search),
-    ('/comet/search/setup',               frontend.search.Template),
-    ('/comet/search/related',             frontend.search.Related),
-    ('/sparqlquery',                      frontend.sparql.Query),
-    ('(.*)',                              ContentNegotiate),
+
+    ('/frontend/metadata',                frontend.htmlview.Metadata), # For tooltip popups
+    ('/frontend/logout',                  frontend.user.Logout),
+    ('/frontend/login',                   frontend.user.Login),
+    ('/frontend/users',                   frontend.user.Logout),  ## Placeholder
+    ('/frontend/search/query',            frontend.search.Search),
+    ('/frontend/search/setup',            frontend.search.Template),
+    ('/frontend/search/related',          frontend.search.Related),
+    ('/frontend/search',                  frontend.search.Search),
+    ('/frontend/sparql',                  frontend.sparql.Query),
+    ('/frontend/',                        frontend.user.Logout),  ## Catch all other /frontend
+    ('/frontend',                         frontend.user.Logout),  ## Catch all other /frontend
+    ('.*',                                ContentNegotiate),
     ],
   gzip = True,
-  login_url = '/login',
+  login_url = '/frontend/login',
   static_path = os.path.join(os.path.dirname(__file__), 'frontend/static'),
   template_path = 'frontend/templates',
   ui_methods = { 'boxsize':    frontend.forms.boxsize,

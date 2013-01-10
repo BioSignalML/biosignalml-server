@@ -5,15 +5,15 @@ function getCookie(name) {
 
 $(function () {
   $('a.cluetip').each(function () {  // Enable tooltips on <a> elements
-    $(this).attr('rel', '/comet/metadata').cluetip({
+    $(this).attr('rel', '/frontend/metadata').cluetip({
       // splitTitle: '|',
       clickThrough: true,
-      titleAttribute: 'uri',
+      titleAttribute: 'href',
 //    ajaxCache: false,   // ####
       ajaxSettings: {
         dataType: 'json',
         type:     'POST',
-        data:     'uri=' + $(this).attr('uri').toString()
+        data:     'uri=' + $(this).attr('href').toString()
                 + '&_xsrf=' + getCookie("_xsrf"),
         },
       ajaxProcess: function(data) {

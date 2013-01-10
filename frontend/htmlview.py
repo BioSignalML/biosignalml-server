@@ -32,14 +32,6 @@ PREFIXES = { 'bsml':     BSML.URI,
 PREFIXES.update(rdf.NAMESPACES)
 
 
-def resource_to_repository_URI(uri):
-#-----------------------------------
-#  logging.debug('U=%s, RP=%s, RS=%s', uri, options.repository.uri, options.resource_prefix)
-  if str(uri).startswith(options.resource_prefix):
-    return str(options.repository.uri) + '/repository/' + str(uri)[len(options.resource_prefix):]
-  else:
-    return uri
-
 
 def abbreviate(u):
 #-----------------
@@ -90,14 +82,14 @@ def property_details(object, properties, **args):
 
 def annotatelink(uri):
 #---------------------
-  return '<a href="/repository/%s?annotations">Add Annotation</a>' % uri
+  return '<a href="%s?annotations">Add Annotation</a>' % uri
 
 
 def link(uri, trimlen=0, makelink=True):
 #---------------------------------------
   text = chop(uri, trimlen)
   if makelink:
-    return '<a href="%s">%s</a>' % (resource_to_repository_URI(uri), text)
+    return '<a href="%s">%s</a>' % (uri, text)
   else:
     return text
 
@@ -189,7 +181,9 @@ def annotation_info(ann):
     p = '<span class="prompt">%s: </span><pre>%s</pre>' % (prompts[n], xmlescape(t))
     if   n == 0: h.append('<p>%s</p>' % p)
     elif n == 1 and d: h.append('<div><div class="half">%s</div>' % p)
-    elif n == 2 and len(h) > 1: h.append('<span>%s</span></div>' % p)
+    elif n == 2 and (len(h) > 1 or d):
+      if len(h) == 1: h.append('<div><div class="half"></div>')
+      h.append('<span>%s</span></div>' % p)
   return ''.join(h)
 
 
@@ -249,43 +243,39 @@ def build_metadata(uri):
 
 class Metadata(tornado.web.RequestHandler):  # Tool-tip popup
 #==========================================
+
   def post(self):
+  #--------------
     self.write({ 'html': build_metadata(self.get_argument('uri', '')) })
 
 
 class Repository(frontend.BasePage):
 #===================================
 
-  def _xmltree(self, uris, base, prefix, select=''):
-    tree = mktree.maketree(uris, base)
+  def _xmltree(self, uris, select=''):
+  #-----------------------------------
+    tree = mktree.maketree(uris)
     #logging.debug('tree: %s', tree)
-    if select.startswith(options.resource_prefix):
-      selectpath = select[len(options.resource_prefix):].split('/')
-    elif select.startswith('http://') or select.startswith('file://'):
-      selectpath = select.rsplit('/', select.count('/') - 2)
-    else:
-      selectpath = select.split('/')
+    selectpath = select.rsplit('/', select.count('/') - 2)
     #logging.debug('SP: %s, %s', select, selectpath)
     return self.render_string('ttree.html',
-                               tree=tree, prefix=prefix,
+                               tree=tree,
                                selectpath=selectpath)
 
   def _show_contents(self, name, annotate):
+  #----------------------------------------
     repo = options.repository
-    prefix = options.resource_prefix[:-1]
     if name:
-      recuri = (name if name.startswith('http://') or name.startswith('file://')
-               else '%s/%s' % (prefix, name)).rsplit('#')[0]
-      #logging.debug('RECORDING: %s', recuri)
-      recording = repo.get_recording_with_signals(recuri, open_dataset=False)
-      if recording is None:
-        self.send_error(404) # 'Unknown recording...')
+      uri = name
+      recording = repo.get_recording_with_signals(uri, open_dataset=False)
+      if recording is None:        ## Not part of a recording, so return RDF
+        self.set_header('Content-Type', rdf.Format.RDFXML)
+        self.write(repo.describe(uri, format=rdf.Format.RDFXML))
         return
-
       selectedsig = None
-      if str(recording.uri) != recuri:
-        if repo.has_signal(recuri): selectedsig = recuri
-        recuri = str(recording.uri)
+      if str(recording.uri) != uri:
+        if repo.has_signal(uri): selectedsig = uri
+        uri = str(recording.uri)
 
       # By now we should have all of recording's RDF as a Graph so we
       # can use this to get events, annotations, etc, etc
@@ -295,11 +285,11 @@ class Repository(frontend.BasePage):
 
 ####      print recording.graph.serialise(format=rdf.Format.TURTLE, base=recording.uri, prefixes=PREFIXES)
 
-      kwds = dict(bodytitle = recuri, style = 'signal',
-                  tree = self._xmltree([r[1] for r in repo.recordings()], prefix, frontend.REPOSITORY, name),
+      kwds = dict(bodytitle = uri, style = 'signal',
+                  tree = self._xmltree([r[1] for r in repo.recordings()], name),
                   content = recording_info(recording)
                           + signal_table(self, recording, selectedsig) )
-      target = selectedsig if selectedsig else recuri
+      target = selectedsig if selectedsig else uri
 
       annotations = [ annotation_info(repo.get_annotation(ann, recording.graph_uri))
                        for ann in repo.annotations(target, recording.graph_uri) ]
@@ -319,22 +309,26 @@ class Repository(frontend.BasePage):
     else:
       self.render('tpage.html',
         title = 'Recordings in repository:',
-        tree = self._xmltree([r[1] for r in repo.recordings()], prefix, frontend.REPOSITORY))
+        tree = self._xmltree([r[1] for r in repo.recordings()]))
 
 ##  @tornado.web.authenticated
-  def get(self, name=''):
-    if self.request.path.startswith('/repository/http:'):
-      name = self.request.path[12:]
+  def get(self):
+  #-------------
+    name = self.full_uri
+    #logging.debug('HTML GET: %s from %s', name, self.request.path)
     self._show_contents(name, 'annotations' in self.request.query)
 
 ##  @tornado.web.authenticated
-  def post(self, name=''):
+  def post(self):
+  #--------------
+    name = self.full_uri
     text = self.get_argument('annotation', '').strip()
     if self.get_argument('action') == 'Annotate' and text:
       repo = options.repository
       target = self.get_argument('target')
       recording = repo.get_recording(target)
       ann = Annotation.Note(recording.make_uri(prefix='annotation'), target, text,
-                            creator='%s/user/%s' % (repo.uri, self.current_user))
+                            creator='%s/user/%s' % (repo.uri, self.current_user)
+                              if self.current_user is not None else None)
       repo.extend_graph(recording.graph.uri, ann.metadata_as_string())
     self._show_contents(name, False)

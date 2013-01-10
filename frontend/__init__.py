@@ -14,7 +14,7 @@ import urllib
 import tornado.web
 
 
-REPOSITORY = '/repository/'       #  Prefix to repository objects 
+RDF_ENDPOINT    = '/metadata/'    ##### Needs to come from ../server.py
 SNORQL_ENDPOINT = '/snorql/'      ##### Needs to come from ../server.py
 
 SESSION_TIMEOUT = 86400 ### 1800 # seconds  ## num(config.config['idletime'])
@@ -23,7 +23,7 @@ SESSION_TIMEOUT = 86400 ### 1800 # seconds  ## num(config.config['idletime'])
 # Provide useful utility functions
 def rdf_link(uri):
 #-----------------
-  return '<a href="%s">RDF</a>' % uri
+  return '<a href="%s%s">RDF</a>' % (RDF_ENDPOINT, uri)
 
 def snorql_link(uri, graph=None):
 #--------------------------------
@@ -41,14 +41,17 @@ def make_link(uri, graph=None):
 
 class SubTree(tornado.web.UIModule):
 #===================================
+
   @staticmethod
-  def treeaction(text, action='', uri=''):
-    return(('<a href="%s" class="cluetip" uri="%s">%s</a>'
-                 % (action,                   uri, text)) if action
+  def treeaction(text, uri=''):
+  #----------------------------
+    return(('<a href="%s" class="cluetip">%s</a>'
+                 % (uri,                 text)) if uri
       else ('<span>%s</span>' % text))
 
   @staticmethod
-  def subtree(tree, prefix, depth, selected):
+  def subtree(tree, depth, selected):
+  #----------------------------------
     html = [ '<ul>\n' ]
     last = len(tree) - 1
     for t in tree:
@@ -58,20 +61,20 @@ class SubTree(tornado.web.UIModule):
         if depth < len(selected) and details[0] == selected[depth]:
           html.append(' class="selected"')
         html.append('>')
-        html.append(SubTree.treeaction(details[0],
-          prefix + details[1].replace(':', '%3A'), details[2]))
+        html.append(SubTree.treeaction(details[0], details[1]))
       else:
         if depth < len(selected) and t[0] == selected[depth]:
           html.append(' class="jstree-open"')
         html.append('>')
         html.append(SubTree.treeaction(t[0]))
-        html.append(SubTree.subtree(t[1], prefix, depth+1, selected))
+        html.append(SubTree.subtree(t[1], depth+1, selected))
       html.append('</li>\n')
     html.append('</ul>')
     return ''.join(html)
 
-  def render(self, tree=[], prefix='', depth=0, selected=[]):
-    return self.subtree(tree, prefix, depth, selected)
+  def render(self, tree=[], depth=0, selected=[]):
+  #-----------------------------------------------
+    return self.subtree(tree, depth, selected)
 
 
 class MenuModule(tornado.web.UIModule):

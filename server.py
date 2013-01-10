@@ -79,12 +79,13 @@ def init_server():
 #=================
   args = parse_args()
   config_file = args.config if args.config[0] == '/' else os.path.join(module_path, args.config)
+
   global options
   options = Options(file=config_file, defaults=DEFAULTS)
-  server_base = options.repository['path']
+  server_path = options.repository['path']
 
   if options.logging['log_file']:
-    filename = os.path.join(server_base, options.logging['log_file'])
+    filename = os.path.join(server_path, options.logging['log_file'])
     try:            os.makedirs(os.path.dirname(filename))
     except OSError: pass
     logging.basicConfig(format=LOGFORMAT, filename=filename, filemode='a')
@@ -95,9 +96,9 @@ def init_server():
   logging.getLogger().addHandler(console)
   logging.info('Starting BioSignalML repository server...')
 
-  define('recordings', os.path.join(server_base, options.repository['recordings']))
+  define('recordings_path', os.path.join(server_path, options.repository['recordings']))
   define('database',
-    webdb.Database(os.path.join(server_base, options.repository['database'])))
+    webdb.Database(os.path.join(server_path, options.repository['database'])))
 
   if   options.repository['sparql_store'] == 'FourStore': SparqlStore = FourStore
   elif options.repository['sparql_store'] == 'Virtuoso':  SparqlStore = Virtuoso

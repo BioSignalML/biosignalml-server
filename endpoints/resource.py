@@ -245,7 +245,7 @@ class ReST(httpchunked.ChunkedHandler):
     if not RecordingClass:
       self._write_error(415, msg="Unknown Content-Type: '%s'" % ctype)
       return
-    file_name = os.path.abspath(os.path.join(options.recordings,
+    file_name = os.path.abspath(os.path.join(options.recordings_path,
                                 str(uuid.uuid1()) + '.' + RecordingClass.EXTENSIONS[0]))
     logging.debug('URI: %s, FILE: %s', rec_uri, file_name)
 

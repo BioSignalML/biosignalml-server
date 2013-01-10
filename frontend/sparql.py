@@ -13,7 +13,7 @@ import logging
 import tornado.web
 from tornado.options import options
 
-from biosignalml.rdf import NAMESPACES
+import biosignalml.rdf as rdf
 from biosignalml.utils import xmlescape
 from biosignalml.model import BSML
 
@@ -25,11 +25,11 @@ namespaces = {
   'pbank': "http://www.biosignalml.org/ontologies/examples/physiobank#",
   }
 
-namespaces.update(NAMESPACES)
+namespaces.update(rdf.NAMESPACES)
 
 def prologue():
 #==============
-  p = [ 'BASE <%s>' % options.resource_prefix ]
+  p = [ 'BASE <%s>' % options.repository_uri ]
   for prefix, uri in namespaces.iteritems():
     p.append('PREFIX %s: <%s>' % (prefix, uri))
   return '\n'.join(p)
@@ -39,10 +39,9 @@ def search(sparql):
 #==================
   if not sparql: return ''
   body = ['<div id="sparqlresult"><table class="results">']
-  results = options.repository.query(sparql, header=True, abbreviate=True,
-                                     htmlbase=str(options.repository.uri))
+  results = options.repository.query(sparql, header=True)
   for n, r in enumerate(results):
-    if n == 0:
+    if n == 0:                      # Header
       if isinstance(r, list):
         cols = r
         body.append('<tr>')
@@ -55,7 +54,21 @@ def search(sparql):
         return '<div class="search">%s</div>' % xmlescape(str(r)).replace('\n', '<br/>')
     else:
       body.append('<tr class="odd">' if odd else '<tr>')
-      for d in r.itervalues(): body.append('<td>%s</td>' % d)
+      for value in r.itervalues():
+        if  isinstance(value, rdf.Uri):
+          value = str(value)
+          (LT, GT) = ('&lt;', '&gt;')
+          if results.base and value.startswith(results.base):
+            uri = value[len(results.base):]
+          else:
+            uri = results.abbreviate_uri(value)
+            if uri != value: (LT, GT) = ('', '')
+          if not value.startswith(str(options.repository.uri)):
+            d = '%s%s%s' % (LT, uri, GT)
+          else:
+            d = '%s<a href="%s" class="cluetip" target="_blank">%s</a>%s' % (LT, value, uri, GT)
+      # return (value, xmlescape(str(value)))
+        body.append('<td>%s</td>' % d)
       body.append('</tr>\n')
       odd = not odd
   body.append('</table></div>\n')

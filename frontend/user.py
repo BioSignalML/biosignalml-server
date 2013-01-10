@@ -38,7 +38,7 @@ class Logout(frontend.BasePage):
 #===============================
   def get(self):
     self.set_secure_cookie('username', '')
-    self.redirect('/login')
+    self.redirect('/frontend/login')
 
 class Login(frontend.BasePage):
 #==============================
@@ -62,5 +62,5 @@ class Login(frontend.BasePage):
     if btn == 'Login' and username and _check(username, self.get_argument('password', '')):
       self.set_secure_cookie('username', username, **{'max-age': str(frontend.SESSION_TIMEOUT)})
       self.redirect(self.get_argument('next', '/'))
-    elif btn == 'Login': self.redirect('/login?unauthorised')
-    else:                self.redirect('/login')
+    elif btn == 'Login': self.redirect('/frontend/login?unauthorised')
+    else:                self.redirect('/frontend/login')
