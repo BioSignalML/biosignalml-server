@@ -21,6 +21,8 @@ from biosignalml.rdf  import Uri
 from biosignalml.data import TimeSeries, UniformTimeSeries
 from biosignalml.units.convert import UnitConvertor
 import biosignalml.formats as formats
+import biosignalml.utils as utils
+
 
 
 class StreamServer(WebSocketHandler):
@@ -33,7 +35,7 @@ class StreamServer(WebSocketHandler):
     WebSocketHandler.__init__(self, *args, **kwds)
     self._parser = stream.BlockParser(self.got_block, check=stream.Checksum.CHECK)
     self._repo = options.repository
-    self._last_info = None
+#    self._last_info = None
 
   def select_subprotocol(self, protocols):
   #---------------------------------------
@@ -53,7 +55,7 @@ class StreamServer(WebSocketHandler):
       bytes = bytearray(msg)
     except TypeError:
       bytes = bytearray(str(msg))
-    logging.debug('RAW: %s', bytes)
+    #logging.debug('RAW: %s', bytes)
     self._parser.process(bytes)
 
   def send_block(self, block, check=stream.Checksum.STRICT):
@@ -80,6 +82,11 @@ class StreamDataSocket(StreamServer):
 #====================================
 
   MAXPOINTS = 50000 ## 4096 ### ?????
+
+  def open(self, name=None):
+  #-------------------------
+    #logging.debug('Stream OPEN: %s, HDR=%s', name, self.request.headers)
+    self.uri = name
 
   def _add_signal(self, uri):
   #--------------------------
@@ -173,66 +180,91 @@ class StreamDataSocket(StreamServer):
       finally:
         self.close()     ## All done with data request
 
-    elif block.type == stream.BlockType.INFO:
-      self._last_info = block.header
-      try:
-        uri = self._last_info['recording']
-        fname = self._last_info.get('dataset')
-        if fname is None:
-          fname = options.recordings + 'streamed/' + str(uuid.uuid1()) + '.h5'
-        ## '/streamed/' should come from configuration
+#    elif block.type == stream.BlockType.INFO:
+#      self._last_info = block.header
+#      try:
+#        uri = self._last_info['recording']
+#        fname = self._last_info.get('dataset')
+#
+#        if fname is None:
+#          fname = options.recordings_path + 'streamed/' + str(uuid.uuid1()) + '.h5'
+#        ## '/streamed/' should come from configuration
+#
+#        ## Metaata PUT should have created file...
+#
+#        ## We support HDF5, user can use resource endpoint to PUT their EDF file...
+#        recording = formats.hdf5.HDF5Recording(uri, dataset=fname)
+#        # This will create, so must ensure that path is in our recording's area...
+#
+#        units = self._last_info.get('units')
+#        rates = self._last_info.get('rates')
+#        if self._last_info.get('signals'):
+#          for n, s in enumerate(self._last_info['signals']):
+#            recording.new_signal(siguri, units[n] if units else None,
+#                                 rate=(rates[n] if rates else None) )
+#        else:
+#          signals = [ ]
+#          for n in xrange(self._last_info['channels']):
+#            signals.append(str(recording.new_signal(None, units[n] if units else None,
+#                                 id=n, rate=(rates[n] if rates else None)).uri))
+#          self._last_info['signals'] = signals
+#        options.repository.store_recording(recording)
+#        recording.close()
+#
+#      except Exception, msg:
+#        self.send_block(stream.ErrorBlock(block, str(msg)))
+#        if options.debug: raise
 
-        ## We support HDF5, user can use resource endpoint to PUT their EDF file...
-        recording = formats.hdf5.HDF5Recording(uri, dataset=fname)
-        # This will create, so must ensure that path is in our recording's area...
-
-        units = self._last_info.get('units')
-        rates = self._last_info.get('rates')
-        if self._last_info.get('signals'):
-          for n, s in enumerate(self._last_info['signals']):
-            recording.new_signal(siguri, units[n] if units else None,
-                                 rate=(rates[n] if rates else None) )
-        else:
-          signals = [ ]
-          for n in xrange(self._last_info['channels']):
-            signals.append(str(recording.new_signal(None, units[n] if units else None,
-                                 id=n, rate=(rates[n] if rates else None)).uri))
-          self._last_info['signals'] = signals
-        options.repository.store_recording(recording)
-        recording.close()
-
-      except Exception, msg:
-        self.send_block(stream.ErrorBlock(block, str(msg)))
-        if options.debug: raise
-
-    elif block.type == stream.BlockType.RDF:
-      ## Or do we just use REST services? Or SPARQL??
-      uri = self._last_info['recording']
-      graph_uri = self._repo.get_graph_and_recording_uri(uri)[0]
-      mimetype = block.header.get('mimetype')
-      options.repository.extend_graph(graph_uri, unicode(block.content), format=mimetype)
+#    elif block.type == stream.BlockType.RDF:
+#      ## Or do we just use REST services? Or SPARQL??
+#      uri = self._last_info['recording']
+#      graph_uri = self._repo.get_graph_and_recording_uri(uri)[0]
+#      mimetype = block.header.get('mimetype')
+#      options.repository.extend_graph(graph_uri, unicode(block.content), format=mimetype)
 
     elif block.type == stream.BlockType.DATA:
       # Got 'D' segment(s), uri is that of signal, that should have a recording link
       # look signal's uri up to get its Recording and hence format/source
       try:
         sd = block.signaldata()
-        if not sd.uri and sd.info is not None:
-          sd.uri = self._last_info['signals'][sd.info]
-        elif sd.uri not in self._last_info['signals']:
-          raise stream.StreamException("Signal '%s' not in Info header" % sd.uri)
 
-        rec_uri = self._repo.get_graph_and_recording_uri(sd.uri)[1]
-        if rec_uri is None or not self._repo.has_signal_in_recording(sd.uri, rec_uri):
+#        if not sd.uri and sd.info is not None:
+#          sd.uri = self._last_info['signals'][sd.info]
+#        elif sd.uri not in self._last_info['signals']:
+#          raise stream.StreamException("Signal '%s' not in Info header" % sd.uri)
+
+        ## Also get and use graph uri...
+        rec_graph, rec_uri = self._repo.get_graph_and_recording_uri(sd.uri)
+        if rec_uri is None or not self._repo.has_signal(sd.uri, rec_graph):
           raise stream.StreamException("Unknown signal '%s'" % sd.uri)
 
-        rec = self._repo.get_recording_with_signals(rec_uri)
+        rec = self._repo.get_recording_with_signals(rec_uri, False, rec_graph)
         if str(rec.format) != formats.hdf5.HDF5Recording.MIMETYPE:
           raise stream.StreamException("Signal can not be appended to -- not HDF5")
 
+        if rec.dataset is None:
+          rec.dataset = options.recordings_path + 'streamed/' + str(uuid.uuid1()) + '.h5'
+
+          self._repo.insert_triples(rec_graph,
+            [ ('<%s>' % rec_uri, '<%s>' % BSML.dataset, '<%s>' % utils.file_uri(rec.dataset)) ])
+#          self._repo.insert_triples(rec.graph_uri, # or rec.graph.uri ???
+#            [ '<%s> <%s> <%s>' % (rec_uri, BSML.dataset, file_uri(rec.dataset)) ])
+
+          rec.initialise(create=True)
+        else:
+          rec.initialise(create_signals=True)  # Open hdf5 file
+
+        sig = rec.get_signal(sd.uri)
+
+        # what if sd.units != sig.units ??
+        # what if sd.rate != sig.rate ??
+        # What if sd.clock ??
+
         if sd.rate: ts = UniformTimeSeries(sd.data, rate=sd.rate)
         else:       ts = TimeSeries(sd.data, sd.clock)
-        rec.get_signal(sd.uri).append(ts)
+
+
+        sig.append(ts)
         rec.close()
 
       except Exception, msg:
