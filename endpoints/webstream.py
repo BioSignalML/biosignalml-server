@@ -81,12 +81,7 @@ class StreamEchoSocket(StreamServer):
 class StreamDataSocket(StreamServer):
 #====================================
 
-  MAXPOINTS = 50000 ## 4096 ### ?????
-
-  def open(self, name=None):
-  #-------------------------
-    #logging.debug('Stream OPEN: %s, HDR=%s', name, self.request.headers)
-    self.uri = name
+  MAXPOINTS = 50000
 
   def _add_signal(self, uri):
   #--------------------------
