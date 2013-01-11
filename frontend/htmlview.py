@@ -215,13 +215,13 @@ def build_metadata(uri):
     graph_uri = repo.get_graph_and_recording_uri(uri)[0]
     objtypes = repo.get_types(uri, graph_uri)
     if   BSML.Recording in objtypes:    # repo.has_recording(uri)
-      rec = repo.get_recording(uri)
+      rec = repo.get_recording(uri, graph_uri)
       ## What about a local cache of opened recordings?? (keyed by uri)
       ## in bsml.recordings module ?? in repo ??
       html.append(property_details(rec, recording_properties))
       # And append info from repo.provenance graph...
     elif BSML.Signal in objtypes:       # repo.has_signal(uri)
-      sig = repo.get_signal(uri)
+      sig = repo.get_signal(uri, graph_uri)
       html.append(property_details(sig, signal_properties, makelink=False))
 #    elif BSML.Event in objtypes:
 #      html.append('event type, time, etc')
@@ -229,11 +229,11 @@ def build_metadata(uri):
        or rdf.TL.RelativeInterval in objtypes):
       html.append('time, etc')
     elif BSML.Annotation in objtypes:
-      ann = repo.get_annotation(uri)
+      ann = repo.get_annotation(uri, graph_uri)
       #html.append(annotation_info(ann))
       html.append(property_details(ann, annotation_properties))
     elif BSML.Event in objtypes:
-      evt = repo.get_event(uri)
+      evt = repo.get_event(uri, graph_uri)
       html.append(property_details(evt, event_properties, makelink=False))
     else:
       html.append('<br/>'.join([str(o) for o in objtypes]))
