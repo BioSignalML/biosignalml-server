@@ -69,10 +69,12 @@ class Properties(object):
           )
     return r
 
-def property_details(object, properties, **args):
-#------------------------------------------------
+
+def property_details(object, properties, graph, **args):
+#-------------------------------------------------------
   r = [ ]
   prompts = properties.header()
+  provenance = options.repository.get_provenance(graph)
   for n, d in enumerate(properties.details(object, **args)):
     if d:
       t = ', '.join(d) if isinstance(d, list) else str(d)
@@ -136,7 +138,7 @@ def recording_info(rec):
   html.append(frontend.make_link(rec.uri, rec.graph.uri))
 ##  html.append(annotatelink(rec.uri))
   html.append('</div>')
-  html.append(property_details(rec, recording_properties))
+  html.append(property_details(rec, recording_properties, rec.graph.uri))
   html.append('</div>')
   return ''.join(html)
 
@@ -218,11 +220,11 @@ def build_metadata(uri):
       rec = repo.get_recording(uri, graph_uri)
       ## What about a local cache of opened recordings?? (keyed by uri)
       ## in bsml.recordings module ?? in repo ??
-      html.append(property_details(rec, recording_properties))
+      html.append(property_details(rec, recording_properties, graph_uri))
       # And append info from repo.provenance graph...
     elif BSML.Signal in objtypes:       # repo.has_signal(uri)
       sig = repo.get_signal(uri, graph_uri)
-      html.append(property_details(sig, signal_properties, makelink=False))
+      html.append(property_details(sig, signal_properties, graph_uri, makelink=False))
 #    elif BSML.Event in objtypes:
 #      html.append('event type, time, etc')
     elif (rdf.TL.RelativeInstant in objtypes
@@ -231,10 +233,10 @@ def build_metadata(uri):
     elif BSML.Annotation in objtypes:
       ann = repo.get_annotation(uri, graph_uri)
       #html.append(annotation_info(ann))
-      html.append(property_details(ann, annotation_properties))
+      html.append(property_details(ann, graph_uri, annotation_properties))
     elif BSML.Event in objtypes:
       evt = repo.get_event(uri, graph_uri)
-      html.append(property_details(evt, event_properties, makelink=False))
+      html.append(property_details(evt, event_properties, graph_uri, makelink=False))
     else:
       html.append('<br/>'.join([str(o) for o in objtypes]))
   html.append('</div>')
