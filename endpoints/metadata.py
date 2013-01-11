@@ -1,4 +1,6 @@
 import logging
+
+import tornado.web
 from tornado.options import options
 
 import biosignalml.rdf as rdf
@@ -8,18 +10,24 @@ from biosignalml.formats import HDF5Recording
 import resource
 
 
-class MetaData(resource.ReST):
-#=============================
+class MetaData(tornado.web.RequestHandler):
+#==========================================
 
   SUPPORTED_METHODS = ("GET", "HEAD", "PUT", "POST") ##, "DELETE")
+
+  def check_xsrf_cookie(self):
+  #---------------------------
+    """Don't check XSRF token for POSTs."""
+    pass
+
 
   def get(self, **kwds):
   #----------------------
     if hasattr(self, 'full_uri'): name = self.full_uri
-    else: name = self.request.uri.split('/', 2)[2]  # Starts with '/metadata/'
+    else: name = self.request.uri.split('/', 3)[3]  # Starts with '/frontend/rdf/'
     # If the resource is a named graph then do we return the graph as RDF?
     repo = options.repository
-    uri, fragment = self._get_names(name)
+    uri = name.split('#')[0]
     graph_uri = repo.get_resource_graph_uri(uri)
     if graph_uri is None:
       if name == '':
@@ -42,9 +50,8 @@ class MetaData(resource.ReST):
   #---------------------
     if hasattr(self, 'full_uri'): name = self.full_uri
     else: name = self.request.uri.split('/', 2)[2]
-    logging.debug('PUT: name=%s, hdr=%s', name, self.request.headers)
 
-    rec_uri, fragment = self._get_names(name)
+    uri = name.split('#')[0]
 
     ## Get user via token or cookie, check we know them, get what they are allowed to do...
     user = "dave@bcs.co.nz"

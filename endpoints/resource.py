@@ -92,10 +92,10 @@ class FileWriter(object):
       raise_error(400, msg="%s: %s -> %s" % (msg, name, self._fname))
 
 
-class ReST(httpchunked.ChunkedHandler):
-#======================================
+class Recording(httpchunked.ChunkedHandler):
+#===========================================
 
-  SUPPORTED_METHODS = ("GET", "HEAD", "POST", "DELETE", "PUT", "OPTIONS", "PATCH")
+  SUPPORTED_METHODS = ("GET", "HEAD", "POST", "DELETE", "PUT")
 
   _mimetype = { }
   _class = { }
@@ -109,7 +109,7 @@ class ReST(httpchunked.ChunkedHandler):
 
   def check_xsrf_cookie(self):
   #---------------------------
-    """Don't check XSRF token for ReST POSTs."""
+    """Don't check XSRF token for POSTs."""
     pass
 
   def write_error(self, status_code, **kwds):
@@ -126,7 +126,7 @@ class ReST(httpchunked.ChunkedHandler):
 
   def _get_names(self, name):
   #--------------------------
-    tail = name.rsplit('#', 1)
+    tail = name.split('#', 1)
     fragment = tail[1] if len(tail) > 1 else ''
     head = tail[0]
     parts = head.split('/')
@@ -139,10 +139,12 @@ class ReST(httpchunked.ChunkedHandler):
       return (options.repository_uri + head, fragment)
 
 
-  def get(self, name, **kwds):
-  #---------------------------
-    # If the resource is a named graph then do we return the graph as RDF?
+  def get(self, **kwds):
+  #---------------------
+    name = self.full_uri
+
     uri, fragment = self._get_names(name)
+
     graph_uri, rec_uri = options.repository.get_graph_and_recording_uri(uri)
     logging.debug('GET: name=%s, req=%s, uri=%s, rec=%s, graph=%s',
                         name, self.request.uri, uri, rec_uri, graph_uri)
@@ -160,12 +162,15 @@ class ReST(httpchunked.ChunkedHandler):
     accept = parse_accept(self.request.headers)
 
     if BSML.Recording in options.repository.get_types(uri, graph_uri):
-      recording = options.repository.get_recording(rec_uri)
-      ## logging.debug('REC %s: %s', recording, accept)  #####################
+      recording = options.repository.get_recording(rec_uri, graph_uri)
+
+
       ctype = getattr(recording, 'format')
 ## Should we set 'Content-Location' header as well?
 ## (to actual URL of representation returned).
       # only send recording if '*/*' or content type match
+
+
       if accept.get(ctype, 0) > 0: # send file
         if recording.dataset is None:
           self._write_error(404, msg="Missing recording dataset: '%s'" % rec_uri)
@@ -191,16 +196,6 @@ class ReST(httpchunked.ChunkedHandler):
     # Check Q value
     # Send HTML if requested...
 
-    # Either not a Recording or ctype not in accept header, so send RDF
-    if   'text/turtle' in accept or 'application/x-turtle' in accept: format = rdf.Format.TURTLE
-    elif 'application/json' in accept:                                format = rdf.Format.JSON
-    else:                                                             format = rdf.Format.RDFXML
-    ## 415 Unsupported Media Type if accept is not */* nor something we can serve...
-
-    # check rdf+xml, turtle, n3, html ??
-    self.set_header('Vary', 'Accept')      # Let caches know we've used Accept header
-    self.set_header('Content-Type', rdf.Format.mimetype(format))
-    self.write(options.repository.describe(uri, graph=graph_uri, format=format))
 
   def _format(self):
   #-----------------
@@ -223,17 +218,20 @@ class ReST(httpchunked.ChunkedHandler):
       elif n.literal[2]: l.append('^^<%s>' % n.literal[2])
       return ''.join(l)
 
-  def put(self, name, **kwds):
-  #---------------------------
+  def put(self, **kwds):
+  #---------------------
     """
     Import a recording into the repository.
 
     """
+    name = self.full_uri
+
     #logging.debug("URI, NM: %s, %s", self.request.uri, name)  #############
     #logging.debug("HDRS: %s", self.request.headers)
     rec_uri, fragment = self._get_names(name)
     ctype = self.request.headers.get('Content-Type')
     if ctype is None:
+      ## Need to first set extn #####
       ctype = ReST._extns.get(extn, 'application/x-raw')
 
     ## PUT of RDF in RDFXML, RDF/JSON and Turtle formats...
@@ -290,9 +288,9 @@ class ReST(httpchunked.ChunkedHandler):
                           '</bsml>', '']))
 
 
-  def post(self, name, **kwds):
-  #-----------------------------
-    logging.debug('POST: %s', self.request.headers)
+  def post(self, **kwds):
+  #-----------------------
+    name = self.full_uri
 
     self._write_error(501, msg="POST not implemented...")
 
@@ -300,8 +298,9 @@ class ReST(httpchunked.ChunkedHandler):
     if rec_uri: self.write("<html><body><p>POST: %s</p></body></html>" % rec_uri)
 
 
-  def delete(self, name, **kwds):
-  #------------------------------
+  def delete(self, **kwds):
+  #------------------------
+    name = self.full_uri
     rec_uri, fragment = self._get_names(name)
     if rec_uri is None: return
     recording = options.repository.get_recording(rec_uri)
@@ -334,13 +333,3 @@ class ReST(httpchunked.ChunkedHandler):
     self.write('\n'.join(['<bsml>',
                           ' <deleted uri="%s"/>' % rec_uri,
                           '</bsml>', '']))
-
-
-  def head(self, name, **kwds):
-  #----------------------------
-    self.write("<html><body><p>HEAD: %s</p></body></html>" % name)
-
-  def patch(self, name, **kwds):
-  #-----------------------------
-      self.set_status(201)
-      self.finish()

@@ -14,10 +14,24 @@ import urllib
 import tornado.web
 
 
-RDF_ENDPOINT    = '/metadata/'    ##### Needs to come from ../server.py
-SNORQL_ENDPOINT = '/snorql/'      ##### Needs to come from ../server.py
+RDF_ENDPOINT    = '/frontend/rdf/'
+SNORQL_ENDPOINT = '/frontend/snorql/'
 
 SESSION_TIMEOUT = 86400 ### 1800 # seconds  ## num(config.config['idletime'])
+
+
+class Snorql(tornado.web.StaticFileHandler):
+#===========================================
+
+  def check_xsrf_cookie(self):
+  #---------------------------
+    """Don't check XSRF token for ReST POSTs."""
+    pass
+
+  def parse_url_path(self, url_path):
+  #----------------------------------
+    return url_path if url_path else 'index.html'
+
 
 
 # Provide useful utility functions

@@ -25,11 +25,6 @@ from biosignalml.rdf.sparqlstore import Virtuoso, FourStore
 import biosignalml.repository as repository
 import frontend.webdb as webdb
 
-
-RESOURCE_ENDPOINT   = '/resource/'     #: Import and export resource representations
-STREAMDATA_ENDPOINT = '/stream/data/'  #: Stream signal data in and out
-SNORQL_ENDPOINT     = '/snorql/'       #: SNORQL browsing of RDF
-
 LOGFORMAT = '%(asctime)s %(levelname)8s %(threadName)s: %(message)s'
 
 DEFAULTS  = { 'uri': 'http://devel.biosignalml.org',
@@ -104,7 +99,6 @@ def init_server():
   elif options.repository['sparql_store'] == 'Virtuoso':  SparqlStore = Virtuoso
   else: raise ValueError("Unknown type of SPARQL store")
   define('repository_uri', options.repository['uri'])
-  define('resource_prefix', options.repository['uri'] + RESOURCE_ENDPOINT)
   sparqlstore = SparqlStore(options.repository['sparql_server'])
   define('sparql_store', sparqlstore)
   define('repository', repository.BSMLStore(options.repository['uri'], sparqlstore))
