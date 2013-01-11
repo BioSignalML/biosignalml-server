@@ -133,7 +133,7 @@ def recording_info(rec):
 #-----------------------
   html = [ '<div id="recording" class="treespace">' ]
   html.append('<div class="block">')
-  html.append(frontend.make_link(rec.uri, rec.graph_uri))
+  html.append(frontend.make_link(rec.uri, rec.graph.uri))
 ##  html.append(annotatelink(rec.uri))
   html.append('</div>')
   html.append(property_details(rec, recording_properties))
@@ -196,7 +196,7 @@ def signal_table(handler, recording, selected=None):
   selectedrow = -1
   for n, sig in enumerate(recording.signals()):
     if str(sig.uri) == selected: selectedrow = n
-    rows.append(signal_properties.details(sig, True, trimlen=lenhdr, graph=recording.graph_uri))
+    rows.append(signal_properties.details(sig, True, trimlen=lenhdr, graph=recording.graph.uri))
   return handler.render_string('table.html',
     header = signal_properties.header(True),
     rows = rows,
@@ -291,8 +291,8 @@ class Repository(frontend.BasePage):
                           + signal_table(self, recording, selectedsig) )
       target = selectedsig if selectedsig else uri
 
-      annotations = [ annotation_info(repo.get_annotation(ann, recording.graph_uri))
-                       for ann in repo.annotations(target, recording.graph_uri) ]
+      annotations = [ annotation_info(repo.get_annotation(ann, recording.graph.uri))
+                       for ann in repo.annotations(target, recording.graph.uri) ]
       if not annotate: annotations.append(annotatelink(target))
       kwds['content'] += self.render_string('annotate.html', uri=target, annotations=annotations)
       if annotate:
