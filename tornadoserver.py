@@ -54,8 +54,11 @@ class Snorql(tornado.web.StaticFileHandler):
 def ContentNegotiate(*args, **kwds):
 #===================================
   request = args[1]
-  accept = resource.parse_accept(request.headers)
-  if (accept.get('application/rdf+xml', 0) > 0.9
+  if request.method == 'GET': accept = resource.parse_accept(request.headers)
+  else:                       accept = { request.headers.get('Content-Type'): 1 }
+  if request.headers.get('Upgrade') == 'websocket':
+    HandlerClass = webstream.StreamDataSocket
+  elif (accept.get('application/rdf+xml', 0) > 0.9
    or accept.get('text/turtle', 0) == 1):
     HandlerClass = metadata.MetaData
   elif (accept.get('text/html', 0) == 1
@@ -66,21 +69,17 @@ def ContentNegotiate(*args, **kwds):
     HandlerClass = metadata.MetaData
   handler = HandlerClass(*args, **kwds)
   if request.path in ['', '/']: handler.full_uri = ''
-  else:                         handler.full_uri = '%s://%s%s' % (request.protocol,
-                                                                  request.host, request.uri)
-  #logging.debug('full URI %s', handler.full_uri)
+  else: handler.full_uri = '%s://%s%s' % (request.protocol, request.host, request.uri)
+  #logging.debug("Negotiate: %s/%s --> %s/%s", accept, handler, handler.full_uri)
   if len(accept) > 1: handler.set_header('Vary', 'Accept') # Let caches know we've used Accept header
   return handler
 
 
 application = tornado.web.Application([
-    ( server.STREAMDATA_ENDPOINT + '(.*)', webstream.StreamDataSocket),
-    ( '/stream/echo/',                    webstream.StreamEchoSocket),
 
 ##    ('(' + server.RESOURCE_ENDPOINT + '.*)',  resource.ReST),
 ## This is supposedly reserved but we have existing recordings here...
 
-    ('/metadata/.*',                      metadata.MetaData),
     ('/provenance/(.*)',                  provenance.ProvenanceRDF),
     ( server.SNORQL_ENDPOINT + '(.*)',    Snorql,
       {'path': os.path.join(os.path.dirname(__file__), 'SNORQL/snorql') }),
