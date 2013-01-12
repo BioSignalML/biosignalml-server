@@ -20,34 +20,20 @@ SNORQL_ENDPOINT = '/frontend/snorql/'
 SESSION_TIMEOUT = 86400 ### 1800 # seconds  ## num(config.config['idletime'])
 
 
-class Snorql(tornado.web.StaticFileHandler):
-#===========================================
-
-  def check_xsrf_cookie(self):
-  #---------------------------
-    """Don't check XSRF token for ReST POSTs."""
-    pass
-
-  def parse_url_path(self, url_path):
-  #----------------------------------
-    return url_path if url_path else 'index.html'
-
-
-
 # Provide useful utility functions
 def rdf_link(uri):
-#-----------------
+#=================
   return '<a href="%s%s">RDF</a>' % (RDF_ENDPOINT, uri)
 
 def snorql_link(uri, graph=None):
-#--------------------------------
+#================================
   if graph is not None: g = '&graph=' + urllib.quote_plus(str(graph))
   else:                 g = ''
   return ('<a href="%s?describe=%s%s" target="_blank">SNORQL</a>'
          % (SNORQL_ENDPOINT, urllib.quote_plus(str(uri)), g) )
 
 def make_link(uri, graph=None):
-#------------------------------
+#==============================
   if graph is not None: g = '&graph=' + urllib.quote_plus(str(graph))
   else:                 g = ''
   return rdf_link(uri) + ' ' + snorql_link(uri, graph)
@@ -93,13 +79,16 @@ class SubTree(tornado.web.UIModule):
 
 class MenuModule(tornado.web.UIModule):
 #======================================
+
   def render(self, level=0):
+  #-------------------------
     out = [ '<div id="menubar"><ul class="jd_menu">' ]
     for item in menu.getmenu(level): out.append(self.menu_entry(item))
     out.append('</ul></div>')
     return ''.join(out)
 
   def menu_entry(self, item):
+  #--------------------------
     out = [ '<li>' ]
     if item[1]:
       out.append('<a href="%s" title="%s" onClick="return oktoexit(this)">%s</a>' % (item[1], item[0], item[0]))
@@ -110,6 +99,7 @@ class MenuModule(tornado.web.UIModule):
     return ''.join(out)
 
   def sub_menu(self, menu):
+  #------------------------
     out = [ '<ul class="sub_menu">' ]
     for item in menu: out.append(self.menu_entry(item))
     out.append('</ul>')
@@ -118,7 +108,9 @@ class MenuModule(tornado.web.UIModule):
 
 class BasePage(tornado.web.RequestHandler):
 #==========================================
+
   def render(self, template, **kwds):
+  #----------------------------------
     kwargs = { 'title': '', 'bodytitle': '', 'content': '',
                'stylesheets': [ ], 'scripts': [ ],
                'refresh': 0, 'alert': '', 'message': '',
@@ -128,13 +120,28 @@ class BasePage(tornado.web.RequestHandler):
     return tornado.web.RequestHandler.render(self, template, **kwargs)
 
   def get_current_user(self):
+  #--------------------------
     name = self.get_secure_cookie('username')
     if name is not None:
       self.set_secure_cookie('username', name, **{'max-age': str(SESSION_TIMEOUT)})
     return name
 
   def userlevel(self):
+  #-------------------
     import user
     if not hasattr(self, "_user_level"):
       self._user_level = user.level(self.current_user)
     return self._user_level
+
+
+class Snorql(tornado.web.StaticFileHandler):
+#===========================================
+
+  def check_xsrf_cookie(self):
+  #---------------------------
+    """Don't check XSRF token for ReST POSTs."""
+    pass
+
+  def parse_url_path(self, url_path):
+  #----------------------------------
+    return url_path if url_path else 'index.html'
