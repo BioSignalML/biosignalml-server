@@ -73,11 +73,25 @@ class Properties(object):
     return r
 
 
+provenance_properties = Properties([
+                         ('Imported', 'completed', datetime_to_isoformat),
+                         ('Author',   'performedby'),
+                       ])
+
+
 def property_details(object, properties, graph, **args):
 #-------------------------------------------------------
   r = [ ]
-  prompts = properties.header()
   provenance = options.repository.get_provenance(graph)
+  if provenance is not None:
+    prompts = provenance_properties.header()
+    for n, d in enumerate(provenance_properties.details(provenance.createdby)):
+      if d:
+        t = ', '.join(d) if isinstance(d, list) else str(d)
+        r.append('<span class="emphasised">%s: </span>%s' % (prompts[n], xmlescape(t).replace('\n', '<br/>')))
+#  logging.debug('PROV: %s by %s, prec %s, next %s', provenance.createdby.completed,
+#    provenance.createdby.performedby, provenance.precededby, provenance.followedby)
+  prompts = properties.header()
   for n, d in enumerate(properties.details(object, **args)):
     if d:
       t = ', '.join(d) if isinstance(d, list) else str(d)
