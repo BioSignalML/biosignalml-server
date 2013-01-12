@@ -29,12 +29,10 @@ class MetaData(tornado.web.RequestHandler):
     else: name = self.request.uri.split('/', 3)[3]  # Starts with '/frontend/rdf/'
     # If the resource is a named graph then do we return the graph as RDF?
     repo = options.repository
-    uri = name.split('#')[0]
+    uri = name.split('#', 1)[0].split('?', 1)[0]
     graph_uri = repo.get_resource_graph_uri(uri)
     if graph_uri is None:
-      if name == '':
-        graph_uri = repo.uri
-        uri = ''
+      if uri == '': graph_uri = repo.uri
       elif repo.has_provenance(uri):
         graph_uri = uri
         uri = ''
@@ -51,42 +49,31 @@ class MetaData(tornado.web.RequestHandler):
   @user.capable(user.ACTION_MODIFY)
   def put(self, **kwds):
   #---------------------
-    if hasattr(self, 'full_uri'): name = self.full_uri
-    else: name = self.request.uri.split('/', 2)[2]
-
-    uri = name.split('#')[0]
-
-    ## Get user via token or cookie, check we know them, get what they are allowed to do...
-    user = "dave@bcs.co.nz"
-    ##replace = True   ## Depends on user's capability
-
-    """
-    check name doesn't exist?? Or authorisation to overwrite??
-
-    check name is valid i.e. uri doesn't clash with reserved repository paths
-
-    check name is inside respository's domain...
-    """
-
-    g = rdf.Graph.create_from_string(rec_uri, self.request.body,
-     self.request.headers.get('Content-Type', rdf.Format.RDFXML))
+    if not hasattr(self, 'full_uri'):
+      self.set_status(405)   # Method not allowed
+      return
+    rec_uri = self.full_uri.split('#', 1)[0].split('?', 1)[0]
+    ## check uri doesn't exist?? Or authorisation to overwrite??
+    try:
+      g = rdf.Graph.create_from_string(rec_uri, self.request.body,
+       self.request.headers.get('Content-Type', rdf.Format.RDFXML))
+    except Exception, msg:
+      logging.error('Cannot create RDF graph -- syntax errors? %s', msg)
+      self.set_status(400)
     if not g.contains(rdf.Statement(rec_uri, rdf.RDF.type, BSML.Recording)):
-      raise TypeError("Metadata doesn't describe a bsml:Recording")
+      logging.error("Metadata doesn't describe a bsml:Recording")
+      self.set_status(400)
+      return
     if not g.contains(rdf.Statement(rec_uri, rdf.DCT.format, HDF5Recording.MIMETYPE)):
-      raise ValueError("Metadata doesn't describe an HDF5 recording")
-
+      logging.error("Metadata doesn't describe an HDF5 recording")
+      self.set_status(400)
+      return
     rec = HDF5Recording.create_from_graph(rec_uri, g)
     rec.close()
+    # Actual HDF5 gets assigned a name and created when data is first streamed to it.
+    # Don't set hdf5 metadata block -- this is for export_hdf5 (see below).
 
-    # Actual HDF5 gets assigned a name and created when data is first
-    # streamed to it.
-##    g.append(rdf.Statement(rec_uri, BSML.dataset, fname))
-
-
-    graph_uri = options.repository.add_recording_graph(rec_uri, g.serialise(), user)
-
-    # Don't set hdf5 metadata block -- thisis for export_hdf5 (see below).
-
+    graph_uri = options.repository.add_recording_graph(rec_uri, g.serialise(), self.user)
     self.set_status(201)      # Created
     self.set_header('Location', str(graph_uri))
 
@@ -94,31 +81,22 @@ class MetaData(tornado.web.RequestHandler):
   @user.capable(user.ACTION_MODIFY)
   def post(self, **kwds):
   #----------------------
-    if hasattr(self, 'full_uri'): rec_uri = self.full_uri
-    else: rec_uri = self.request.uri.split('/', 2)[2]
-
-    logging.debug('POST: name=%s, hdr=%s', rec_uri, self.request.headers)
-
-    ## Checks on user as above...  ###
-
-    rec_graph, rec_uri = options.repository.get_graph_and_recording_uri(rec_uri)
+    if not hasattr(self, 'full_uri'):
+      self.set_status(405)   # Method not allowed
+      return
+    uri = self.full_uri.split('#', 1)[0].split('?', 1)[0]
+    rec_graph, rec_uri = options.repository.get_graph_and_recording_uri(uri)
     if rec_graph is None:
-      raise KeyError('Unknown resource graph in repository')
-    options.repository.extend_graph(rec_graph,
-      self.request.body,
-      self.request.headers.get('Content-Type', rdf.Format.RDFXML))
-
+      logging.error('Unknown resource in repository: %s', uri)
+      self.set_status(404)
+      return
+    try:
+      options.repository.extend_graph(rec_graph,
+        self.request.body,
+        self.request.headers.get('Content-Type', rdf.Format.RDFXML))
+    except Exception, msg:
+      logging.error('Cannot extend RDF graph -- syntax errors? %s', msg)
+      self.set_status(400)
+      return
     self.set_status(200)      # OK
     self.set_header('Location', str(rec_uri))
-
-
-    """
-    ===>  Need a "export_hdf5 URI" utility
-
-
-    What about a new dataset in HDF5 file?? Or will append create this??
-
-    """
-
-
-
