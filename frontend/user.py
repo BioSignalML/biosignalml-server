@@ -8,8 +8,10 @@
 #
 ######################################################
 
-import uuid
+from datetime import timedelta, datetime
+import hashlib
 import logging
+import dateutil.parser
 
 import tornado.web
 from tornado.options import options
@@ -17,9 +19,66 @@ from tornado.options import options
 from forms import Button, Field
 import frontend
 
-VIEWER        = 1
+# Levels of user
+GUEST         = 0
+USER          = 1
 UPDATER       = 5
 ADMINISTRATOR = 9
+
+# User actions against repository:
+ACTION_VIEW   = 1
+ACTION_EXTEND = 3
+ACTION_MODIFY = 5
+ACTION_DELETE = 7
+ACTION_ADMIN  = 9
+
+ACTIONS = {
+  ACTION_VIEW:   'VIEW',
+  ACTION_EXTEND: 'EXTEND',
+  ACTION_MODIFY: 'MODIFY',
+  ACTION_DELETE: 'DELETE',
+  ACTION_ADMIN:  'ADMIN',
+  }
+
+
+CAPABILITIES = { GUEST:         [ ACTION_VIEW ],
+                 USER:          [ ACTION_VIEW, ACTION_EXTEND ],
+                 UPDATER:       [ ACTION_VIEW, ACTION_EXTEND, ACTION_MODIFY ],
+                 ADMINISTRATOR: [ ACTION_VIEW, ACTION_EXTEND, ACTION_MODIFY, ACTION_DELETE, ACTION_ADMIN ],
+               }
+
+TOKEN_TIMEOUT = 86400  # seconds
+
+
+## FUTURE: Define groups and assign users to them.
+
+## FUTURE: Also use URI to control access.
+
+def _capable(request, action, uri):
+#==================================
+  token = request.get_cookie('access')
+  row = options.database.readrow('users', ('email', 'level', 'expiry'),
+                                 where='token=:t', bindings=dict(t=token))
+  try:
+    request.user = row.get('email', 'guest')
+    if (datetime.utcnow() < dateutil.parser.parse(row['expiry'])
+        and action in CAPABILITIES[int(row['level'])]): return True
+  except (TypeError, KeyError):
+    pass
+  return action in CAPABILITIES[GUEST]
+
+def capable(action):
+#===================
+  def decorator(method):
+    def wrapper(request, *args, **kwds):
+      if _capable(request, action, getattr(request, 'full_uri', None)):
+        logging.info("User <%s> allowed to %s", request.user, ACTIONS[action])
+        return method(request, *args, **kwds)
+      else:
+        logging.error("User <%s> not allowed to %s", request.user, ACTIONS[action])
+        request.set_status(401)  ## 531 is a better status, but not in httplib.responses
+    return wrapper
+  return decorator
 
 
 def level(name):
@@ -30,19 +89,36 @@ def level(name):
   except (TypeError, KeyError):
     return 0
 
+
 def _check(name, passwd):
 #========================
-  return options.database.findrow('users', dict(username=name, password=passwd))
+  return (options.database.findrow('users', dict(username=name, password=passwd))
+       or options.database.findrow('users', dict(email=name, password=passwd)))
+
+
+def _make_token(user, row, timeout):
+#=====================================
+  expiry = (datetime.utcnow() + timedelta(seconds=timeout)).isoformat()
+  token = hashlib.sha1(user + expiry).hexdigest()
+  options.database.execute('update users set token=:t, expiry=:e where rowid=:r and username=:u',
+    dict(t=token, e=expiry, r=row, u=user))
+  return token
+
 
 class Logout(frontend.BasePage):
 #===============================
+
   def get(self):
+  #-------------
     self.set_secure_cookie('username', '')
     self.redirect('/frontend/login')
 
+
 class Login(frontend.BasePage):
 #==============================
+
   def get(self):
+  #-------------
     self.render('tform.html',
                 title = 'Please log in:',
                 rows = 4,  cols = 0,
@@ -55,12 +131,35 @@ class Login(frontend.BasePage):
                     else ''),
                 )
 
+  def check_xsrf_cookie(self):
+  #---------------------------
+    """Don't check XSRF token for POSTs."""
+    pass
+
   def post(self):
-    import frontend
+  #--------------
     btn = self.get_argument('action')
     username = self.get_argument('username', '')
-    if btn == 'Login' and username and _check(username, self.get_argument('password', '')):
-      self.set_secure_cookie('username', username, **{'max-age': str(frontend.SESSION_TIMEOUT)})
-      self.redirect(self.get_argument('next', '/'))
-    elif btn == 'Login': self.redirect('/frontend/login?unauthorised')
-    else:                self.redirect('/frontend/login')
+    user_row = _check(username, self.get_argument('password', ''))
+
+    if btn == 'Login':
+      if user_row > 0:
+        kwds = { 'max-age': str(frontend.SESSION_TIMEOUT), 'expires_days': None }
+        self.set_secure_cookie('username', username, **kwds)
+        self.redirect(self.get_argument('next', '/'))
+      else:
+        self.redirect('/frontend/login?unauthorised')
+
+    elif btn == 'Token':
+      if user_row > 0:
+        token = _make_token(username, user_row, TOKEN_TIMEOUT)
+        self.set_cookie('access', token)
+        self.set_header('Content-Type', 'text/plain')
+        self.set_status(200)
+        self.write(token)
+      else:
+        self.set_status(401)
+        # self.set_header('WWW-Authenticate', ???) ####
+
+    else:
+      self.redirect('/frontend/login')

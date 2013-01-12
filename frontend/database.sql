@@ -1,4 +1,4 @@
-BEGIN TRANSACTION;
+BEGIN TRANSACTION ;
 
 CREATE TABLE status (
   name  text(10) primary key,
@@ -10,10 +10,13 @@ CREATE TABLE users (
   password      text(20),
   changepw      integer(1),
   level         integer(1),
-  token         text
+  email         text,
+  token         text,
+  expiry        text
   );
-INSERT INTO "users" VALUES('admin','admin',0,9,'');
-INSERT INTO "users" VALUES('demo', 'demo', 0,1,'');
 
-COMMIT;
+INSERT INTO "users" VALUES('admin', 'admin', 0, 9, 'd.brooks@auckland.ac.nz', '', '') ;
+INSERT INTO "users" VALUES('guest', 'guest', 0, 1, '',                        '', '') ;
+
+COMMIT ;
 

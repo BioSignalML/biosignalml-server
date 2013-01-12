@@ -8,6 +8,7 @@ from biosignalml import BSML
 from biosignalml.formats import HDF5Recording
 
 import resource
+from frontend import user
 
 
 class MetaData(tornado.web.RequestHandler):
@@ -21,6 +22,7 @@ class MetaData(tornado.web.RequestHandler):
     pass
 
 
+  @user.capable(user.ACTION_VIEW)
   def get(self, **kwds):
   #----------------------
     if hasattr(self, 'full_uri'): name = self.full_uri
@@ -46,6 +48,7 @@ class MetaData(tornado.web.RequestHandler):
     self.write(options.repository.describe(uri, graph=graph_uri, format=format))
 
 
+  @user.capable(user.ACTION_MODIFY)
   def put(self, **kwds):
   #---------------------
     if hasattr(self, 'full_uri'): name = self.full_uri
@@ -88,6 +91,7 @@ class MetaData(tornado.web.RequestHandler):
     self.set_header('Location', str(graph_uri))
 
 
+  @user.capable(user.ACTION_MODIFY)
   def post(self, **kwds):
   #----------------------
     if hasattr(self, 'full_uri'): rec_uri = self.full_uri
