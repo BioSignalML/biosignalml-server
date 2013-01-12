@@ -10,7 +10,7 @@ String.prototype.startsWith = function(str) {
 
 function Snorql() {
     // modify this._endpoint to point to your SPARQL endpoint
-    this._endpoint = document.location.href.match(/^([^?]*)snorql\//)[1] + 'sparql/';
+    this._endpoint = document.location.href.match(/^([^?]*)frontend\/snorql\//)[1] + 'sparql/';
     // modify these to your likeing
     this._poweredByLink = 'http://4store.org/';
     this._poweredByLabel = '4store';
