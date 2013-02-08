@@ -54,24 +54,24 @@ TOKEN_TIMEOUT = 86400  # seconds
 
 ## FUTURE: Also use URI to control access.
 
-def _capable(request, action, uri):
-#==================================
+def capabilities(request, uri):
+#==============================
   token = request.get_cookie('access')
   row = options.database.readrow('users', ('email', 'level', 'expiry'),
                                  where='token=:t', bindings=dict(t=token))
   try:
     request.user = row.get('email', 'guest')
-    if (datetime.utcnow() < dateutil.parser.parse(row['expiry'])
-        and action in CAPABILITIES[int(row['level'])]): return True
+    if datetime.utcnow() < dateutil.parser.parse(row['expiry']):
+      return CAPABILITIES[int(row['level'])]
   except (TypeError, KeyError):
     pass
-  return action in CAPABILITIES[GUEST]
+  return CAPABILITIES[GUEST]
 
 def capable(action):
 #===================
   def decorator(method):
     def wrapper(request, *args, **kwds):
-      if _capable(request, action, getattr(request, 'full_uri', None)):
+      if action in capabilities(request, getattr(request, 'full_uri', None)):
         logging.info("User <%s> allowed to %s", request.user, ACTIONS[action])
         return method(request, *args, **kwds)
       else:

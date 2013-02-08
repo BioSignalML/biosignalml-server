@@ -23,6 +23,7 @@ from biosignalml.units.convert import UnitConvertor
 import biosignalml.formats as formats
 import biosignalml.utils as utils
 
+from frontend import user
 
 
 class StreamServer(WebSocketHandler):
@@ -35,6 +36,7 @@ class StreamServer(WebSocketHandler):
     WebSocketHandler.__init__(self, *args, **kwds)
     self._parser = stream.BlockParser(self.got_block, check=stream.Checksum.CHECK)
     self._repo = options.repository
+    self._capabilities = [ ]
 #    self._last_info = None
 
   def select_subprotocol(self, protocols):
@@ -50,7 +52,7 @@ class StreamServer(WebSocketHandler):
 
   def on_message(self, msg):
   #-------------------------
-    # self.request.headers ### will get headers sent with request, incl. cookies...
+    self._capabilities = user.capabilities(self, None)
     try:
       bytes = bytearray(msg)
     except TypeError:
@@ -99,11 +101,21 @@ class StreamDataSocket(StreamServer):
     else:
       raise IOError('Unknown signal: %s' % uri)
 
+  def _check_authorised(self, action):
+  #-----------------------------------
+    if action in self._capabilities:
+      logging.info("User <%s> allowed to %s", self.user, user.ACTIONS[action])
+    else:
+      error = "User <%s> not allowed to %s" % (self.user, user.ACTIONS[action])
+      logging.error(error)
+      raise stream.StreamException(error)
+
   def got_block(self, block):
   #--------------------------
     logging.debug('GOT: %s', block)
     if   block.type == stream.BlockType.DATA_REQ:
       try:
+        self._check_authorised(user.ACTION_VIEW)
         uri = block.header.get('uri')
         ## Need to return 404 if unknown URI... (not a Recording or Signal)
         self._sigs = [ ]
@@ -221,6 +233,7 @@ class StreamDataSocket(StreamServer):
       # Got 'D' segment(s), uri is that of signal, that should have a recording link
       # look signal's uri up to get its Recording and hence format/source
       try:
+        self._check_authorised(user.ACTION_EXTEND)  ## or MODIFY ??
         sd = block.signaldata()
 
 #        if not sd.uri and sd.info is not None:
