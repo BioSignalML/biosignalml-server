@@ -139,7 +139,7 @@ class Snorql(tornado.web.StaticFileHandler):
 
   def check_xsrf_cookie(self):
   #---------------------------
-    """Don't check XSRF token for ReST POSTs."""
+    """Don't check XSRF token for POSTs."""
     pass
 
   def parse_url_path(self, url_path):
