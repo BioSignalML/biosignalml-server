@@ -83,7 +83,7 @@ application = tornado.web.Application([
     ('/frontend/search/query',            frontend.search.Search),
     ('/frontend/search',                  frontend.search.Search),
     ('/frontend/sparql',                  frontend.sparql.Query),      # SPARQL query form
-    ( '/frontend/snorql/(.*)',            frontend.Snorql,
+    ('/frontend/snorql/(.*)',             frontend.Snorql,
       {'path': os.path.join(os.path.dirname(__file__), 'SNORQL/snorql') }),
     ('/frontend/users',                   frontend.user.Logout),  ## Placeholder
     ('/frontend/logout',                  frontend.user.Logout),
