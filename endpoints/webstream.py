@@ -122,7 +122,7 @@ class StreamDataSocket(StreamServer):
         if isinstance(uri, list):
           for s in uri: self._add_signal(s)
         elif self._repo.has_recording(uri):
-          rec = self._repo.get_recording_with_signals(uri)
+          rec = self._repo.get_recording(uri)
           recclass = formats.CLASSES.get(str(rec.format))
           if recclass:
             recclass.initialise_class(rec)
@@ -246,7 +246,7 @@ class StreamDataSocket(StreamServer):
         if rec_uri is None or not self._repo.has_signal(sd.uri, rec_graph):
           raise stream.StreamException("Unknown signal '%s'" % sd.uri)
 
-        rec = self._repo.get_recording_with_signals(rec_uri, False, rec_graph)
+        rec = self._repo.get_recording(rec_uri, False, rec_graph)
         if str(rec.format) != formats.hdf5.HDF5Recording.MIMETYPE:
           raise stream.StreamException("Signal can not be appended to -- not HDF5")
 
