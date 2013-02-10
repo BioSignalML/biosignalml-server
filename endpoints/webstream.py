@@ -126,8 +126,7 @@ class StreamDataSocket(StreamServer):
           recclass = formats.CLASSES.get(str(rec.format))
           if recclass:
             recclass.initialise_class(rec)
-##########
-            self._sigs = [ s for s in rec.signals() if s.rate ]   #### Only uniformly sampled, no annotation signals....
+            self._sigs = rec.signals()
         else:
           self._add_signal(uri)
         start = block.header.get('start')
