@@ -102,7 +102,7 @@ def _make_token(user, row, timeout):
   token = hashlib.sha1(user + expiry).hexdigest()
   options.database.execute('update users set token=:t, expiry=:e where rowid=:r and username=:u',
     dict(t=token, e=expiry, r=row, u=user))
-  return token
+  return (token, expiry)
 
 
 class Logout(frontend.BasePage):
@@ -152,11 +152,11 @@ class Login(frontend.BasePage):
 
     elif btn == 'Token':
       if user_row > 0:
-        token = _make_token(username, user_row, TOKEN_TIMEOUT)
+        token, expiry = _make_token(username, user_row, TOKEN_TIMEOUT)
         self.set_cookie('access', token)
         self.set_header('Content-Type', 'text/plain')
         self.set_status(200)
-        self.write(token)
+        self.write('%s %s %s' % (token, username, expiry))
       else:
         self.set_status(401)
         # self.set_header('WWW-Authenticate', ???) ####
