@@ -37,10 +37,12 @@ class StreamServer(WebSocketHandler):
 
   def __init__(self, *args, **kwds):
   #---------------------------------
-    WebSocketHandler.__init__(self, *args, **kwds)
+    WebSocketHandler.__init__(self, *args, **kwds)  ## Can't use super() as class is not
+                                                    ## correctly initialised.
     self._parser = stream.BlockParser(self.got_block, check=stream.Checksum.CHECK)
     self._repo = options.repository
     self._capabilities = [ ]
+    self.ws_connection = None
 #    self._last_info = None
 
   def select_subprotocol(self, protocols):
@@ -73,7 +75,13 @@ class StreamServer(WebSocketHandler):
     :param check: Set to :attr:`~biosignalml.transports.stream.Checksum.STRICT`
       to append a SHA1 checksum to the block.
     '''
-    self.write_message(str(block.bytes(check)), True)
+    if self.ws_connection is not None:
+      self.write_message(str(block.bytes(check)), True)
+
+  def close(self, *args):
+  #----------------------
+    if self.ws_connection is not None:
+      WebSocketHandler.close(self, *args)
 
 
 class StreamEchoSocket(StreamServer):
@@ -85,7 +93,7 @@ class StreamEchoSocket(StreamServer):
 
 
 class SignalReadThread(threading.Thread):
-#----------------------------------------
+#========================================
 
   def __init__(self, handler, block, signals, units):
   #--------------------------------------------------
@@ -116,8 +124,8 @@ class SignalReadThread(threading.Thread):
                  segment=segment, maxpoints=maxpoints) for sig in self._signals ]
       ## data is a list of generators
 
-      active = len(data)
-      while active > 0:
+      self._active = len(data)
+      while self._active > 0:
         for n, sigdata in enumerate(data):
           if sigdata is not None:
             try:
@@ -135,7 +143,7 @@ class SignalReadThread(threading.Thread):
               self._send_block(stream.SignalData(siguri, d.starttime, datablock, **keywords).streamblock())
             except StopIteration:
               data[n] = None
-              active -= 1
+              self._active -= 1
 
     except Exception, msg:
       if str(msg) != "Stream is closed":
@@ -156,6 +164,7 @@ class SignalReadThread(threading.Thread):
 
   def _finished(self):
   #-------------------
+    self._active = -1
     self._handler.close()     ## All done with data request
 
 
