@@ -10,9 +10,13 @@
 
 import uuid
 import logging
+import threading
+import functools
 
+import tornado
 from tornado.options import options
 from tornado.websocket import WebSocketHandler
+from tornado.ioloop import IOLoop
 
 import biosignalml.transports.stream as stream
 
@@ -80,6 +84,81 @@ class StreamEchoSocket(StreamServer):
     self.send_block(block)
 
 
+class SignalReadThread(threading.Thread):
+#----------------------------------------
+
+  def __init__(self, handler, block, signals, units):
+  #--------------------------------------------------
+    threading.Thread.__init__(self)
+    self._handler = handler
+    self._reqblock = block
+    self._signals = signals
+    self._units = units
+
+  def run(self):
+  #-------------
+    try:
+      header = self._reqblock.header
+      dtypes = { 'dtype': header.get('dtype'), 'ctype': header.get('ctype') }
+      start = header.get('start')
+      duration = header.get('duration')
+      if start is None and duration is None: interval = None
+      else:                                  interval = (start, duration)
+      offset = header.get('offset')
+      count = header.get('count')
+      if offset is None and count is None: segment = None
+      else:                                segment = (offset, count)
+      maxpoints = header.get('maxsize', 0),
+
+      # Interleave signal blocks...
+      ### What if signal has multiple channels? What does read() return??
+      data = [ sig.read(interval=sig.recording.interval(*interval) if interval else None,
+                 segment=segment, maxpoints=maxpoints) for sig in self._signals ]
+      ## data is a list of generators
+
+      active = len(data)
+      while active > 0:
+        for n, sigdata in enumerate(data):
+          if sigdata is not None:
+            try:
+              d = sigdata.next()
+              siguri = str(self._signals[n].uri)
+              keywords = dtypes.copy()
+              keywords['info'] = n
+              if isinstance(d.dataseries, UniformTimeSeries):
+                keywords['rate'] = d.dataseries.rate
+              else:
+                keywords['clock'] = d.dataseries.times
+              if self._units is not None: datablock = self._units[n](d.dataseries.data)
+              else:                       datablock = d.dataseries.data
+              logging.debug("Send block for %s", siguri)
+              self._send_block(stream.SignalData(siguri, d.starttime, datablock, **keywords).streamblock())
+            except StopIteration:
+              data[n] = None
+              active -= 1
+
+    except Exception, msg:
+      if str(msg) != "Stream is closed":
+        logging.error("Stream exception - %s" % msg)
+        self._send_block(stream.ErrorBlock(self._reqblock, str(msg)))
+        if options.debug: raise
+
+    finally:
+      IOLoop.instance().add_callback(self._finished)
+
+  def _send_block(self, block):
+  #----------------------------
+    IOLoop.instance().add_callback(functools.partial(self._send, block))
+
+  def _send(self, block):
+  #----------------------
+    self._handler.send_block(block)
+
+  def _finished(self):
+  #-------------------
+    self._handler.close()     ## All done with data request
+
+
 class StreamDataSocket(StreamServer):
 #====================================
 
@@ -110,6 +189,7 @@ class StreamDataSocket(StreamServer):
       logging.error(error)
       raise stream.StreamException(error)
 
+  @tornado.web.asynchronous
   def got_block(self, block):
   #--------------------------
     logging.debug('GOT: %s', block)
@@ -129,15 +209,6 @@ class StreamDataSocket(StreamServer):
             self._sigs = rec.signals()
         else:
           self._add_signal(uri)
-        start = block.header.get('start')
-        duration = block.header.get('duration')
-        if start is None and duration is None: interval = None
-        else:                                  interval = (start, duration)
-        offset = block.header.get('offset')
-        count = block.header.get('count')
-        if offset is None and count is None: segment = None
-        else:                                segment = (offset, count)
-        dtypes = { 'dtype': block.header.get('dtype'), 'ctype': block.header.get('ctype') }
 
         unit_convertor = UnitConvertor(options.sparql_store)
         conversions = []
@@ -147,44 +218,22 @@ class StreamDataSocket(StreamServer):
           unit_conversion = [ unit_convertor.mapping(sig.units, requested_units) for sig in self._sigs ]
         else:
           units = [str(sig.units) for sig in self._sigs],
+          unit_conversion = None
 
         self.send_block(stream.InfoBlock(channels = len(self._sigs),
                                          signals = [str(sig.uri) for sig in self._sigs],
                                          rates = [sig.rate for sig in self._sigs],
                                          units = units ))
-        # Interleave signal blocks...
-        ### What if signal has multiple channels? What does read() return??
-        ###
-        data = [ sig.read(interval=sig.recording.interval(*interval) if interval else None,
-                          segment=segment, maxpoints=block.header.get('maxsize', 0))
-                   for sig in self._sigs ]
 
-        active = len(data)
-        while active > 0:
-          for n, sigdata in enumerate(data):
-            if sigdata is not None:
-              try:
-                d = sigdata.next()
-                siguri = str(self._sigs[n].uri)
-                keywords = dtypes.copy()
-                keywords['info'] = n
-                if isinstance(d.dataseries, UniformTimeSeries):
-                  keywords['rate'] = d.dataseries.rate
-                else:
-                  keywords['clock'] = d.dataseries.times
-                if requested_units is not None: datablock = unit_conversion[n](d.dataseries.data)
-                else:                           datablock = d.dataseries.data
-                logging.debug("Send block for %s", siguri)
-                self.send_block(stream.SignalData(siguri, d.starttime, datablock, **keywords).streamblock())
-              except StopIteration:
-                data[n] = None
-                active -= 1
+        sender = SignalReadThread(self, block, self._sigs, unit_conversion)
+        sender.start()
+
       except Exception, msg:
         if str(msg) != "Stream is closed":
+          logging.error("Stream exception - %s" % msg)
           self.send_block(stream.ErrorBlock(block, str(msg)))
+          self.close()
           if options.debug: raise
-      finally:
-        self.close()     ## All done with data request
 
 #    elif block.type == stream.BlockType.INFO:
 #      self._last_info = block.header
