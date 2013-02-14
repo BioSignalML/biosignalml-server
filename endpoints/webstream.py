@@ -116,7 +116,7 @@ class SignalReadThread(threading.Thread):
       count = header.get('count')
       if offset is None and count is None: segment = None
       else:                                segment = (offset, count)
-      maxpoints = header.get('maxsize', 0),
+      maxpoints = header.get('maxsize', 0)
 
       # Interleave signal blocks...
       ### What if signal has multiple channels? What does read() return??
