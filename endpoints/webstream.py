@@ -43,8 +43,6 @@ class StreamServer(WebSocketHandler):
     self._parser = stream.BlockParser(self.got_block, check=stream.Checksum.CHECK)
     self._repo = options.repository
     self._capabilities = [ ]
-    self.ws_connection = None
-#    self._last_info = None
 
   def select_subprotocol(self, protocols):
   #---------------------------------------
@@ -148,7 +146,6 @@ class SignalReadThread(threading.Thread):
                 keywords['clock'] = d.dataseries.times
               if self._units is not None: datablock = self._units[n](d.dataseries.data)
               else:                       datablock = d.dataseries.data
-              logging.debug("Send block for %s", siguri)
               self._send_block(stream.SignalData(siguri, d.starttime, datablock, **keywords).streamblock())
             except StopIteration:
               data[n] = None
