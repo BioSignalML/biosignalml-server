@@ -170,7 +170,6 @@ class SignalReadThread(threading.Thread):
 
   def _finished(self):
   #-------------------
-    logging.debug("close count=%d", self._handler.write_count())
     if self._handler.write_count() > 0:
       stream = self._handler.ws_connection.stream ;
       stream._add_io_state(stream.io_loop.WRITE)
