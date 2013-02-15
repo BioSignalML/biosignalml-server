@@ -158,16 +158,11 @@ class SignalReadThread(threading.Thread):
         if options.debug: raise
 
     finally:
-      while self._handler.write_count() > 0:
-        time.sleep(0.001)
       IOLoop.instance().add_callback(self._finished)
 
   def _send_block(self, block):
   #----------------------------
-    while self._handler.write_count() > 10:
-      time.sleep(0.001)
     IOLoop.instance().add_callback(functools.partial(self._send, block))
-    time.sleep(0.001)           ## Now give IOLoop a chance to run...
 
   def _send(self, block):
   #----------------------
@@ -175,6 +170,12 @@ class SignalReadThread(threading.Thread):
 
   def _finished(self):
   #-------------------
+    logging.debug("close count=%d", self._handler.write_count())    self._active = -1
+    if self._handler.write_count() > 0:
+      stream = self._handler.ws_connection.stream ;
+      stream._add_io_state(stream.io_loop.WRITE)
+      IOLoop.instance().add_callback(self._finished)
+      return
     self._active = -1
     self._handler.close()     ## All done with data request
 
