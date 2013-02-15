@@ -12,6 +12,7 @@ import uuid
 import logging
 import threading
 import functools
+import time
 
 import tornado
 from tornado.options import options
@@ -83,6 +84,14 @@ class StreamServer(WebSocketHandler):
     if self.ws_connection is not None:
       WebSocketHandler.close(self, *args)
 
+  def writing(self):
+  #-----------------
+    return self.ws_connection is not None and self.ws_connection.stream.writing()
+
+  def write_count(self):
+  #---------------------
+    return len(self.ws_connection.stream._write_buffer) if self.ws_connection is not None else 0
+
 
 class StreamEchoSocket(StreamServer):
 #====================================
@@ -144,7 +153,6 @@ class SignalReadThread(threading.Thread):
             except StopIteration:
               data[n] = None
               self._active -= 1
-      self._send_block(stream.Finished())
 
     except Exception, msg:
       if str(msg) != "Stream is closed":
@@ -153,11 +161,16 @@ class SignalReadThread(threading.Thread):
         if options.debug: raise
 
     finally:
+      while self._handler.write_count() > 0:
+        time.sleep(0.001)
       IOLoop.instance().add_callback(self._finished)
 
   def _send_block(self, block):
   #----------------------------
+    while self._handler.write_count() > 10:
+      time.sleep(0.001)
     IOLoop.instance().add_callback(functools.partial(self._send, block))
+    time.sleep(0.001)           ## Now give IOLoop a chance to run...
 
   def _send(self, block):
   #----------------------
