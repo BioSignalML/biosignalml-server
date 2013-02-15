@@ -144,6 +144,7 @@ class SignalReadThread(threading.Thread):
             except StopIteration:
               data[n] = None
               self._active -= 1
+      self._send_block(stream.Finished())
 
     except Exception, msg:
       if str(msg) != "Stream is closed":
