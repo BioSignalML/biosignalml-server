@@ -56,24 +56,19 @@ class Options(object):
     for s in cfg.sections(): setattr(self, s, dict(cfg.items(s, True)))
 
 
-def parse_args():
-#================
-  parser = argparse.ArgumentParser(
-    description="Start a HTTP interface to a BioSignalML repository."
-    )
-  parser.add_argument("-c", "--config", dest="config",
-                    help="""The name of the configuration file. Default is
-                            '%s/biosignalml.ini'; relative names are with
-                            respect to '%s/'.""" % (module_path, module_path),
-                    default="biosignalml.ini",
-                    metavar="CONFIG")
-  return parser.parse_args()
-
-
 def init_server():
 #=================
-  args = parse_args()
-  config_file = args.config if args.config[0] == '/' else os.path.join(module_path, args.config)
+
+  define("config", help=("The name of the configuration file. Default is"
+                         " '%s/biosignalml.ini'; relative names are with"
+                         " respect to '%s/'.") % (module_path, module_path),
+                   default="biosignalml.ini",
+                   metavar="CONFIG")
+  del tornado.options.options['logging']
+  define('logging', 'none') # Default to our settings
+  tornado.options.parse_command_line()
+  cfile = tornado.options.options.config
+  config_file = cfile if cfile.startswith('/') else os.path.join(module_path, cfile)
 
   global options
   options = Options(file=config_file, defaults=DEFAULTS)
