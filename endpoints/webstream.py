@@ -213,6 +213,8 @@ class StreamDataSocket(StreamServer):
   def got_block(self, block):
   #--------------------------
     logging.debug('GOT: %s', block)
+    if   block.type == stream.BlockType.ERROR:
+      self.send_block(block)   ## Error blocks from parser v's from client...
     if   block.type == stream.BlockType.DATA_REQ:
       try:
         self._check_authorised(user.ACTION_VIEW)
