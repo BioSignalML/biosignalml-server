@@ -1,3 +1,39 @@
+Pre-requisites
+==============
+
+hdf5
+libwfdb with Python bindings
+
+easy_install/pip
+----------------
+
+* biosignalml >= 0.3.7
+* tornado >= 2.4.1
+* numpy >= 2.1.1
+
+
+
+Server Install
+==============
+
+Configuration
+-------------
+
+Starting
+---------
+
+Loading Unit-of-Measure Ontologies
+----------------------------------
+
+::
+
+  tools/load_units.sh http://www.sbpax.org/uome/list.owl
+  tools/load_units.sh http://www.biosignalml.org/ontologies/examples/unit.rdf
+
+
+
+---
+
 # Setting up repository configuration with a 4store backend:
 #
 
