@@ -61,8 +61,8 @@ def capabilities(request, uri):
                                  where='token=:t', bindings=dict(t=token))
   try:
     request.user = row.get('email', 'guest')
-    if datetime.utcnow() < dateutil.parser.parse(row['expiry']):
-      return CAPABILITIES[int(row['level'])]
+    request.user_expired = (datetime.utcnow() > dateutil.parser.parse(row.get('expiry', '2000')))
+    if not request.user_expired: return CAPABILITIES[int(row['level'])]
   except (TypeError, KeyError):
     pass
   return CAPABILITIES[GUEST]
@@ -72,10 +72,13 @@ def capable(action):
   def decorator(method):
     def wrapper(request, *args, **kwds):
       if action in capabilities(request, getattr(request, 'full_uri', None)):
-        logging.info("User <%s> allowed to %s", request.user, ACTIONS[action])
+##        logging.debug("User <%s> allowed to %s", request.user, ACTIONS[action])
         return method(request, *args, **kwds)
       else:
-        logging.error("User <%s> not allowed to %s", request.user, ACTIONS[action])
+        if request.user_expired:
+          logging.error("User <%s> is no longer current", request.user)
+        else:
+          logging.error("User <%s> not allowed to %s", request.user, ACTIONS[action])
         request.set_status(401)  ## 531 is a better status, but not in httplib.responses
     return wrapper
   return decorator
