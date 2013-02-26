@@ -21,7 +21,6 @@ class MetaData(tornado.web.RequestHandler):
     """Don't check XSRF token for POSTs."""
     pass
 
-
   @user.capable(user.ACTION_VIEW)
   def get(self, **kwds):
   #----------------------
@@ -45,8 +44,7 @@ class MetaData(tornado.web.RequestHandler):
     self.set_header('Content-Type', rdf.Format.mimetype(format))
     self.write(options.repository.describe(uri, graph=graph_uri, format=format))
 
-
-  @user.capable(user.ACTION_MODIFY)
+  @user.capable(user.ACTION_EXTEND)
   def put(self, **kwds):
   #---------------------
     if not hasattr(self, 'full_uri'):
