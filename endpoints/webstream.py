@@ -185,6 +185,12 @@ class StreamDataSocket(StreamServer):
 
   MAXPOINTS = 50000
 
+  def _send_error(self, msg):
+  #--------------------------
+    logging.error("Stream error: %s" % msg)
+    self.send_block(stream.ErrorBlock(self._block, str(msg)))
+    self.close()
+
   def _add_signal(self, uri):
   #--------------------------
     if self._repo.has_signal(uri):
@@ -197,31 +203,27 @@ class StreamDataSocket(StreamServer):
         recclass.initialise_class(rec)
         self._sigs.append(sig)
       else:
-        raise IOError('No format for: %s' % uri)
+        return self._send_error('No format for: %s' % uri)
     else:
-      raise IOError('Unknown signal: %s' % uri)
+      self._send_error('Unknown signal: %s' % uri)
 
   def _check_authorised(self, action):
   #-----------------------------------
-    if action in self._capabilities:
-      pass
-      ## logging.debug("User <%s> allowed to %s", self.user, user.ACTIONS[action])
+    if action in self._capabilities: return True
     else:
-      error = "User <%s> not allowed to %s" % (self.user, user.ACTIONS[action])
-      logging.error(error)
-      ## But can't raise exception on stream
-      ## Instead need to send Error block and then close...
-      raise stream.StreamException(error)
+      self._send_error("User <%s> not allowed to %s" % (self.user, user.ACTIONS[action]))
+      return False
 
   @tornado.web.asynchronous
   def got_block(self, block):
   #--------------------------
     ##logging.debug('GOT: %s', block)
+    self._block = block        ## For error handling
     if   block.type == stream.BlockType.ERROR:
       self.send_block(block)   ## Error blocks from parser v's from client...
     if   block.type == stream.BlockType.DATA_REQ:
       try:
-        self._check_authorised(user.ACTION_VIEW)
+        if not self._check_authorised(user.ACTION_VIEW): return
         uri = block.header.get('uri')
         ## Need to return 404 if unknown URI... (not a Recording or Signal)
         self._sigs = [ ]
@@ -250,16 +252,13 @@ class StreamDataSocket(StreamServer):
                                          signals = [str(sig.uri) for sig in self._sigs],
                                          rates = [sig.rate for sig in self._sigs],
                                          units = units ))
-
         sender = SignalReadThread(self, block, self._sigs, unit_conversion)
         sender.start()
 
       except Exception, msg:
         if str(msg) != "Stream is closed":
-          logging.error("Stream exception - %s" % msg)
-          self.send_block(stream.ErrorBlock(block, str(msg)))
-          self.close()
-          if options.debug: raise
+          self._send_error(msg)
+          ##if options.debug: raise
 
 #    elif block.type == stream.BlockType.INFO:
 #      self._last_info = block.header
@@ -300,7 +299,7 @@ class StreamDataSocket(StreamServer):
       # Got 'D' segment(s), uri is that of signal, that should have a recording link
       # look signal's uri up to get its Recording and hence format/source
       try:
-        self._check_authorised(user.ACTION_EXTEND)  ## or MODIFY ??
+        if not self._check_authorised(user.ACTION_EXTEND): return
         sd = block.signaldata()
 
 #        if not sd.uri and sd.info is not None:
