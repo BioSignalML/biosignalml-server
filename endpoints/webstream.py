@@ -296,13 +296,6 @@ class StreamDataSocket(StreamServer):
 #        self.send_block(stream.ErrorBlock(block, str(msg)))
 #        if options.debug: raise
 
-#    elif block.type == stream.BlockType.RDF:
-#      ## Or do we just use REST services? Or SPARQL??
-#      uri = self._last_info['recording']
-#      graph_uri = self._repo.get_graph_and_recording_uri(uri)[0]
-#      mimetype = block.header.get('mimetype')
-#      options.repository.extend_graph(graph_uri, unicode(block.content), format=mimetype)
-
     elif block.type == stream.BlockType.DATA:
       # Got 'D' segment(s), uri is that of signal, that should have a recording link
       # look signal's uri up to get its Recording and hence format/source
@@ -328,12 +321,8 @@ class StreamDataSocket(StreamServer):
 
         if rec.dataset is None:
           rec.dataset = options.recordings_path + 'streamed/' + str(uuid.uuid1()) + '.h5'
-
           self._repo.insert_triples(rec_graph,
             [ ('<%s>' % rec_uri, '<%s>' % BSML.dataset, '<%s>' % utils.file_uri(rec.dataset)) ])
-#          self._repo.insert_triples(rec.graph_uri, # or rec.graph.uri ???
-#            [ '<%s> <%s> <%s>' % (rec_uri, BSML.dataset, file_uri(rec.dataset)) ])
-
           rec.initialise(create=True)
         else:
           rec.initialise()  # Open hdf5 file
@@ -376,10 +365,7 @@ if __name__ == '__main__':
 
   def test(uri):
   #-------------
-
     repo = repository.BSMLRepository('http://devel.biosignalml.org', 'http://localhost:8083')
-
-
 
   if len(sys.argv) < 2:
     print "Usage: %s uri..." % sys.argv[0]
@@ -387,7 +373,6 @@ if __name__ == '__main__':
 
   uri = sys.argv[1:]
   if len(uri) == 1: uri = uri[0]
-
 
   test(uri)
 
