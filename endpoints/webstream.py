@@ -315,6 +315,8 @@ class StreamDataSocket(StreamServer):
 #        elif sd.uri not in self._last_info['signals']:
 #          raise stream.StreamException("Signal '%s' not in Info header" % sd.uri)
 
+        ## Extend to have mutiple signals in a block -- sd.uri etc are then lists
+
         ## Also get and use graph uri...
         rec_graph, rec_uri = self._repo.get_graph_and_recording_uri(sd.uri)
         if rec_uri is None or not self._repo.has_signal(sd.uri, rec_graph):
