@@ -207,6 +207,8 @@ class StreamDataSocket(StreamServer):
     else:
       error = "User <%s> not allowed to %s" % (self.user, user.ACTIONS[action])
       logging.error(error)
+      ## But can't raise exception on stream
+      ## Instead need to send Error block and then close...
       raise stream.StreamException(error)
 
   @tornado.web.asynchronous

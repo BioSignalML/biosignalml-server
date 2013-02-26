@@ -310,6 +310,7 @@ class Recording(httpchunked.ChunkedHandler):
       return
 
     self._write_error(501, msg="DELETE not fully implemented...")
+    ## Need to consider what happens to RDF graphs...
     return
 
     try:
