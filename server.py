@@ -96,7 +96,7 @@ def init_server():
   define('repository_uri', options.repository['uri'])
   sparqlstore = SparqlStore(options.repository['sparql_server'])
   define('sparql_store', sparqlstore)
-  define('repository', repository.BSMLStore(options.repository['uri'], sparqlstore))
+  define('repository', repository.BSMLUpdateStore(options.repository['uri'], sparqlstore))
   define('debug',      (options.logging['log_level'] == 'DEBUG'))
   tornado.options.host = options.repository['host']
   tornado.options.port = int(options.repository['port'])
