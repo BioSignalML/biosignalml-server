@@ -47,7 +47,7 @@ CAPABILITIES = { GUEST:         [ ACTION_VIEW ],
                  ADMINISTRATOR: [ ACTION_VIEW, ACTION_EXTEND, ACTION_MODIFY, ACTION_DELETE, ACTION_ADMIN ],
                }
 
-TOKEN_TIMEOUT = 86400  # seconds
+TOKEN_TIMEOUT = 864000  # seconds  #### MAKE CONFIGURABLE
 
 
 ## FUTURE: Define groups and assign users to them.
