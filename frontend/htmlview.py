@@ -305,7 +305,7 @@ class Repository(frontend.BasePage):
 ####      print recording.graph.serialise(format=rdf.Format.TURTLE, base=recording.uri, prefixes=PREFIXES)
 
       kwds = dict(bodytitle = uri, style = 'signal',
-                  tree = self._xmltree([r[1] for r in repo.recordings()], name),
+                  tree = self._xmltree([r[1] for r in repo.recording_uris()], name),
                   content = recording_info(recording)
                           + signal_table(self, recording, selectedsig) )
       target = selectedsig if selectedsig else uri
@@ -328,7 +328,7 @@ class Repository(frontend.BasePage):
     else:
       self.render('tpage.html',
         title = 'Recordings in repository:',
-        tree = self._xmltree([r[1] for r in repo.recordings()]))
+        tree = self._xmltree([r[1] for r in repo.recording_uris()]))
 
 ##  @tornado.web.authenticated
   def get(self):
