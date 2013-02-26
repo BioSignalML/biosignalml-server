@@ -74,7 +74,9 @@ def ContentNegotiate(*args, **kwds):
 
 application = tornado.web.Application([
     ('/provenance/(.*)',                  provenance.ProvenanceRDF),
-    ( '/sparql/',                         sparql.sparql),              # SPARQL endpoint
+    ( '/sparql/update/',                  sparql.SparqlUpdate),        # SPARQL endpoint
+    ( '/sparql/graph/',                   sparql.SparqlGraph),         # SPARQL endpoint
+    ( '/sparql/',                         sparql.SparqlQuery),         # SPARQL endpoint
 
     ('/frontend/metadata',                frontend.htmlview.Metadata), # For tooltip popups
     ('/frontend/rdf/.*',                  metadata.MetaData),          # Return RDF
