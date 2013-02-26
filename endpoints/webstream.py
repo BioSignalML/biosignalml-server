@@ -334,10 +334,11 @@ class StreamDataSocket(StreamServer):
 
           rec.initialise(create=True)
         else:
-          rec.initialise(create_signals=True)  # Open hdf5 file
+          rec.initialise()  # Open hdf5 file
 
         sig = rec.get_signal(sd.uri)
 
+        sig.initialise(create=True, dtype=sd.dtype)
         # what if sd.units != sig.units ??
         # what if sd.rate != sig.rate ??
         # What if sd.clock ??
