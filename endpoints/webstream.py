@@ -336,18 +336,20 @@ class StreamDataSocket(StreamServer):
         else:
           rec.initialise()  # Open hdf5 file
 
-        sig = rec.get_signal(sd.uri)
+        if sd.rate: ts = UniformTimeSeries(sd.data, rate=sd.rate)
+        else:       ts = TimeSeries(sd.data, sd.clock)
 
+        sig = rec.get_signal(sd.uri)
         sig.initialise(create=True, dtype=sd.dtype)
         # what if sd.units != sig.units ??
         # what if sd.rate != sig.rate ??
         # What if sd.clock ??
 
-        if sd.rate: ts = UniformTimeSeries(sd.data, rate=sd.rate)
-        else:       ts = TimeSeries(sd.data, sd.clock)
-
-
         sig.append(ts)
+
+        if rec.duration is None or rec.duration < sig.duration:
+          rec.duration = sig.duration
+          self._repo.save_subject_property(rec_graph, rec, 'duration')
         rec.close()
 
       except Exception, msg:
