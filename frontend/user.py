@@ -57,15 +57,16 @@ TOKEN_TIMEOUT = 864000  # seconds  #### MAKE CONFIGURABLE
 def capabilities(request, uri):
 #==============================
   token = request.get_cookie('access')
+  nouser = 'guest' if token is None else None
   row = options.database.readrow('users', ('email', 'level', 'expiry'),
                                  where='token=:t', bindings=dict(t=token))
   try:
-    request.user = row.get('email', 'guest')
+    request.user = row.get('email', nouser)
     request.user_expired = (datetime.utcnow() > dateutil.parser.parse(row.get('expiry', '2000')))
     if not request.user_expired: return CAPABILITIES[int(row['level'])]
   except (TypeError, KeyError):
     pass
-  return CAPABILITIES[GUEST]
+  return CAPABILITIES[GUEST] if token is None else [ ]
 
 def capable(action):
 #===================
@@ -75,7 +76,9 @@ def capable(action):
 ##        logging.debug("User <%s> allowed to %s", request.user, ACTIONS[action])
         return method(request, *args, **kwds)
       else:
-        if request.user_expired:
+        if request.user is None:
+          logging.error("Unknown user")
+        elif request.user_expired:
           logging.error("User <%s> is no longer current", request.user)
         else:
           logging.error("User <%s> not allowed to %s", request.user, ACTIONS[action])
