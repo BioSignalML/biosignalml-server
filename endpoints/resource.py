@@ -162,14 +162,12 @@ class Recording(httpchunked.ChunkedHandler):
     accept = parse_accept(self.request.headers)
 
     if BSML.Recording in options.repository.get_types(uri, graph_uri):
-      recording = options.repository.get_recording(rec_uri, graph_uri)
-
-
+      recording = options.repository.get_recording(rec_uri, with_signals=False, open_dataset=False,
+                                                                                graph_uri=graph_uri)
       ctype = getattr(recording, 'format')
 ## Should we set 'Content-Location' header as well?
 ## (to actual URL of representation returned).
       # only send recording if '*/*' or content type match
-
 
       if accept.get(ctype, 0) > 0: # send file
         if recording.dataset is None:
@@ -303,7 +301,7 @@ class Recording(httpchunked.ChunkedHandler):
     name = self.full_uri
     rec_uri, fragment = self._get_names(name)
     if rec_uri is None: return
-    recording = options.repository.get_recording(rec_uri)
+    recording = options.repository.get_recording(rec_uri, with_signals=False, open_dataset=False)
     if recording.dataset is None:
       self._write_error(404, msg="Recording '%s' is not in repository" % rec_uri)
       return

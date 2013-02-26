@@ -234,7 +234,7 @@ def build_metadata(uri):
     graph_uri = repo.get_graph_and_recording_uri(uri)[0]
     objtypes = repo.get_types(uri, graph_uri)
     if   BSML.Recording in objtypes:    # repo.has_recording(uri)
-      rec = repo.get_recording(uri, graph_uri)
+      rec = repo.get_recording(uri, with_signals=False, open_dataset=False, graph_uri=graph_uri)
       ## What about a local cache of opened recordings?? (keyed by uri)
       ## in bsml.recordings module ?? in repo ??
       html.append(property_details(rec, recording_properties, graph_uri))
@@ -286,7 +286,7 @@ class Repository(frontend.BasePage):
     repo = options.repository
     if name:
       uri = name
-      recording = repo.get_recording_with_signals(uri, open_dataset=False)
+      recording = repo.get_recording(uri, open_dataset=False)
       if recording is None:        ## Not part of a recording, so return RDF
         self.set_header('Content-Type', rdf.Format.RDFXML)
         self.write(repo.describe(uri, format=rdf.Format.RDFXML))
@@ -345,7 +345,7 @@ class Repository(frontend.BasePage):
     if self.get_argument('action') == 'Annotate' and text:
       repo = options.repository
       target = self.get_argument('target')
-      recording = repo.get_recording(target)
+      recording = repo.get_recording(target, with_signals=False, open_dataset=False)
       ann = Annotation.Note(recording.make_uri(prefix='annotation'), target, text,
                             creator='%s/user/%s' % (repo.uri, self.current_user)
                               if self.current_user is not None else None)
