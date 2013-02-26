@@ -3,9 +3,9 @@ import logging
 import tornado.web
 from tornado.options import options
 
-import biosignalml.rdf as rdf
 from biosignalml import BSML
-from biosignalml.formats import HDF5Recording
+import biosignalml.rdf as rdf
+import biosignalml.formats as formats
 
 import resource
 from frontend import user
@@ -64,13 +64,21 @@ class MetaData(tornado.web.RequestHandler):
       logging.error("Metadata doesn't describe a bsml:Recording")
       self.set_status(400)
       return
-    if not g.contains(rdf.Statement(rec_uri, rdf.DCT.format, HDF5Recording.MIMETYPE)):
-      logging.error("Metadata doesn't describe an HDF5 recording")
-      self.set_status(400)
-      return
-    rec = HDF5Recording.create_from_graph(rec_uri, g)
+
+    format = str(g.get_object(rec_uri, rdf.DCT.format))
+    if format is None or format == formats.BSMLRecording.MIMETYPE:
+      RecordingClass = formats.HDF5Recording
+      g.set_subject_property(rec_uri, rdf.DCT.format, formats.HDF5Recording.MIMETYPE)
+    else:
+      RecordingClass = formats.CLASSES.get(format)
+      if RecordingClass is None:
+        logging.error("Repository doesn't support requested Recording class")
+        self.set_status(400)
+        return
+    rec = RecordingClass.create_from_graph(rec_uri, g)
     rec.close()
-    # Actual HDF5 gets assigned a name and created when data is first streamed to it.
+
+    # Actual file gets assigned a name and created when data is first streamed to it.
     # Don't set hdf5 metadata block -- this is for export_hdf5 (see below).
 
     graph_uri = options.repository.add_recording_graph(rec_uri, g.serialise(), self.user)
