@@ -177,6 +177,7 @@ class SignalReadThread(threading.Thread):
       return
     self._active = -1
     self._handler.close()     ## All done with data request
+    logging.debug("All sent...")
 
 
 class StreamDataSocket(StreamServer):
@@ -215,7 +216,7 @@ class StreamDataSocket(StreamServer):
   @tornado.web.asynchronous
   def got_block(self, block):
   #--------------------------
-    logging.debug('GOT: %s', block)
+    ##logging.debug('GOT: %s', block)
     if   block.type == stream.BlockType.ERROR:
       self.send_block(block)   ## Error blocks from parser v's from client...
     if   block.type == stream.BlockType.DATA_REQ:
