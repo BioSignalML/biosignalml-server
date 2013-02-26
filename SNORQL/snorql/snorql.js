@@ -12,8 +12,8 @@ function Snorql() {
     // modify this._endpoint to point to your SPARQL endpoint
     this._endpoint = document.location.href.match(/^([^?]*)frontend\/snorql\//)[1] + 'sparql/';
     // modify these to your likeing
-    this._poweredByLink = 'http://4store.org/';
-    this._poweredByLabel = '4store';
+    this._poweredByLink = 'http://virtuoso.openlinksw.com/';
+    this._poweredByLabel = 'Virtuoso';
     this._enableNamedGraphs = true;
 
     this._browserBase = null;
