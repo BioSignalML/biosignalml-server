@@ -203,7 +203,8 @@ class StreamDataSocket(StreamServer):
   def _check_authorised(self, action):
   #-----------------------------------
     if action in self._capabilities:
-      logging.info("User <%s> allowed to %s", self.user, user.ACTIONS[action])
+      pass
+      ## logging.debug("User <%s> allowed to %s", self.user, user.ACTIONS[action])
     else:
       error = "User <%s> not allowed to %s" % (self.user, user.ACTIONS[action])
       logging.error(error)
