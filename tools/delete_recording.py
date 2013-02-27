@@ -1,5 +1,6 @@
 import sys
 import json
+import urlparse
 
 from biosignalml.rdf import Format
 from biosignalml.rdf.sparqlstore import Virtuoso
@@ -9,11 +10,14 @@ from biosignalml.repository import BSMLStore
 if __name__ == '__main__':
 #=========================
 
-  if len(sys.argv) < 3:
-    print "Usage: %s repository recording_uri" % sys.argv[0]
+  if len(sys.argv) < 2:
+    print "Usage: %s recording_uri" % sys.argv[0]
     exit(1)
 
-  (repo, recording) = tuple(sys.argv[1:3])
+  recording = sys.argv[1]
+  p = urlparse.urlparse(recording)
+  repo = p.scheme + '://' + p.netloc
+
   store = Virtuoso('http://localhost:8890')
 
   for g in [ r['g']['value'] for r in json.loads(
