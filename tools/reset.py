@@ -1,8 +1,9 @@
 import sys
 import json
 
-from biosignalml.rdf import Format
-from biosignalml.rdf.sparqlstore import Virtuoso
+from biosignalml import BSML
+from biosignalml.rdf import Format, PRV
+from biosignalml.rdf.sparqlstore import StoreException, Virtuoso
 from biosignalml.repository import BSMLStore
 
 
@@ -31,16 +32,24 @@ if __name__ == '__main__':
                                graph <%s/provenance> {
                                 ?g a bsml:RecordingGraph
                                 }
-                              } order by ?g""" % repo, format=Format.JSON)
+                              } order by ?g""" % repo,
+                            format=Format.JSON,
+                            prefixes={'bsml': BSML.prefix})
                ).get('results', {}).get('bindings', [])
-            ]:  store.delete_graph(g)
+            ]:
+    try:
+      store.delete_graph(g)
+    except StoreException:  ## Actual graph may not exist
+      pass
 
   store.query("""WITH <%s/provenance>
                  DELETE { ?x ?p ?v } WHERE {
                    ?g a bsml:RecordingGraph ; prv:createdBy ?x .
                    ?x ?p ?v .
-                   }""" % repo)
+                   }""" % repo,
+              prefixes={'bsml': BSML.prefix, 'prv': PRV.prefix})
   store.query("""WITH <%s/provenance>
                  DELETE { ?g ?p ?v } WHERE {
                    ?g a bsml:RecordingGraph ; ?p ?v .
-                   }""" % repo)
+                   }""" % repo,
+              prefixes={'bsml': BSML.prefix})

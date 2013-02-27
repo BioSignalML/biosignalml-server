@@ -2,8 +2,9 @@ import sys
 import json
 import urlparse
 
-from biosignalml.rdf import Format
-from biosignalml.rdf.sparqlstore import Virtuoso
+from biosignalml import BSML
+from biosignalml.rdf import Format, DCT, PRV
+from biosignalml.rdf.sparqlstore import StoreException, Virtuoso
 from biosignalml.repository import BSMLStore
 
 
@@ -26,9 +27,15 @@ if __name__ == '__main__':
                                 ?g a bsml:RecordingGraph ;
                                    dct:subject <%s>
                                 }
-                              } order by ?g""" % (repo, recording), format=Format.JSON)
+                              } order by ?g""" % (repo, recording),
+                           format=Format.JSON,
+                           prefixes={'bsml': BSML.prefix, 'dct': DCT.prefix})
                ).get('results', {}).get('bindings', [])
-            ]:  store.delete_graph(g)
+            ]:
+    try:
+      store.delete_graph(g)
+    except StoreException:  ## Actual graph may not exist
+      pass
 
   store.query("""WITH <%s/provenance>
                  DELETE { ?x ?p ?v } WHERE {
@@ -36,10 +43,13 @@ if __name__ == '__main__':
                       dct:subject <%s> ;
                       prv:createdBy ?x .
                    ?x ?p ?v .
-                   }""" % (repo, recording))
+                   }""" % (repo, recording),
+              prefixes={'bsml': BSML.prefix, 'dct': DCT.prefix, 'prv': PRV.prefix})
   store.query("""WITH <%s/provenance>
                  DELETE { ?g ?p ?v } WHERE {
                    ?g a bsml:RecordingGraph ;
                       dct:subject <%s> ;
                       ?p ?v .
-                   }""" % (repo, recording))
+                   }""" % (repo, recording),
+              prefixes={'bsml': BSML.prefix, 'dct': DCT.prefix})
+
