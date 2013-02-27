@@ -280,6 +280,11 @@ div.block a {
   font-size: 0.9em;
 }
 
+.details {
+  word-wrap: break-word;
+  }
+
+
 .search th {
   text-align: left ;
   }

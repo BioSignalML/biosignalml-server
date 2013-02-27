@@ -75,27 +75,25 @@ class Properties(object):
 
 provenance_properties = Properties([
                          ('Imported', 'completed', datetime_to_isoformat),
-                         ('Author',   'performedby'),
+                         ('Importer', 'performedby'),
                        ])
 
 
 def property_details(object, properties, graph, **args):
 #-------------------------------------------------------
   r = [ ]
-  provenance = options.repository.get_provenance(graph)
-  if provenance is not None:
-    prompts = provenance_properties.header()
-    for n, d in enumerate(provenance_properties.details(provenance.createdby)):
+  def _append_details(prompts, details):
+    for n, d in enumerate(details):
       if d:
         t = ', '.join(d) if isinstance(d, list) else str(d)
-        r.append('<span class="emphasised">%s: </span>%s' % (prompts[n], xmlescape(t).replace('\n', '<br/>')))
+        r.append('<span class="emphasised">%s: </span><span class="details">%s</span>'
+                                   % (prompts[n], xmlescape(t).replace('\n', '<br/>')))
+  _append_details(properties.header(), properties.details(object, **args))
+  provenance = options.repository.get_provenance(graph)
+  if provenance is not None:
+    _append_details(provenance_properties.header(), provenance_properties.details(provenance.createdby))
 #  logging.debug('PROV: %s by %s, prec %s, next %s', provenance.createdby.completed,
 #    provenance.createdby.performedby, provenance.precededby, provenance.followedby)
-  prompts = properties.header()
-  for n, d in enumerate(properties.details(object, **args)):
-    if d:
-      t = ', '.join(d) if isinstance(d, list) else str(d)
-      r.append('<span class="emphasised">%s: </span>%s' % (prompts[n], xmlescape(t).replace('\n', '<br/>')))
   return '<p>' + '</p><p>'.join(r) + '</p>'
 
 
@@ -125,6 +123,7 @@ signal_properties = Properties([
 recording_properties = Properties([
                          ('Description', 'description'),
                          ('Created',     'starttime'),
+                         ('Creator',     'creator'),
                          ('Duration',    'duration', maketime),
                          ('Format',      'format', abbreviate),
                          ('Study',       'investigation'),
