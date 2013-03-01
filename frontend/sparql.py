@@ -94,7 +94,7 @@ class Query(frontend.BasePage):
     p.append(prologue())
     p.append('')
     p.append('select ?subject ?type where {')
-    p.append('  graph <%s/provenance> {' % options.repository_uri)
+    p.append('  graph <%s> {' % options.repository.provenance_uri)
     p.append('    ?graph a bsml:RecordingGraph MINUS { [] prv:precededBy ?graph }')
     p.append('    }')
     p.append('  graph ?graph {')

@@ -47,7 +47,7 @@ class ProvenanceRDF(tornado.web.RequestHandler):
     self.set_header('Vary', 'Accept')      # Let caches know we've used Accept header
     self.set_header('Content-Type', rdf.Format.mimetype(format))
 
-    graph_uri = options.repository.provenance_uri()
+    graph_uri = options.repository.provenance_uri
     if name is None:
       self.write(options.repository.construct('?s ?p ?o', '?s ?p ?o', graph=graph_uri, format=format))
     else:
