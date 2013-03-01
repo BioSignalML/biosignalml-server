@@ -79,8 +79,8 @@ provenance_properties = Properties([
                        ])
 
 
-def property_details(object, properties, graph, **args):
-#-------------------------------------------------------
+def property_details(object, properties, graph, provenance=False, **args):
+#-------------------------------------------------------------------------
   r = [ ]
   def _append_details(prompts, details):
     for n, d in enumerate(details):
@@ -89,9 +89,10 @@ def property_details(object, properties, graph, **args):
         r.append('<span class="emphasised">%s: </span><span class="details">%s</span>'
                                    % (prompts[n], xmlescape(t).replace('\n', '<br/>')))
   _append_details(properties.header(), properties.details(object, **args))
-  provenance = options.repository.get_provenance(graph)
-  if provenance is not None:
-    _append_details(provenance_properties.header(), provenance_properties.details(provenance.createdby))
+  if provenance:
+    prov = options.repository.get_provenance(graph)
+    if prov is not None:
+      _append_details(provenance_properties.header(), provenance_properties.details(prov.createdby))
 #  logging.debug('PROV: %s by %s, prec %s, next %s', provenance.createdby.completed,
 #    provenance.createdby.performedby, provenance.precededby, provenance.followedby)
   return '<p>' + '</p><p>'.join(r) + '</p>'
@@ -109,6 +110,13 @@ def link(uri, trimlen=0, makelink=True):
     return '<a href="%s">%s</a>' % (uri, text)
   else:
     return text
+
+
+def time_display(t):
+#-------------------
+  d = ['%gs' % t.start]
+  if t.duration: d.append('to %gs' % t.end)
+  return ' '.join(d)
 
 
 signal_properties = Properties([
@@ -135,15 +143,15 @@ recording_properties = Properties([
 event_properties = Properties([
                           ('Recording', 'recording'),
                           ('Type',      'eventtype'),
-                          ('Time',      'time'),
-                          ('Duration',  'duration'),
+                          ('Time',      'time', time_display),
                         ])
 
 annotation_properties = Properties([
                           ('About',      'about'),
-                          ('Created',    'created', datetime_to_isoformat),
-                          ('Author',     'creator'),
+                          ('Time',       'time', time_display),
                           ('Annotation', 'comment'),
+                          ('Author',     'creator'),
+                          ('Created',    'created', datetime_to_isoformat),
                         ])
 
 
@@ -154,16 +162,9 @@ def recording_info(rec):
   html.append(frontend.make_link(rec.uri, rec.graph.uri))
 ##  html.append(annotatelink(rec.uri))
   html.append('</div>')
-  html.append(property_details(rec, recording_properties, rec.graph.uri))
+  html.append(property_details(rec, recording_properties, rec.graph.uri, provenance=True))
   html.append('</div>')
   return ''.join(html)
-
-
-def time_display(t):
-#-------------------
-  d = ['%gs' % t.start]
-  if t.duration: d.append('to %gs' % t.end)
-  return ' '.join(d)
 
 
 def event_info(evt):
@@ -236,7 +237,7 @@ def build_metadata(uri):
       rec = repo.get_recording(uri, with_signals=False, open_dataset=False, graph_uri=graph_uri)
       ## What about a local cache of opened recordings?? (keyed by uri)
       ## in bsml.recordings module ?? in repo ??
-      html.append(property_details(rec, recording_properties, graph_uri))
+      html.append(property_details(rec, recording_properties, graph_uri, provenance=True))
       # And append info from repo.provenance graph...
     elif BSML.Signal in objtypes:       # repo.has_signal(uri)
       sig = repo.get_signal(uri, graph_uri)
