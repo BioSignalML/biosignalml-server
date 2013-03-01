@@ -34,10 +34,12 @@ Virtuoso
 
 * Set buffer limits in /usr/local/virtuoso-opensource/var/lib/virtuoso/db/virtuoso.ini
 
-* Enable full text search:::
+* Enable full text search (see
+  http://docs.openlinksw.com/virtuoso/sparqlextensions.html#rdfsparqlrulefulltext):::
 
     $ /usr/local/virtuoso-opensource/bin/isql
     > DB.DBA.RDF_OBJ_FT_RULE_ADD (null, null, 'All');
+    > DB.DBA.VT_BATCH_UPDATE ('DB.DBA.RDF_OBJ', 'OFF', null);
     > EXIT;
 
 
