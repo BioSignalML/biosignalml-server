@@ -27,6 +27,7 @@ def rdf_link(uri):
 
 def snorql_link(uri, graph=None):
 #================================
+  if uri in ['', None]: return ''
   if graph is not None: g = '&graph=' + urllib.quote_plus(str(graph))
   else:                 g = ''
   return ('<a href="%s?describe=%s%s" target="_blank">SNORQL</a>'
@@ -34,6 +35,7 @@ def snorql_link(uri, graph=None):
 
 def make_link(uri, graph=None):
 #==============================
+  if uri in ['', None]: return ''
   if graph is not None: g = '&graph=' + urllib.quote_plus(str(graph))
   else:                 g = ''
   return rdf_link(uri) + ' ' + snorql_link(uri, graph)
