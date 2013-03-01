@@ -20,7 +20,7 @@
 {# if $refresh#<meta http-equiv='Refresh' content='$refresh'/> #}
  <head>
   <title>{{ headtitle }}</title>
-  <link rel="shortcut icon" href="/static/favicon.ico?v=1"/>{%
+  <link rel="shortcut icon" href="/static/favicon.ico?v=2"/>{%
   for script in (javascript + scripts) %}
    <script type="text/javascript" src="{{ static_url("script/%s" % script) }}"></script>
   {% end %}
