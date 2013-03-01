@@ -12,6 +12,35 @@ easy_install/pip
 * numpy >= 2.1.1
 
 
+Virtuoso
+========
+
+* Use develop/6 HEAD:::
+
+    $ git clone git://github.com/openlink/virtuoso-opensource.git
+    $ cd virtuoso-opensource
+
+* Configuring and building:::
+
+    $ ./autogen.sh
+    ##
+    ##            --with-malloc-debug prevents an occassional crash...
+    $ ./configure --with-malloc-debug --prefix=/usr/local/ --with-readline
+    $ make
+    $ sudo make install
+
+* Ensure /usr/local/virtuoso-opensource/var/lib/virtuoso/db/ and contents are
+  owned by user running Virtuoso.
+
+* Set buffer limits in /usr/local/virtuoso-opensource/var/lib/virtuoso/db/virtuoso.ini
+
+* Enable full text search:::
+
+    $ /usr/local/virtuoso-opensource/bin/isql
+    > DB.DBA.RDF_OBJ_FT_RULE_ADD (null, null, 'All');
+    > EXIT;
+
+
 
 Server Install
 ==============
@@ -21,6 +50,9 @@ Configuration
 
 Starting
 ---------
+
+
+
 
 Loading Unit-of-Measure Ontologies
 ----------------------------------
