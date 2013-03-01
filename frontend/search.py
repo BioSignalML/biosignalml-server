@@ -291,12 +291,17 @@ class Search(frontend.BasePage):
       sparql = [ ]
       sparql.append(PREFIXES)
       sparql.append('')
-      sparql.append('select distinct ?g ?r ?s ?t where { graph ?g {')
-      sparql.append('?r rdf:type bsml:Recording .')
+      sparql.append('select distinct ?g ?r ?s ?t where {')
+      sparql.append('  graph <%s> {' % options.repository.provenance_uri)
+      sparql.append('    ?graph a bsml:RecordingGraph MINUS { [] prv:precededBy ?graph }')
+      sparql.append('    }')
+      sparql.append('  graph ?g {')
+      sparql.append('    ?r rdf:type bsml:Recording .')
       sparql.append(query)
-      sparql.append('?s rdf:type ?t .')   ##  % stype)
-      sparql.append('filter(?g != <%s>)' % options.repository._provenance_uri)  # Call method ??
-      sparql.append('} }')
+      sparql.append('    ?s rdf:type ?t .')   ##  % stype)
+      sparql.append('    filter(?g != <%s>)' % options.repository.provenance_uri)  # Call method ??
+      sparql.append('    }')
+      sparql.append('  }')
       ##logging.debug('SEARCH: %s', '\n'.join(sparql))
       subjects = set()
       # Provenance....
