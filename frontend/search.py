@@ -353,15 +353,24 @@ class Search(frontend.BasePage):
       sigs = join(sigs, op, linesearch(line))
     sigs = list(sigs)
     sigs.sort()
-    html = [ '<div>' ]
-    for n, s in enumerate(sigs):
-      html.append('<div class="result%s" id="%s">%s %s %s %s</div>'
-                             % (' odd' if n%2 else '', s[0], s[4], s[1], s[2], frontend.snorql_link(s[0], s[3])))
+
+    html = ['<div id="sparqlresult">']
+    html.append('<table class="results">')
+    html.append('<tr>')
+    html.append('<th>Recording</th><th>Resource</th><th>Type</th><th>Browse</th>')
+    html.append('</tr>')
+    odd = True
+    for s in sigs:
+      html.append('<tr class="result%s" id="%s">' % (' odd' if odd else '', s[0]))
+      html.append('<td>%s</td><td>%s</td><td>%s</td><td>%s</td>'
+                    % (s[4],      s[1],      s[2], frontend.snorql_link(s[0], s[3])))
+      html.append('</tr>')
+      odd = not odd
+    html.append('</table>')
     html.append('</div>')
     self.write( { 'html': '\n'.join(html) } )
 
   ## We need a SignalSet, created from the list of signal uris
-
 
 
   """
