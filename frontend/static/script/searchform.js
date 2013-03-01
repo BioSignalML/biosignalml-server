@@ -174,7 +174,7 @@ function enable_cluetips() {
       ajaxSettings: {
         dataType: 'json',
         type:     'POST',
-        data:     'uri=' + $(this).attr('uri').toString()
+        data:     'uri=' + $(this).attr('href').toString()
                 + '&_xsrf=' + getCookie("_xsrf"),
                         },
       ajaxProcess: function(data) {
