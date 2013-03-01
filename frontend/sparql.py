@@ -93,10 +93,12 @@ class Query(frontend.BasePage):
     p = [ ]
     p.append(prologue())
     p.append('')
-    p.append('select * where {')
-    p.append('  graph <http://devel.biosignalml.org/provenance> { ?graph a bsml:RecordingGraph }')
+    p.append('select ?subject ?type where {')
+    p.append('  graph <%s/provenance> {' % options.repository_uri)
+    p.append('    ?graph a bsml:RecordingGraph MINUS { [] prv:precededBy ?graph }')
+    p.append('    }')
     p.append('  graph ?graph {')
-    p.append('    ?subject ?predicate ?object')
+    p.append('    ?subject a ?type')
     p.append('    }')
     p.append('  } limit 20')
     self.render('\n'.join(p)) # Default namespace prefixes and query
