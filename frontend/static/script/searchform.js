@@ -169,7 +169,7 @@ function enable_cluetips() {
     $(this).attr('rel', '/frontend/metadata').cluetip({
       // splitTitle: '|',
       clickThrough: true,
-      titleAttribute: 'uri',
+      titleAttribute: 'href',
       ajaxCache: false,   // ####
       ajaxSettings: {
         dataType: 'json',
