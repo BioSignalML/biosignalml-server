@@ -303,7 +303,7 @@ class Search(frontend.BasePage):
       resultset = options.repository.query('\n'.join(sparql))
       for r in resultset:
         # logging.debug('R: %s', r)
-        if r.get('error'): return set([('', r['error'], '')])
+        if r.get('error'): return set([('', r['error'], '', '', '')])
         rec = make_html(resultset, r['r'])
         s = make_html(resultset, r['s'])
         t = make_html(resultset, r['t'])
