@@ -249,7 +249,7 @@ def build_metadata(uri):
     elif BSML.Annotation in objtypes:
       ann = repo.get_annotation(uri, graph_uri)
       #html.append(annotation_info(ann))
-      html.append(property_details(ann, graph_uri, annotation_properties))
+      html.append(property_details(ann, annotation_properties, graph_uri))
     elif BSML.Event in objtypes:
       evt = repo.get_event(uri, graph_uri)
       html.append(property_details(evt, event_properties, graph_uri, makelink=False))
