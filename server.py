@@ -25,6 +25,8 @@ from biosignalml.rdf.sparqlstore import Virtuoso, FourStore
 import biosignalml.repository as repository
 import frontend.webdb as webdb
 
+VERSION = '0.4.0'
+
 LOGFORMAT = '%(asctime)s %(levelname)8s %(threadName)s: %(message)s'
 
 DEFAULTS  = { 'uri': 'http://devel.biosignalml.org',
@@ -84,7 +86,7 @@ def init_server():
   console = logging.StreamHandler()
   console.setFormatter(logging.Formatter(LOGFORMAT))
   logging.getLogger().addHandler(console)
-  logging.info('Starting BioSignalML repository server...')
+  logging.info('Starting BioSignalML server v%s', VERSION)
 
   define('recordings_path', os.path.join(server_path, options.repository['recordings']))
   define('database',
