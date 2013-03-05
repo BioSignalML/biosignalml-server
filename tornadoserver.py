@@ -11,6 +11,7 @@
 """A web.py application powered by Tornado"""
 
 import os
+import urllib
 import logging
 
 import tornado.httpserver
@@ -48,7 +49,7 @@ def ContentNegotiate(*args, **kwds):
   if request.headers.get('Upgrade') == 'websocket':
     HandlerClass = webstream.StreamDataSocket
 
-  elif len(accept) == 1 and accept.keys()[0].startswith('application/x-bsml+'):
+  elif len(accept) == 1 and accept.keys()[0].startswith('application/x-bsml'):
     HandlerClass = resource.Recording
 
   elif (accept.get('application/rdf+xml', 0) > 0.9
@@ -66,7 +67,7 @@ def ContentNegotiate(*args, **kwds):
 
   handler = HandlerClass(*args, **kwds)
   if request.path in ['', '/']: handler.full_uri = ''
-  else: handler.full_uri = '%s://%s%s' % (request.protocol, request.host, request.path)
+  else: handler.full_uri = '%s://%s%s' % (request.protocol, request.host, urllib.unquote(request.path))
   ##logging.debug("Negotiate: %s --> %s (%s)", accept, handler, handler.full_uri)
   if len(accept) > 1: handler.set_header('Vary', 'Accept') # Let caches know we've used Accept header
   return handler

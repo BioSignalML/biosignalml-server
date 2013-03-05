@@ -20,18 +20,18 @@ import logging
 import uuid
 import os
 import urllib
+import urlparse
 import httplib
 import hashlib
 from datetime import datetime
 
+import tornado.web as web
 from tornado.options import options
-import httpchunked
 
+import biosignalml.rdf as rdf
 from biosignalml.utils import xmlescape
 from biosignalml.model import BSML
-
-import biosignalml.formats
-import biosignalml.rdf as rdf
+from biosignalml.formats import CLASSES as RECORDING_CLASSES
 
 KnownSchemes = [ 'http', 'urn' ]
 
@@ -77,55 +77,61 @@ class FileWriter(object):
   def __init__(self, fname, uri, cls):
   #----------------------------------
     self.fname = fname
-    self.output = open(fname, 'wb')
-    self.sha = hashlib.sha512()
     self.uri = uri
     self.Recording = cls
+    self._output = open(fname, 'wb')
+    self._sha = hashlib.sha512()
 
   def write(self, data):
   #---------------------
-    logging.debug('Writing %d bytes', len(data))
-    self.sha.update(data)
+    self._sha.update(data)
     try:
       self._output.write(data)
     except IOError, msg:
-      raise_error(400, msg="%s: %s -> %s" % (msg, name, self._fname))
+      raise_error(400, msg="%s: %s -> %s" % (msg, self.uri, self.fname))
+
+  def close(self):
+  #---------------
+    self._output.close()
+
+  def hexdigest(self):
+  #-------------------
+    return self._sha.hexdigest()
 
 
-class Recording(httpchunked.ChunkedHandler):
-#===========================================
+class Recording(web.RequestHandler):
+#===================================
 
   SUPPORTED_METHODS = ("GET", "HEAD", "POST", "DELETE", "PUT")
 
-  _mimetype = { }
-  _class = { }
   _extns = { }
-
-  for name, cls in biosignalml.formats.CLASSES.iteritems():
-    _mimetype[name] = cls.MIMETYPE
-    _class[cls.MIMETYPE] = cls
+  for mtype, cls in RECORDING_CLASSES.iteritems():
     for extn in cls.EXTENSIONS:
-      _extns[extn] = cls.MIMETYPE
+      if extn in _extns:
+        raise ValueError("Duplicate extension: %s", extn)
+      _extns[extn] = mtype
 
   def check_xsrf_cookie(self):
   #---------------------------
     """Don't check XSRF token for POSTs."""
     pass
 
-  def write_error(self, status_code, **kwds):
-  #------------------------------------------
-    self.finish("<html><title>%(code)d: %(message)s</title>"
-                "<body>%(code)d: %(message)s</body></html>" % {
-            "code": status_code,
-            "message": httplib.responses[status_code],
-            })
+#  def write_error(self, status_code, **kwds):
+#  #------------------------------------------
+#    self.finish("<html><title>%(code)d: %(message)s</title>"
+#                "<body>%(code)d: %(message)s</body></html>" % {
+#            "code": status_code,
+#            "message": httplib.responses[status_code],
+#            })
 
   def _write_error(self, status, msg=None):
   #----------------------------------------
+    logging.error("Error %d: %s", status, '' if msg is None else msg)
     raise_error(self, status, msg)
 
-  def _get_names(self, name):
-  #--------------------------
+  @staticmethod
+  def _get_names(name):
+  #--------------------
     tail = name.split('#', 1)
     fragment = tail[1] if len(tail) > 1 else ''
     head = tail[0]
@@ -139,6 +145,7 @@ class Recording(httpchunked.ChunkedHandler):
       return (options.repository_uri + head, fragment)
 
 
+##  @user.capable(user.ACTION_VIEW)
   def get(self, **kwds):
   #---------------------
     name = self.full_uri
@@ -175,6 +182,7 @@ class Recording(httpchunked.ChunkedHandler):
           return
         filename = str(recording.dataset)  ### ' '.join([str(f) for f in recording.dataset])   #### Why????
         logging.debug("Sending '%s'", filename)
+        # Tornado's defaults to sending with ChunkedTransferEncoding
         try:
           rfile = urllib.urlopen(filename).fp
           self.set_header('Vary', 'Accept')      # Let caches know we've used Accept header
@@ -216,54 +224,80 @@ class Recording(httpchunked.ChunkedHandler):
       elif n.literal[2]: l.append('^^<%s>' % n.literal[2])
       return ''.join(l)
 
+
+  def _get_length(self):
+  #---------------------
+    self._stream.read_until('\r\n', self._got_length)
+
+  def _got_length(self, data):
+  #------------------------------
+    assert data[-2:] == '\r\n', 'Bad chunk length'
+    length = int(data[:-2], 16)
+    if length > 0:
+      self._stream.read_bytes(length + 2, self._read_callback, streaming_callback=self._got_data)
+    else:
+      self._finished_read()
+
+  def _got_data(self, data):
+  #-------------------------
+    assert data[-2:] == '\r\n', 'Bad data chunk'
+    self._file.write(data[:-2])
+    self._get_length()
+
+  def _read_callback(self, data):
+  #------------------------------
+    assert len(data) == 0, 'Data outside chunk??'
+
+  def _chunked_read(self):
+  #-----------------------
+    if (self.request.headers.get('Transfer-Encoding') == 'chunked'
+    and self.request.headers.get('Expect') == '100-continue'
+    and not 'Content-Length' in self.request.headers):
+      self._stream = self.request.connection.stream
+      self._auto_finish = False
+      self._get_length()
+      self.request.write("HTTP/1.1 100 (Continue)\r\n\r\n")
+      return True
+    return False
+
+##  @user.capable(user.ACTION_EXTEND)
+    ## Provenance will take care of multiple versions but need to check user can replace....
   def put(self, **kwds):
   #---------------------
     """
     Import a recording into the repository.
 
     """
-    name = self.full_uri
-
-    #logging.debug("URI, NM: %s, %s", self.request.uri, name)  #############
-    #logging.debug("HDRS: %s", self.request.headers)
-    rec_uri, fragment = self._get_names(name)
+    u = urlparse.urlparse(self.full_uri)
+    path, extn = os.path.splitext(u.path)
+    if extn != '': extn = extn[1:]
+    rec_uri = urlparse.urlunparse((u.scheme, u.netloc, path, '', '', ''))
     ctype = self.request.headers.get('Content-Type')
-    if ctype is None:
-      ## Need to first set extn #####
-      ctype = ReST._extns.get(extn, 'application/x-raw')
-
-    ## PUT of RDF in RDFXML, RDF/JSON and Turtle formats...
-
-    if not ctype.startswith('application/x-'):
-      self._write_error(415, msg="Invalid Content-Type: '%s'" % ctype)
+    if ctype == 'application/x-bsml' and extn != '':
+      ctype = Recording._extns.get(extn, 'application/x-bsml+raw')
+    RecordingClass = RECORDING_CLASSES.get(ctype)
+    if RecordingClass is None:
+      self._write_error(415, msg="Unsupported recording format: %s" % ctype)
       return
-    RecordingClass = ReST._class.get(ctype)
-    if not RecordingClass:
-      self._write_error(415, msg="Unknown Content-Type: '%s'" % ctype)
-      return
-    file_name = os.path.abspath(os.path.join(options.recordings_path,
-                                str(uuid.uuid1()) + '.' + RecordingClass.EXTENSIONS[0]))
-    logging.debug('URI: %s, FILE: %s', rec_uri, file_name)
+    fname = os.path.join(options.recordings_path, str(uuid.uuid1()) + '.' + RecordingClass.EXTENSIONS[0])
+    self._file = FileWriter(fname, rec_uri, RecordingClass)
+    if not self._chunked_read():
+      self._file.write(self.request.body)
+      self._finished_read()
 
-    ## Provenance will take care of multiple versions but need to check user can replace....
-
-    ## Also check u = rec_uri...
-    try: os.makedirs(os.path.dirname(file_name))
-    except OSError: pass
-    newfile = FileWriter(file_name, rec_uri, RecordingClass)
-    if not self.have_chunked(newfile, self.finished_put):
-      newfile.write(self.request.body)
-      self.finished_put(newfile)
-
-  def finished_put(self, newfile):
-  #-------------------------------
-    newfile.output.close()
-    logging.debug("Imported %s -> %s", newfile.uri, newfile.fname)
+  def _finished_read(self):
+  #------------------------
+    self._file.close()
     ## We've streamed a file to somewhere on our file system
     ## Now open the file and put metadata into triplestore
-    recording = newfile.Recording(newfile.uri, dataset=newfile.fname, digest=newfile.sha.hexdigest())
-    options.repository.store_recording(recording)
-    recording.close()
+    try:
+      recording = self._file.Recording(self._file.uri, dataset=self._file.fname, digest=self._file.hexdigest())
+      options.repository.store_recording(recording)
+      recording.close()
+      logging.debug("Imported %s -> %s", self._file.uri, self._file.fname)
+    except Exception, msg:
+      self._write_error(415, msg=str(msg))
+      return
 
     # Or do we return HTML? RDF/XML of provenance? And include location in provenance...
     # OR a <status>Added...</status> message ???
@@ -281,21 +315,22 @@ class Recording(httpchunked.ChunkedHandler):
                           ' <created',
                           '  class="recording"',
                           '  uri="%s"'      % location, ## recording.uri
-                          '  mimetype="%s"' % writer.Recording.MIMETYPE,
+                          '  mimetype="%s"' % recording.MIMETYPE,
                           '  />',
                           '</bsml>', '']))
+    self.finish()
 
 
+##  @user.capable(user.ACTION_MODIFY)
   def post(self, **kwds):
   #-----------------------
     name = self.full_uri
-
-    self._write_error(501, msg="POST not implemented...")
-
+    raise web.HTTPError(501, "POST not implemented...")
     rec_uri = self._get_names(name)[0]
     if rec_uri: self.write("<html><body><p>POST: %s</p></body></html>" % rec_uri)
 
 
+##  @user.capable(user.ACTION_DELETE)
   def delete(self, **kwds):
   #------------------------
     name = self.full_uri
