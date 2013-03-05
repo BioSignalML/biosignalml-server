@@ -74,7 +74,7 @@ def init_server():
 
   global options
   options = Options(file=config_file, defaults=DEFAULTS)
-  server_path = options.repository['path']
+  server_path = os.path.abspath(options.repository['path'])
 
   if options.logging['log_file']:
     filename = os.path.join(server_path, options.logging['log_file'])
