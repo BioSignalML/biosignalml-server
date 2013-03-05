@@ -319,7 +319,7 @@ class StreamDataSocket(StreamServer):
           raise stream.StreamException("Signal can not be appended to -- not HDF5")
 
         if rec.dataset is None:
-          rec.dataset = options.recordings_path + 'streamed/' + str(uuid.uuid1()) + '.h5'
+          rec.dataset = os.path.join(options.recordings_path, str(uuid.uuid1()) + '.h5')
           self._repo.insert_triples(rec_graph,
             [ ('<%s>' % rec_uri, '<%s>' % BSML.dataset, '<%s>' % utils.file_uri(rec.dataset)) ])
           rec.initialise(create=True)
