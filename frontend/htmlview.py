@@ -170,7 +170,7 @@ def event_info(evt):
   h.append('<div>')
   for n, d in enumerate(props.details(evt)):
     if d:
-      t = '<br/>'.join(list(d)) if hasattr(d, '__iter__') else str(d)
+      t = '<br/>'.join(list(d)) if hasattr(d, '__iter__') else unicode(d)
       p = '<span class="prompt">%s </span>%s' % (prompts[n], xmlescape(t).replace('\n', '<br/>'))
       if n == 0: h.append('<div class="rside">%s</div>' % p)
       else: h.append('<div>%s</div>' % p)
@@ -189,7 +189,7 @@ def annotation_info(ann):
   prompts = props.header()
   for n, d in enumerate(props.details(ann)):
     if d is None: d = ''
-    t = '<br/>'.join(list(d)) if hasattr(d, '__iter__') else str(d)
+    t = '<br/>'.join(list(d)) if hasattr(d, '__iter__') else unicode(d)
     p = '<span class="prompt">%s: </span><pre>%s</pre>' % (prompts[n], xmlescape(t))
     if   n == 0: h.append('<p>%s</p>' % p)
     elif n == 1 and d: h.append('<div><div class="half">%s</div>' % p)
