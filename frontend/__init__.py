@@ -13,11 +13,24 @@ import urllib
 
 import tornado.web
 
+from biosignalml import BSML
+import biosignalml.rdf as rdf
+
 
 RDF_ENDPOINT    = '/frontend/rdf/'
 SNORQL_ENDPOINT = '/frontend/snorql/'
 
 SESSION_TIMEOUT = 86400 ### 1800 # seconds  ## num(config.config['idletime'])
+
+
+NAMESPACES = {
+  'bsml':  str(BSML.URI),
+  'unit':  "http://www.biosignalml.org/ontologies/examples/unit#",
+  'sleep': "http://www.biosignalml.org/ontologies/examples/sleep#",
+  'pbank': "http://www.biosignalml.org/ontologies/examples/physiobank#",
+  }
+
+NAMESPACES.update(rdf.NAMESPACES)
 
 
 # Provide useful utility functions

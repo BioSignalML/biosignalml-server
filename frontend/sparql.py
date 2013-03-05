@@ -20,17 +20,11 @@ from biosignalml.model import BSML
 from forms import Button, Field
 import frontend
 
-namespaces = {
-  'bsml':  str(BSML.URI),
-  'pbank': "http://www.biosignalml.org/ontologies/examples/physiobank#",
-  }
-
-namespaces.update(rdf.NAMESPACES)
 
 def prologue():
 #==============
   p = [ 'BASE <%s>' % options.repository_uri ]
-  for prefix, uri in namespaces.iteritems():
+  for prefix, uri in frontend.NAMESPACES.iteritems():
     p.append('PREFIX %s: <%s>' % (prefix, uri))
   return '\n'.join(p)
 

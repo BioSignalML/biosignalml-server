@@ -26,17 +26,10 @@ import menu
 import user
 
 
-PREFIXES = { 'bsml':     BSML.URI,
-             'pbterms': 'http://www.biosignalml.org/ontologies/examples/physiobank#',
-           }
-PREFIXES.update(rdf.NAMESPACES)
-
-
-
 def abbreviate(u):
 #-----------------
   s = str(u) if u else ''
-  for p, n in PREFIXES.iteritems():
+  for p, n in frontend.NAMESPACES.iteritems():
     if s.startswith(n): return ''.join([p, ':', s[len(n):]])
   return s
 
