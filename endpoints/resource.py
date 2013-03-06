@@ -283,6 +283,9 @@ class Recording(web.RequestHandler):
     if RecordingClass is None:
       self._write_error(415, msg="Unsupported recording format: %s" % ctype)
       return
+    if options.repository.has_recording(rec_uri):
+      self._write_error(409, msg="Recording already exists in repository")
+      return
     fname = os.path.join(options.recordings_path, str(uuid.uuid1()) + '.' + RecordingClass.EXTENSIONS[0])
     self._file = FileWriter(fname, rec_uri, RecordingClass)
     if not self._chunked_read():
