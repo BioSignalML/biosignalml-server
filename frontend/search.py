@@ -287,8 +287,8 @@ class Search(frontend.BasePage):
 ## Following gets the recording, but what if annotation is about something else?
 ## eg. a signal, event, annotation...
 
-    def sparql_find(stype, query):
-    #-----------------------------
+    def sparql_find(query):
+    #----------------------
       sparql = [ ]
       sparql.append(PREFIXES)
       sparql.append('')
@@ -299,7 +299,7 @@ class Search(frontend.BasePage):
       sparql.append('  graph ?g {')
       sparql.append('    ?r rdf:type bsml:Recording .')
       sparql.append(query)
-      sparql.append('    ?s rdf:type ?t .')   ##  % stype)
+      sparql.append('    ?s rdf:type ?t .')
       sparql.append('    filter(?g != <%s>)' % options.repository.provenance_uri)  # Call method ??
       sparql.append('    }')
       sparql.append('  }')
@@ -336,8 +336,7 @@ class Search(frontend.BasePage):
       else:
         test = ''
       v = term[2]
-      return sparql_find('bsml:Signal',
-                         sparql % { 'property': field['property'], 'test': test, 'value': v })
+      return sparql_find(sparql % { 'property': field['property'], 'test': test, 'value': v })
 
     def linesearch(line):
     #--------------------
