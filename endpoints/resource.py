@@ -232,17 +232,21 @@ class Recording(web.RequestHandler):
   def _got_length(self, data):
   #------------------------------
     assert data[-2:] == '\r\n', 'Bad chunk length'
-    length = int(data[:-2], 16)
-    if length > 0:
-      self._stream.read_bytes(length + 2, self._read_callback, streaming_callback=self._got_data)
+    self._chunk_length = int(data[:-2], 16)
+    if self._chunk_length > 0:
+      self._stream.read_bytes(self._chunk_length + 2, self._read_callback,
+                              streaming_callback=self._got_data)
     else:
       self._finished_read()
 
   def _got_data(self, data):
   #-------------------------
-    assert data[-2:] == '\r\n', 'Bad data chunk'
-    self._file.write(data[:-2])
-    self._get_length()
+    l = min(len(data), self._chunk_length)
+    self._file.write(data[:l])
+    self._chunk_length -= l
+    if self._chunk_length == 0:
+      assert data[-2:] == '\r\n', 'Bad data chunk'
+      self._get_length()
 
   def _read_callback(self, data):
   #------------------------------
