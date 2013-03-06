@@ -111,6 +111,10 @@ def time_display(t):
   if t.duration: d.append('to %gs' % t.end)
   return ' '.join(d)
 
+def tags_display(tags):
+#----------------------
+  return ', '.join([abbreviate(t) for t in tags]) if tags else ''
+
 
 signal_properties = Properties([
                       ('Id',    'uri',   link, ['trimlen', 'makelink']),
@@ -143,6 +147,7 @@ annotation_properties = Properties([
                           ('About',      'about'),
                           ('Time',       'time', time_display),
                           ('Annotation', 'comment'),
+                          ('Tags',       'tags', tags_display),
                           ('Author',     'creator'),
                           ('Created',    'created', datetime_to_isoformat),
                         ])
@@ -163,8 +168,8 @@ def recording_info(rec):
 def event_info(evt):
 #------------------
   props = Properties([('Time:',  'time', time_display),
-                      ('Event:', 'tags', lambda t: abbreviate(t[0]) if t else ''),
-                      ('Event:', 'comment')])
+                      ('Event:', 'comment'),
+                      ('Tags:',  'tags', tags_display)])
   h = [ ]
   prompts = props.header()
   h.append('<div>')
@@ -181,8 +186,8 @@ def event_info(evt):
 def annotation_info(ann):
 #------------------------
   if getattr(ann, 'time') is not None: return event_info(ann)
-
   props = Properties([('Annotation', 'comment'),
+                      ('Tags:',      'tags', tags_display),
                       ('Author',     'creator'),
                       ('Created',    'created', datetime_to_isoformat)])
   h = [ ]
