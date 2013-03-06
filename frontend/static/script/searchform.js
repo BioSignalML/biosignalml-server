@@ -29,7 +29,7 @@ function type_list() {
  sel = [ '<select>' ] ;
  sel.push(' <option value="">Please select:</option>') ;
  for (var i in fields) {
-  sel.push('  <option value="' + String(Number(i)) + '">' + fields[i].prompt + '</option>') ;
+  sel.push('  <option value="' + fields[i].index + '">' + fields[i].prompt + '</option>') ;
   }
  sel.push('</select>') ;
  return $(sel.join('\n'))

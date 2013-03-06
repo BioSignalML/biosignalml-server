@@ -27,8 +27,8 @@ PREFIXES = sparql.prologue()
 
 #### Into repository.model
 #
-def _values(predicate, rtype):
-#=============================
+def _get_values(predicate, rtype):
+#=================================
   values = [ ]
   sparql = PREFIXES + "\n\nselect distinct ?v where { ?s %s ?v }" % predicate
   results = options.repository.query(sparql)
@@ -102,9 +102,10 @@ class Template(tornado.web.RequestHandler):
 #==========================================
   def post(self):
     fields = [ ]
-    for f in SEARCH_FIELDS:
-      values = f['values'] if f['values'] != [ ] else _values(f['property'], f.get('type', str))
-      if values: fields.append( { 'prompt': f['prompt'],
+    for n, f in enumerate(SEARCH_FIELDS):
+      values = f['values'] if f['values'] != [ ] else _get_values(f['property'], f.get('type', str))
+      if values: fields.append( { 'index':  n,
+                                  'prompt': f['prompt'],
                                   'tests':  f['tests'],
                                   'values': values } )
     self.write({ 'relns': SEARCH_RELNS, 'fields': fields })
