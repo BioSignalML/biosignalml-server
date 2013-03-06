@@ -10,6 +10,7 @@
 
 
 var fields      = [ ] ;   // Content sent from server
+var fields_by_index = { } ;
 var group       = null ;  // Set when fields received
 var group_relns = null ;
 
@@ -30,6 +31,7 @@ function type_list() {
  sel.push(' <option value="">Please select:</option>') ;
  for (var i in fields) {
   sel.push('  <option value="' + fields[i].index + '">' + fields[i].prompt + '</option>') ;
+  fields_by_index[fields[i].index] = fields[i] ;
   }
  sel.push('</select>') ;
  return $(sel.join('\n'))
@@ -38,7 +40,7 @@ function type_list() {
 function got_type() {
  var fld_index = this.value ; 
  if (fld_index != '') {
-  var fld = fields[fld_index] ;
+  var fld = fields_by_index[fld_index] ;
   $(this.nextElementSibling).replaceWith(search_tests(fld).addClass('fld2')) ;
   $(this.nextElementSibling
    .nextElementSibling).replaceWith(search_values(fld).addClass('fld3')) ;
