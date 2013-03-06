@@ -294,7 +294,7 @@ class Search(frontend.BasePage):
       sparql.append('')
       sparql.append('select distinct ?g ?r ?s ?t where {')
       sparql.append('  graph <%s> {' % options.repository.provenance_uri)
-      sparql.append('    ?graph a bsml:RecordingGraph MINUS { [] prv:precededBy ?graph }')
+      sparql.append('    ?g a bsml:RecordingGraph MINUS { [] prv:precededBy ?g }')
       sparql.append('    }')
       sparql.append('  graph ?g {')
       sparql.append('    ?r rdf:type bsml:Recording .')
