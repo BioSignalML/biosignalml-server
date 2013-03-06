@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.openlinksw.virtuoso</string>
+	<key>OnDemand</key>
+	<false/>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/usr/local/virtuoso-opensource/bin/virtuoso-t</string>
+		<string>-f</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>ServiceDescription</key>
+	<string></string>
+	<key>UserName</key>
+	<string>dave</string>
+	<key>WorkingDirectory</key>
+	<string>/usr/local/virtuoso-opensource/var/lib/virtuoso/db</string>
+</dict>
+</plist>
