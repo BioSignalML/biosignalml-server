@@ -54,9 +54,9 @@ Media Fragment handling (also check for '?t='
 def raise_error(handler, code, msg=None):
 #========================================
   handler.set_status(code)
-  handler.set_header('Content-Type', 'text/xml')
-  ### Return JSON...
-  handler.write(('<bsml>\n <error>%s</error>\n</bsml>\n' % xmlescape(msg)) if msg else '')
+  handler.set_header('Content-Type', 'text/plain')
+  ### Return JSON or XML ??
+  handler.write('%d: %s\n' % (code, msg if msg is not None else ''))
   handler.finish()
 
 
