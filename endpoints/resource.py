@@ -150,12 +150,8 @@ class Recording(web.RequestHandler):
   def get(self, **kwds):
   #---------------------
     name = self.full_uri
-
     uri, fragment = self._get_names(name)
-
     graph_uri, rec_uri = options.repository.get_graph_and_recording_uri(uri)
-    logging.debug('GET: name=%s, req=%s, uri=%s, rec=%s, graph=%s',
-                        name, self.request.uri, uri, rec_uri, graph_uri)
     if graph_uri is None:
       if name == '':
         graph_uri = options.repository.uri
@@ -164,25 +160,19 @@ class Recording(web.RequestHandler):
         graph_uri = uri
         uri = ''
       else:
-        self.send_error(404)
-##        self._write_error(404, msg="Recording unknown for '%s'" % uri)
+        self._write_error(404, msg="Recording unknown for '%s'" % uri)
         return
-    accept = parse_accept(self.request.headers)
 
     if BSML.Recording in options.repository.get_types(uri, graph_uri):
       recording = options.repository.get_recording(rec_uri, with_signals=False, open_dataset=False,
                                                                                 graph_uri=graph_uri)
       ctype = getattr(recording, 'format')
-## Should we set 'Content-Location' header as well?
-## (to actual URL of representation returned).
-      # only send recording if '*/*' or content type match
-
+      accept = parse_accept(self.request.headers)
       if accept.get(ctype, 0) > 0 or accept.get(BSMLRecording.MIMETYPE, 0) > 0: # send file
         if recording.dataset is None:
           self._write_error(404, msg="Missing recording dataset: '%s'" % rec_uri)
           return
         filename = str(recording.dataset)  ### ' '.join([str(f) for f in recording.dataset])   #### Why????
-        logging.debug("Sending '%s'", filename)
         # Tornado's defaults to sending with ChunkedTransferEncoding
         try:
           rfile = urllib.urlopen(filename).fp
@@ -198,13 +188,10 @@ class Recording(web.RequestHandler):
           self.finish()
         except Exception, msg:
           self._write_error(500, msg="Error serving recording: %s" % msg)
-        return
-    # Check for extension...
-    # Check Q value
-    # Send HTML if requested...
-
-
+      else:
+        self._write_error(415, msg="Format doesn't match that requested")
     else:
+      self._write_error(415, msg="Requested resource is not a Recording")
 
 
   def _get_length(self):
@@ -313,10 +300,10 @@ class Recording(web.RequestHandler):
 ##  @user.capable(user.ACTION_MODIFY)
   def post(self, **kwds):
   #-----------------------
-    name = self.full_uri
-    raise web.HTTPError(501, "POST not implemented...")
-    rec_uri = self._get_names(name)[0]
-    if rec_uri: self.write("<html><body><p>POST: %s</p></body></html>" % rec_uri)
+    self.send_error(501, "POST not implemented...")
+#    name = self.full_uri
+#    rec_uri = self._get_names(name)[0]
+#    if rec_uri: self.write("<html><body><p>POST: %s</p></body></html>" % rec_uri)
 
 
 ##  @user.capable(user.ACTION_DELETE)
