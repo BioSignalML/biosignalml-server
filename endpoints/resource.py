@@ -31,6 +31,7 @@ from tornado.options import options
 import biosignalml.rdf as rdf
 from biosignalml.utils import xmlescape
 from biosignalml.model import BSML
+from biosignalml.formats import BSMLRecording, RAWRecording
 from biosignalml.formats import CLASSES as RECORDING_CLASSES
 
 KnownSchemes = [ 'http', 'urn' ]
@@ -277,8 +278,8 @@ class Recording(web.RequestHandler):
     if extn != '': extn = extn[1:]
     rec_uri = urlparse.urlunparse((u.scheme, u.netloc, path, '', '', ''))
     ctype = self.request.headers.get('Content-Type')
-    if ctype == 'application/x-bsml' and extn != '':
-      ctype = Recording._extns.get(extn, 'application/x-bsml+raw')
+    if ctype == BSMLRecording.MIMETYPE and extn != '':
+      ctype = Recording._extns.get(extn, RAWRecording.MIMETYPE)
     RecordingClass = RECORDING_CLASSES.get(ctype)
     if RecordingClass is None:
       self._write_error(415, msg="Unsupported recording format: %s" % ctype)

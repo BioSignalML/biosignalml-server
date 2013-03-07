@@ -23,6 +23,9 @@ import tornado.options as options
 ## import tornado.auth     ## FUTURE
 ## import rpdb2; rpdb2.start_embedded_debugger('test')
 
+from biosignalml.formats import BSMLRecording
+
+
 import server
 server.init_server()  # Setup globals
 
@@ -49,7 +52,7 @@ def ContentNegotiate(*args, **kwds):
   if request.headers.get('Upgrade') == 'websocket':
     HandlerClass = webstream.StreamDataSocket
 
-  elif len(accept) == 1 and accept.keys()[0].startswith('application/x-bsml'):
+  elif len(accept) == 1 and accept.keys()[0].startswith(BSMLRecording.MIMETYPE):
     HandlerClass = resource.Recording
 
   elif (accept.get('application/rdf+xml', 0) > 0.9
