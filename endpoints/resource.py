@@ -177,7 +177,7 @@ class Recording(web.RequestHandler):
 ## (to actual URL of representation returned).
       # only send recording if '*/*' or content type match
 
-      if accept.get(ctype, 0) > 0: # send file
+      if accept.get(ctype, 0) > 0 or accept.get(BSMLRecording.MIMETYPE, 0) > 0: # send file
         if recording.dataset is None:
           self._write_error(404, msg="Missing recording dataset: '%s'" % rec_uri)
           return
