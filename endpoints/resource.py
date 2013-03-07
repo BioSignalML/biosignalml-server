@@ -204,26 +204,7 @@ class Recording(web.RequestHandler):
     # Send HTML if requested...
 
 
-  def _format(self):
-  #-----------------
-    ctype = self.request.headers.get('Content-Type')
-    if ctype in ['text/turtle', 'application/x-turtle']:
-      return rdf.Format.TURTLE
-    elif ctype == 'application/rdf+xml':
-      return rdf.Format.RDFXML
     else:
-      return None
-
-  @staticmethod
-  def _node(n):
-  #------------
-    if   n.is_resource(): return '<%s>' % str(n)
-    elif n.is_blank():    return '_:%s' % str(n)
-    elif n.is_literal():
-      l = [ '"%s"' % n.literal[0] ]
-      if   n.literal[1]: l.append('@%s'    % n.literal[1])
-      elif n.literal[2]: l.append('^^<%s>' % n.literal[2])
-      return ''.join(l)
 
 
   def _get_length(self):
