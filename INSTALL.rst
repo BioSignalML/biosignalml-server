@@ -7,7 +7,7 @@ libwfdb with Python bindings
 easy_install/pip
 ----------------
 
-* biosignalml >= 0.3.7
+* biosignalml >= 0.3.8
 * tornado >= 2.4.1
 * numpy >= 2.1.1
 
