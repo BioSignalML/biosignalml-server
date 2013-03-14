@@ -43,5 +43,5 @@ if __name__ == '__main__':
   if response.status != 200:
     sys.exit('Cannot obtain token -- unauthorised?')
 
-  client.save_token(repository, token)
+  client.Repository.save_token(repository, token)
   print "%s %s" % (repository, token)
