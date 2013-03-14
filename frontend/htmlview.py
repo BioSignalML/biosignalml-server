@@ -261,6 +261,11 @@ def build_metadata(uri):
 class Metadata(tornado.web.RequestHandler):  # Tool-tip popup
 #==========================================
 
+  def check_xsrf_cookie(self):
+  #---------------------------
+    """Don't check XSRF token for POSTs."""
+    pass
+
   def post(self):
   #--------------
     self.write({ 'html': build_metadata(self.get_argument('uri', '')) })
