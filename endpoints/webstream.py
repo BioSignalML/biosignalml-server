@@ -336,7 +336,7 @@ class StreamDataSocket(StreamServer):
           raise stream.StreamException("Unknown signal '%s'" % sd.uri)
 
         rec = self._repo.get_recording(rec_uri, open_dataset=False, graph_uri=rec_graph)
-        if str(rec.format) != formats.hdf5.HDF5Recording.MIMETYPE:
+        if str(rec.format) != formats.MIMETYPES.HDF5:
           raise stream.StreamException("Signal can not be appended to -- not HDF5")
 
         if rec.dataset is None:
