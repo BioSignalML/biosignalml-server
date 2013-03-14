@@ -25,7 +25,8 @@ import biosignalml.transports.stream as stream
 from biosignalml      import BSML
 from biosignalml.rdf  import Uri
 from biosignalml.data import TimeSeries, UniformTimeSeries
-from biosignalml.units.convert import UnitConvertor
+from biosignalml.data.convert import RateConverter
+from biosignalml.units.convert import UnitConverter
 import biosignalml.formats as formats
 import biosignalml.utils as utils
 
@@ -103,13 +104,14 @@ class StreamEchoSocket(StreamServer):
 class SignalReadThread(threading.Thread):
 #========================================
 
-  def __init__(self, handler, block, signals, units):
-  #--------------------------------------------------
+  def __init__(self, handler, block, signals, rates, unit_map=None):
+  #-----------------------------------------------------------------
     threading.Thread.__init__(self)
     self._handler = handler
     self._reqblock = block
     self._signals = signals
-    self._units = units
+    self._rates = rates
+    self._unit_map = unit_map
 
   def run(self):
   #-------------
@@ -128,28 +130,43 @@ class SignalReadThread(threading.Thread):
 
       # Interleave signal blocks...
       ### What if signal has multiple channels? What does read() return??
-      data = [ sig.read(interval=sig.recording.interval(*interval) if interval else None,
-                 segment=segment, maxpoints=maxpoints) for sig in self._signals ]
+      sources = [ sig.read(interval=sig.recording.interval(*interval) if interval else None,
+                   segment=segment, maxpoints=maxpoints) for sig in self._signals ]
       ## data is a list of generators
-
-      self._active = len(data)
+      starttimes = [ None ] * len(sources)
+      converters = [ None ] * len(sources)
+      self._active = len(sources)
       while self._active > 0:
-        for n, sigdata in enumerate(data):
+        for n, sigdata in enumerate(sources):
           if sigdata is not None:
             try:
-              d = sigdata.next()
+              data = sigdata.next()
+              starttimes[n] = data.starttime
               siguri = str(self._signals[n].uri)
               keywords = dtypes.copy()
               keywords['info'] = n
-              if isinstance(d.dataseries, UniformTimeSeries):
-                keywords['rate'] = d.dataseries.rate
+              if self._unit_map is not None: datablock = self._unit_map[n](data.data)
+              else:                          datablock = data.data
+              if data.is_uniform:
+                keywords['rate'] = self._rates[n]
+                if self._rates[n] != data.rate and converters[n] is None:
+                  converters[n] = RateConverter(self._rates[n], data.data.size/len(data), maxpoints)
               else:
-                keywords['clock'] = d.dataseries.times
-              if self._units is not None: datablock = self._units[n](d.dataseries.data)
-              else:                       datablock = d.dataseries.data
-              self._send_block(stream.SignalData(siguri, d.starttime, datablock, **keywords).streamblock())
+                if rates[n] is not None: raise ValueError("Cannot rate convert non-uniform signal")
+                keywords['clock'] = data.times
+              if converters[n] is not None:
+                for out in converters[n].convert(datablock, rate=data.rate):
+                  self._send_block(stream.SignalData(siguri, starttimes[n], out, **keywords).streamblock())
+                  starttimes[n] += len(out)/converters[n].rate
+              else:
+                self._send_block(stream.SignalData(siguri, starttimes[n], datablock, **keywords).streamblock())
             except StopIteration:
-              data[n] = None
+              if converters[n] is not None:
+                for out in converters[n].convert(None, finished=True):
+                  self._send_block(stream.SignalData(siguri, starttimes[n], out, **keywords).streamblock())
+                  starttimes[n] += len(out)/converters[n].rate
+                converters[n] = None
+              sources[n] = None
               self._active -= 1
 
     except Exception, msg:
@@ -238,22 +255,25 @@ class StreamDataSocket(StreamServer):
             self._sigs = rec.signals()
         else:
           self._add_signal(uri)
+        requested_rate = block.header.get('rate')
+        if requested_rate is not None: rates = len(self._sigs)*[requested_rate]
+        else:                          rates = [sig.rate for sig in self._sigs]
 
-        unit_convertor = UnitConvertor(options.sparql_store)
+        unit_converter = UnitConverter(options.sparql_store)
         conversions = []
         requested_units = block.header.get('units')
         if requested_units is not None:
           units = len(self._sigs)*[requested_units]
-          unit_conversion = [ unit_convertor.mapping(sig.units, requested_units) for sig in self._sigs ]
+          unit_map = [ unit_converter.mapping(sig.units, requested_units) for sig in self._sigs ]
         else:
           units = [str(sig.units) for sig in self._sigs],
-          unit_conversion = None
+          unit_map = None
 
         self.send_block(stream.InfoBlock(channels = len(self._sigs),
                                          signals = [str(sig.uri) for sig in self._sigs],
-                                         rates = [sig.rate for sig in self._sigs],
+                                         rates = rates,
                                          units = units ))
-        sender = SignalReadThread(self, block, self._sigs, unit_conversion)
+        sender = SignalReadThread(self, block, self._sigs, rates, unit_map)
         sender.start()
 
       except Exception, msg:
