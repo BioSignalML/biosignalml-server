@@ -152,7 +152,7 @@ class SignalReadThread(threading.Thread):
                 if self._rates[n] != data.rate and converters[n] is None:
                   converters[n] = RateConverter(self._rates[n], data.data.size/len(data), maxpoints)
               else:
-                if rates[n] is not None: raise ValueError("Cannot rate convert non-uniform signal")
+                if self._rates[n] is not None: raise ValueError("Cannot rate convert non-uniform signal")
                 keywords['clock'] = data.times
               if converters[n] is not None:
                 for out in converters[n].convert(datablock, rate=data.rate):
