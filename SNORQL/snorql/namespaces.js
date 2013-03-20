@@ -5,11 +5,12 @@ var D2R_namespacePrefixes = {
     dct: 'http://purl.org/dc/terms/',
     xsd: 'http://www.w3.org/2001/XMLSchema#',
     prv: 'http://purl.org/net/provenance/ns#',
+    prov: 'http://www.w3.org/ns/prov#',
     tl:  'http://purl.org/NET/c4dm/timeline.owl#',
     units: 'http://www.sbpax.org/uome/list.owl#',
     bsml: 'http://www.biosignalml.org/ontologies/2011/04/biosignalml#',
     drugbank: 'http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugs/',
     pbank: 'http://www.biosignalml.org/ontologies/examples/physiobank#',
-    repo: 'http://demo.biosignalml.org/',
+//    repo: 'http://demo.biosignalml.org/',
 };
 
