@@ -148,6 +148,7 @@ div.title {
   padding-left: 10px ;
   padding-right: 19px ;
   background: #ACD655 ;
+  word-wrap: break-word ;
   }
 
 div.title h1 {
