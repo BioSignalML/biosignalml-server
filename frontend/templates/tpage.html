@@ -40,7 +40,7 @@
    {% if title %}<div class="title"><h1>{{ title }}</h1></div>{% end %}
    {% if globals().get('tree') %}{% raw tree %}{% end %} 
    <div id="contentbody">
-     {% if bodytitle %}<div class="title"><h2>{{ bodytitle }}</h2></div>{% end %}
+     {% if bodytitle %}<div class="title treespace"><h2>{{ bodytitle }}</h2></div>{% end %}
      {% if not globals().get('bottom', 0) %}
        {% block content %}{% end %}
      {% end %}
