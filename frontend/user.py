@@ -54,6 +54,16 @@ TOKEN_TIMEOUT = 864000  # seconds  #### MAKE CONFIGURABLE
 
 ## FUTURE: Also use URI to control access.
 
+def valid(token):
+#================
+  row = options.database.readrow('users', ('expiry',),
+                                 where='token=:t', bindings=dict(t=token))
+  try:
+    return (datetime.utcnow() <= dateutil.parser.parse(row.get('expiry', '2000')))
+  except KeyError:
+    pass
+  return False
+
 def capabilities(request, uri):
 #==============================
   token = request.get_cookie('access')
@@ -145,6 +155,18 @@ class Login(frontend.BasePage):
   def post(self):
   #--------------
     btn = self.get_argument('action')
+
+    if btn == 'Validate':
+      token = self.get_argument('token', '')
+      if valid(token):
+        self.set_cookie('access', token)
+        self.set_header('Content-Type', 'text/plain')
+        self.set_status(200)
+        self.write(token)
+      else:
+        self.set_status(401)
+      return
+
     username = self.get_argument('username', '')
     user_row = _check(username, self.get_argument('password', ''))
 
