@@ -10,11 +10,13 @@ $(function () {
       clickThrough: true,
       titleAttribute: 'href',
 //    ajaxCache: false,   // ####
+      positionBy: 'mouse',
       ajaxSettings: {
         dataType: 'json',
         type:     'POST',
         data:     'uri=' + $(this).attr('href').toString()
                 + '&_xsrf=' + getCookie("_xsrf"),
+        timeout: 20000,
         },
       ajaxProcess: function(data) {
         return data.html ;
