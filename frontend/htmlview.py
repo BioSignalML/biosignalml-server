@@ -167,9 +167,9 @@ def recording_info(rec):
 
 def event_info(evt):
 #------------------
-  props = Properties([('Time:',  'time', time_display),
-                      ('Event:', 'comment'),
-                      ('Tags:',  'tags', tags_display)])
+  props = Properties([('Time',  'time', time_display),
+                      ('Event', 'comment'),
+                      ('Tags',  'tags', tags_display)])
   h = [ ]
   prompts = props.header()
   h.append('<div>')
@@ -187,7 +187,7 @@ def annotation_info(ann):
 #------------------------
   if getattr(ann, 'time') is not None: return event_info(ann)
   props = Properties([('Annotation', 'comment'),
-                      ('Tags:',      'tags', tags_display),
+                      ('Tags',       'tags', tags_display),
                       ('Author',     'creator'),
                       ('Created',    'created', datetime_to_isoformat)])
   h = [ ]
