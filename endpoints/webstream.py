@@ -195,7 +195,6 @@ class SignalReadThread(threading.Thread):
       return
     self._active = -1
     self._handler.close()     ## All done with data request
-    logging.debug("All sent...")
 
 
 class StreamDataSocket(StreamServer):
