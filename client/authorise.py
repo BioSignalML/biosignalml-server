@@ -19,29 +19,24 @@
 ######################################################
 
 import sys
-import urllib
-import httplib2
 
-import biosignalml.client as client
+import biosignalml.client.repository as bsmlrepo
 
 
 if __name__ == '__main__':
 #=========================
 
-  if len(sys.argv) < 3:
+  if len(sys.argv) < 4:
     print "Usage: %s REPOSITORY_URI USERNAME PASSWORD" % sys.argv[0]
     sys.exit(1)
 
-  repository = sys.argv[1]
-  remote = httplib2.Http()
   try:
-    response, token = remote.request(repository + '/frontend/login', method='POST',
-      body=urllib.urlencode({'action': 'Token', 'username': sys.argv[2], 'password': sys.argv[3]}),
-      headers={'Content-type': 'application/x-www-form-urlencoded'})
+    repo = bsmlrepo.RemoteRepository(sys.argv[1], sys.argv[2], sys.argv[3])
+    repo.close()
   except Exception, msg:
     sys.exit(str(msg))
-  if response.status != 200:
-    sys.exit('Cannot obtain token -- unauthorised?')
 
-  client.Repository.save_token(repository, token)
-  print "%s %s" % (repository, token)
+  if repo.access_token is None:
+    sys.exit('Cannot authenticate with %s' % sys.argv[1])
+
+  print "%s %s %s" % (sys.argv[1], repo.access_token, repo.access_expiry)
