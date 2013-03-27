@@ -280,6 +280,7 @@ class Repository(frontend.BasePage):
     tree = mktree.maketree(uris)
     #logging.debug('tree: %s', tree)
     selectpath = select.rsplit('/', select.count('/') - 2)
+    selectpath.pop(0)
     #logging.debug('SP: %s, %s', select, selectpath)
     return self.render_string('ttree.html',
                                tree=tree,
@@ -288,6 +289,7 @@ class Repository(frontend.BasePage):
   def _show_contents(self, name, annotate):
   #----------------------------------------
     repo = options.repository
+    title = 'Recordings in %s' % repo.uri
     if name:
       uri = name
       recording = repo.get_recording(uri, open_dataset=False)
@@ -306,9 +308,7 @@ class Repository(frontend.BasePage):
  ## Is sending tree each time, that then has JScript setting up tooltips
  ## a cause of connection closed problems...???
 
-####      print recording.graph.serialise(format=rdf.Format.TURTLE, base=recording.uri, prefixes=PREFIXES)
-
-      kwds = dict(bodytitle = uri, style = 'signal',
+      kwds = dict(title=title, bodytitle=uri, style='signal',
                   tree = self._xmltree(repo.recording_uris(), name),
                   content = recording_info(recording)
                           + signal_table(self, recording, selectedsig) )
@@ -330,9 +330,7 @@ class Repository(frontend.BasePage):
           **kwds)
       else: self.render('tpage.html', **kwds)
     else:
-      self.render('tpage.html',
-        title = 'Recordings in repository:',
-        tree = self._xmltree(repo.recording_uris()))
+      self.render('tpage.html', title=title, tree=self._xmltree(repo.recording_uris()))
 
 ##  @tornado.web.authenticated
   def get(self):

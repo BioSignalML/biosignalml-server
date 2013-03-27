@@ -18,7 +18,8 @@ def maketree(uris):
   for u in uris:
     uri = str(u)
     components = uri.rsplit('/', uri.count('/') - 2)
-    if components[0] == '':  components[0] = '/'
+##    if components[0] == '':  components[0] = '/'
+    components.pop(0)   #######
     if components[-1] == '': del components[-1]
     else:                    components[-1] = (components[-1], uri)
     tree = addpath(components, tree)
