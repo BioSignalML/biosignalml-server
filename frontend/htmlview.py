@@ -186,7 +186,7 @@ def event_info(evt):
 
 def annotation_info(ann):
 #------------------------
-  if getattr(ann, 'time') is not None: return event_info(ann)
+  if ann.time is not None: return event_info(ann)
   props = Properties([('Annotation', 'comment'),
                       ('Tags',       'tags', tags_display),
                       ('Author',     'creator'),
