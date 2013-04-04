@@ -25,7 +25,7 @@ from biosignalml import BSML
 import biosignalml.rdf as rdf
 from biosignalml.formats.hdf5 import H5Recording
 from biosignalml.rdf.sparqlstore import Virtuoso
-from biosignalml.repository import BSMLStore
+from biosignalml.repository import BSMLUpdateStore
 
 
 if __name__ == '__main__':
@@ -38,7 +38,7 @@ if __name__ == '__main__':
     print "Usage: %s REPOSITORY_URI BIOSIGNALML_HDF5_FILE" % sys.argv[0]
     sys.exit(1)
 
-  store = BSMLStore(sys.argv[1],
+  store = BSMLUpdateStore(sys.argv[1],
 #                     FourStore('http://localhost:8083'))
                      Virtuoso('http://localhost:8890'))
 
@@ -49,11 +49,11 @@ if __name__ == '__main__':
 
   # rec.dataset = ....  From repo? Parameter?? Default to filename's full path??
   #                     Move/rename/copy file ??
-  dataset = 'file://' + os.path.abspath(sys.argv[2])
+  dataset = rdf.Uri('file://' + os.path.abspath(sys.argv[2]))
 
   graph = rdf.Graph.create_from_string(rec.uri, statements, format)
-  graph.append(rdf.Statement(rec.uri, BSML.dataset, dataset))
-  graph_uri = store.add_recording_graph(rec.uri, graph.serialise(), 'file://' + os.path.abspath(__file__))
+  graph.set_subject_property(rec.uri, BSML.dataset, dataset)
 
+  graph_uri = store.add_recording_graph(rec.uri, graph.serialise(), 'file://' + os.path.abspath(__file__))
   print '<%s> stored in <%s>' % (rec.uri, graph_uri)
 

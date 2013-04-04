@@ -42,14 +42,14 @@ if __name__ == '__main__':
     except StoreException:  ## Actual graph may not exist
       pass
 
-  store.query("""WITH <%s/provenance>
-                 DELETE { ?x ?p ?v } WHERE {
-                   ?g a bsml:RecordingGraph ; prv:createdBy ?x .
-                   ?x ?p ?v .
-                   }""" % repo,
+  store.update("""WITH <%s/provenance>
+                  DELETE { ?x ?p ?v } WHERE {
+                    ?g a bsml:RecordingGraph ; prv:createdBy ?x .
+                    ?x ?p ?v .
+                    }""" % repo,
               prefixes={'bsml': BSML.prefix, 'prv': PRV.prefix})
-  store.query("""WITH <%s/provenance>
-                 DELETE { ?g ?p ?v } WHERE {
-                   ?g a bsml:RecordingGraph ; ?p ?v .
-                   }""" % repo,
+  store.update("""WITH <%s/provenance>
+                  DELETE { ?g ?p ?v } WHERE {
+                    ?g a bsml:RecordingGraph ; ?p ?v .
+                    }""" % repo,
               prefixes={'bsml': BSML.prefix})

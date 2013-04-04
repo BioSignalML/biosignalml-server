@@ -37,19 +37,19 @@ if __name__ == '__main__':
     except StoreException:  ## Actual graph may not exist
       pass
 
-  store.query("""WITH <%s/provenance>
-                 DELETE { ?x ?p ?v } WHERE {
-                   ?g a bsml:RecordingGraph ;
+  store.update("""WITH <%s/provenance>
+                  DELETE { ?x ?p ?v } WHERE {
+                    ?g a bsml:RecordingGraph ;
                       dct:subject <%s> ;
                       prv:createdBy ?x .
-                   ?x ?p ?v .
-                   }""" % (repo, recording),
-              prefixes={'bsml': BSML.prefix, 'dct': DCT.prefix, 'prv': PRV.prefix})
-  store.query("""WITH <%s/provenance>
-                 DELETE { ?g ?p ?v } WHERE {
-                   ?g a bsml:RecordingGraph ;
+                    ?x ?p ?v .
+                    }""" % (repo, recording),
+               prefixes={'bsml': BSML.prefix, 'dct': DCT.prefix, 'prv': PRV.prefix})
+  store.update("""WITH <%s/provenance>
+                  DELETE { ?g ?p ?v } WHERE {
+                    ?g a bsml:RecordingGraph ;
                       dct:subject <%s> ;
                       ?p ?v .
-                   }""" % (repo, recording),
-              prefixes={'bsml': BSML.prefix, 'dct': DCT.prefix})
+                    }""" % (repo, recording),
+               prefixes={'bsml': BSML.prefix, 'dct': DCT.prefix})
 
