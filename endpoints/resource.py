@@ -282,18 +282,12 @@ class Recording(web.RequestHandler):
     ## Return 200 OK since we are providing content
     ## Otherwise return Created()
 
-    self.set_header('Content-Type', 'text/xml')
+    self.set_header('Content-Type', 'text/plain')
     self.set_status(201)      # Created
     location = str(recording.uri)
     self.set_header('Location', location)
     #self.set_header('Location', str(recording.uri))
-    self.write('\n'.join(['<bsml>',
-                          ' <created',
-                          '  class="recording"',
-                          '  uri="%s"'      % location, ## recording.uri
-                          '  mimetype="%s"' % recording.MIMETYPE,
-                          '  />',
-                          '</bsml>', '']))
+    self.write('201: Created %s %s\n' % (location, recording.MIMETYPE))
     self.finish()
 
 
@@ -338,8 +332,6 @@ class Recording(web.RequestHandler):
 
     logging.debug("Deleted '%s' (%s)", rec_uri, recording.dataset)
 
-    self.set_header('Content-Type', 'text/xml')
-    sel.set_status(200)
-    self.write('\n'.join(['<bsml>',
-                          ' <deleted uri="%s"/>' % rec_uri,
-                          '</bsml>', '']))
+    self.set_header('Content-Type', 'text/plain')
+    self.set_status(200)
+    self.write('200: Deleted %s\n' % rec_uri)
