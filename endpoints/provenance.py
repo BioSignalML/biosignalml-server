@@ -14,7 +14,7 @@ import logging
 import tornado
 from tornado.options import options
 
-
+from biosignalml import BSML
 import biosignalml.rdf as rdf
 
 
@@ -36,8 +36,8 @@ class ProvenanceRDF(tornado.web.RequestHandler):
                for k in [ a.split(';', 1)
                 for a in self.request.headers.get('Accept', '*/*').split(',') ] }
 
-  def get(self, name=None):
-  #------------------------
+  def get(self, name=''):
+  #----------------------
     accept = self._accept_headers()
     if   'text/turtle' in accept or 'application/x-turtle' in accept: format = rdf.Format.TURTLE
     elif 'application/json' in accept:                                format = rdf.Format.JSON
@@ -48,8 +48,10 @@ class ProvenanceRDF(tornado.web.RequestHandler):
     self.set_header('Content-Type', rdf.Format.mimetype(format))
 
     graph_uri = options.repository.provenance_uri
-    if name is None:
-      self.write(options.repository.construct('?s ?p ?o', '?s ?p ?o', graph=graph_uri, format=format))
+    if name == '':
+      self.write(options.repository.construct('?s a bsml:RecordingGraph ; dct:subject ?r',
+                                              graph=graph_uri, format=format,
+                                              prefixes=dict(bsml=BSML.prefix, dct=rdf.DCT.prefix)))
     else:
       if name.startswith('http:'): uri = name
       else: uri = graph_uri + '/' + name
