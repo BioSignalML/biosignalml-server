@@ -29,7 +29,6 @@ from biosignalml.formats import BSMLRecording
 import server
 server.init_server()  # Setup globals
 
-import endpoints.provenance as provenance
 import endpoints.webstream as webstream
 import endpoints.metadata  as metadata
 import endpoints.resource  as resource
@@ -77,7 +76,6 @@ def ContentNegotiate(*args, **kwds):
 
 
 application = tornado.web.Application([
-    ('/provenance/(.*)',                  provenance.ProvenanceRDF),
     ('/sparql/update/',                   sparql.SparqlUpdate),        # SPARQL endpoint
     ('/sparql/graph/',                    sparql.SparqlGraph),         # SPARQL endpoint
     ('/sparql/',                          sparql.SparqlQuery),         # SPARQL endpoint
