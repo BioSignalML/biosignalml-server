@@ -214,7 +214,8 @@ class StreamDataSocket(StreamServer):
       rec = self._repo.get_recording(uri, with_signals=False, open_dataset=False)
       recclass = formats.CLASSES.get(str(rec.format))
       if recclass:
-        sig = self._repo.get_signal(uri)
+        sig = self._repo.get_signal(uri,
+           signal_class=rec.SignalClass)  ## Hack....!!
         rec.add_signal(sig)
         #print sig.graph.serialise()
         recclass.initialise_class(rec)
