@@ -26,8 +26,9 @@ class SparqlProxy(tornado.web.RequestHandler):
 
   def header_handler(self, header):
   #--------------------------------
-    hdr = header.split(':', 1)
-    self.set_header(hdr[0], hdr[1].strip())
+    if ':' in header:
+      hdr = header.split(':', 1)
+      self.set_header(hdr[0], hdr[1].strip())
 
   def stream_handler(self, response):
   #----------------------------------
