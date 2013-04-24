@@ -29,8 +29,8 @@ import tornado.web as web
 from tornado.options import options
 
 import biosignalml.rdf as rdf
+from biosignalml import BSML
 from biosignalml.utils import xmlescape
-from biosignalml.model import BSML
 from biosignalml.formats import BSMLRecording, RAWRecording
 from biosignalml.formats import CLASSES as RECORDING_CLASSES
 
