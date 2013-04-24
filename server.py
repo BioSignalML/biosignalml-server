@@ -66,8 +66,7 @@ def init_server():
                          " respect to '%s/'.") % (module_path, module_path),
                    default="biosignalml.ini",
                    metavar="CONFIG")
-  del tornado.options.options['logging']
-  define('logging', 'none') # Default to our settings
+  sys.argv.append('--logging=none')
   tornado.options.parse_command_line()
   cfile = tornado.options.options.config
   config_file = cfile if cfile.startswith('/') else os.path.join(module_path, cfile)
