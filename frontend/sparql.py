@@ -15,7 +15,7 @@ from tornado.options import options
 
 import biosignalml.rdf as rdf
 from biosignalml.utils import xmlescape
-from biosignalml.model import BSML
+from biosignalml import BSML
 
 from forms import Button, Field
 import frontend
@@ -61,7 +61,8 @@ def search(sparql):
             d = '%s%s%s' % (LT, uri, GT)
           else:
             d = '%s<a href="%s" class="cluetip" target="_blank">%s</a>%s' % (LT, value, uri, GT)
-      # return (value, xmlescape(str(value)))
+        else:
+          d = xmlescape(str(value))
         body.append('<td>%s</td>' % d)
       body.append('</tr>\n')
       odd = not odd
