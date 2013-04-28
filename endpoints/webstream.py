@@ -135,6 +135,7 @@ class SignalReadThread(threading.Thread):
       ## data is a list of generators
       starttimes = [ None ] * len(sources)
       converters = [ None ] * len(sources)
+      datarate   = [ None ] * len(sources)
       self._active = len(sources)
       while self._active > 0:
         for n, sigdata in enumerate(sources):
@@ -155,6 +156,7 @@ class SignalReadThread(threading.Thread):
                 if self._rates[n] is not None: raise ValueError("Cannot rate convert non-uniform signal")
                 keywords['clock'] = data.times
               if converters[n] is not None:
+                datarate[n] = data.rate
                 for out in converters[n].convert(datablock, rate=data.rate):
                   self._send_block(stream.SignalData(siguri, starttimes[n], out, **keywords).streamblock())
                   starttimes[n] += len(out)/converters[n].rate
@@ -162,7 +164,7 @@ class SignalReadThread(threading.Thread):
                 self._send_block(stream.SignalData(siguri, starttimes[n], datablock, **keywords).streamblock())
             except StopIteration:
               if converters[n] is not None:
-                for out in converters[n].convert(None, finished=True):
+                for out in converters[n].convert(None, rate=datarate[n], finished=True):
                   self._send_block(stream.SignalData(siguri, starttimes[n], out, **keywords).streamblock())
                   starttimes[n] += len(out)/converters[n].rate
                 converters[n] = None
