@@ -19,12 +19,15 @@
 ######################################################
 
 import sys
+import logging
 
 import biosignalml.client.repository as bsmlrepo
 
 
 if __name__ == '__main__':
 #=========================
+
+  logging.getLogger().setLevel('DEBUG')
 
   if len(sys.argv) < 4:
     print "Usage: %s REPOSITORY_URI USERNAME PASSWORD" % sys.argv[0]
