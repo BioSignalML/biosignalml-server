@@ -118,7 +118,7 @@ def tags_display(tags):
 
 signal_properties = Properties([
                       ('Id',    'uri',   link, ['trimlen', 'makelink']),
-                      ('Name',  'label'),
+                      ('Label', 'label'),
                       ('Units', 'units', abbreviate),
                       ('Rate',  'rate',  trimdecimal),
 ##                      ('*Annotations', 'uri', annotatelink),
