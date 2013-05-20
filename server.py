@@ -10,6 +10,7 @@
 
 
 import sys, os
+import fcntl
 import argparse
 import ConfigParser
 import signal
@@ -80,6 +81,10 @@ def init_server():
     try:            os.makedirs(os.path.dirname(filename))
     except OSError: pass
     logging.basicConfig(format=LOGFORMAT, filename=filename, filemode='a')
+    logger = logging.getLogger()
+    fd = logger.handlers[0].stream.fileno()
+    flags = fcntl.fcntl(fd, fcntl.F_GETFD)
+    fcntl.fcntl(fd, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
   if options.logging['log_level']:
     logging.getLogger().setLevel(options.logging['log_level'])
   console = logging.StreamHandler()
