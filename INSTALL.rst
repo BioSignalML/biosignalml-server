@@ -25,14 +25,22 @@ Virtuoso
     $ ./autogen.sh
     ##
     ##            --with-malloc-debug prevents an occassional crash...
-    $ ./configure --with-malloc-debug --prefix=/usr/local/ --with-readline
+    $ ./configure --with-malloc-debug --with-readline
     $ make
     $ sudo make install
 
 * Ensure /usr/local/virtuoso-opensource/var/lib/virtuoso/db/ and contents are
   owned by user running Virtuoso.
 
-* Set buffer limits in /usr/local/virtuoso-opensource/var/lib/virtuoso/db/virtuoso.ini
+* Set buffer limits in /usr/local/virtuoso-opensource/var/lib/virtuoso/db/virtuoso.ini:::
+
+    [Parameters]
+    # Following for approx 1G of free memory
+    NumberOfBuffers  = 100000
+    MaxDirtyBuffers  =  60000
+
+    [SPARQL]
+    ResultSetMaxRows = 50000
 
 * Enable full text search (see
   http://docs.openlinksw.com/virtuoso/sparqlextensions.html#rdfsparqlrulefulltext):::
@@ -41,6 +49,10 @@ Virtuoso
     > DB.DBA.RDF_OBJ_FT_RULE_ADD (null, null, 'All');
     > DB.DBA.VT_BATCH_UPDATE ('DB.DBA.RDF_OBJ', 'OFF', null);
     > EXIT;
+
+* Give SPARQL_UPDATE role to the SPARQL user, using Conductor at
+  http://localhost:8890 (dba/dba) -- "System Admin"/"User Accounts"/
+  "SPARQL Edit"
 
 
 
@@ -55,16 +67,20 @@ Starting
 
 
 
-
 Loading Unit-of-Measure Ontologies
 ----------------------------------
 
 ::
+  cd tools
+  ./load_units.sh
 
-  tools/load_units.sh http://www.sbpax.org/uome/list.owl
-  tools/load_units.sh http://www.biosignalml.org/ontologies/examples/unit.rdf
 
+Loading Semantic Tag Ontologies
+-------------------------------
 
+::
+  cd tools
+  ./load_tags.sh
 
 ---
 
