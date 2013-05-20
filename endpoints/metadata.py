@@ -58,6 +58,7 @@ class MetaData(tornado.web.RequestHandler):
     except Exception, msg:
       logging.error('Cannot create RDF graph -- syntax errors? %s', msg)
       self.set_status(400)
+      return
     if not g.contains(rdf.Statement(rec_uri, rdf.RDF.type, BSML.Recording)):
       logging.error("Metadata doesn't describe a bsml:Recording")
       self.set_status(400)
