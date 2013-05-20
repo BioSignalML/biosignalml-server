@@ -271,11 +271,10 @@ class StreamDataSocket(StreamServer):
         else:
           units = [str(sig.units) for sig in self._sigs],
           unit_map = None
-
-        self.send_block(stream.InfoBlock(channels = len(self._sigs),
-                                         signals = [str(sig.uri) for sig in self._sigs],
-                                         rates = rates,
-                                         units = units ))
+#        self.send_block(stream.InfoBlock(channels = len(self._sigs),
+#                                         signals = [str(sig.uri) for sig in self._sigs],
+#                                         rates = rates,
+#                                         units = units ))
         sender = SignalReadThread(self, block, self._sigs, rates, unit_map)
         sender.start()
 
