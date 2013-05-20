@@ -57,6 +57,7 @@ class SparqlProxy(tornado.web.RequestHandler):
       streaming_callback = self.stream_handler,
       header_callback = self.header_handler)
     self.ioloop.start()
+    self.ioloop.close(True)
 
 
 class SparqlQuery(SparqlProxy):
