@@ -82,7 +82,31 @@ Loading Semantic Tag Ontologies
   cd tools
   ./load_tags.sh
 
+
+OS/X System
+===========
+
+Three separate services are required to be running for the BioSignalML repository to work:
+
+    Virtuoso -- RDF/SPARQL engine.
+    haproxy -- web proxy
+    BioSignalML server
+
+
+They are started and stopped via launchctl:
+
+$ sudo launchctl load /Library/LaunchDaemons/virtuoso.plist
+$ sudo launchctl load /Library/LaunchDaemons/biosignalml.plist
+$ sudo launchctl load /Library/LaunchDaemons/haproxy.plist
+
+and the equivalent 'unload' command.
+
+
 ---
+
+
+4-store
+=======
 
 # Setting up repository configuration with a 4store backend:
 #
