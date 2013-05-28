@@ -17,14 +17,20 @@ Virtuoso
 
 * Use develop/6 HEAD:::
 
-    $ git clone git://github.com/openlink/virtuoso-opensource.git
-    $ cd virtuoso-opensource
+    $ git clone -b develop/6 git://github.com/openlink/virtuoso-opensource.git
+
+* Better to use develop/7 HEAD:::
+
+    $ git clone -b develop/7 git://github.com/openlink/virtuoso-opensource.git
+
+  And then apply patch from https://github.com/openlink/virtuoso-opensource/issues/41
 
 * Configuring and building:::
 
+    $ cd virtuoso-opensource
     $ ./autogen.sh
     ##
-    ##            --with-malloc-debug prevents an occassional crash...
+    ##            --with-malloc-debug prevents an occassional crashi seen in develop/6
     $ ./configure --with-malloc-debug --with-readline
     $ make
     $ sudo make install
@@ -53,7 +59,6 @@ Virtuoso
 * Give SPARQL_UPDATE role to the SPARQL user, using Conductor at
   http://localhost:8890 (dba/dba) -- "System Admin"/"User Accounts"/
   "SPARQL Edit"
-
 
 
 Server Install
