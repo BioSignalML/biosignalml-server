@@ -145,7 +145,6 @@ class SignalReadThread(threading.Thread):
               starttimes[n] = data.starttime
               siguri = str(self._signals[n].uri)
               keywords = dtypes.copy()
-              keywords['info'] = n
               if self._unit_map is not None: datablock = self._unit_map[n](data.data)
               else:                          datablock = data.data
               if data.is_uniform:
