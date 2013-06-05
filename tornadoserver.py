@@ -46,7 +46,7 @@ def ContentNegotiate(*args, **kwds):
 #===================================
   request = args[1]
   if request.method == 'GET': accept = resource.parse_accept(request.headers)
-  else:                       accept = { request.headers.get('Content-Type'): 1 }
+  else:                       accept = { request.headers.get('Content-Type', ''): 1 }
 
   if request.headers.get('Upgrade') == 'websocket':
     HandlerClass = webstream.StreamDataSocket
