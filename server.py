@@ -26,7 +26,7 @@ from biosignalml.rdf.sparqlstore import Virtuoso, FourStore
 import biosignalml.repository as repository
 import frontend.webdb as webdb
 
-VERSION = '0.4.1pre'
+VERSION = '0.5.0'
 
 LOGFORMAT = '%(asctime)s %(levelname)8s %(threadName)s: %(message)s'
 
