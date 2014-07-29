@@ -48,7 +48,8 @@ def search(sparql):
         return '<div class="search">%s</div>' % xmlescape(str(r)).replace('\n', '<br/>')
     else:
       body.append('<tr class="odd">' if odd else '<tr>')
-      for value in r.itervalues():
+      for c in cols:
+        value = r.get(c, '')
         if  isinstance(value, rdf.Uri):
           value = str(value)
           (LT, GT) = ('&lt;', '&gt;')
