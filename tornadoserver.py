@@ -42,37 +42,42 @@ import frontend.search
 import frontend.htmlview
 
 
-def ContentNegotiate(*args, **kwds):
-#===================================
-  request = args[1]
-  if request.method == 'GET': accept = resource.parse_accept(request.headers)
-  else:                       accept = { request.headers.get('Content-Type', ''): 1 }
+class ContentNegotiate(tornado.web.RequestHandler):
+#==================================================
 
-  if request.headers.get('Upgrade') == 'websocket':
-    HandlerClass = webstream.StreamDataSocket
+  def __new__(cls, *args, **kwds):
+  #-------------------------------
+    request = args[1]
+    if request.method == 'GET': accept = resource.parse_accept(request.headers)
+    else:                       accept = { request.headers.get('Content-Type', ''): 1 }
 
-  elif len(accept) == 1 and accept.keys()[0].startswith(BSMLRecording.MIMETYPE):
-    HandlerClass = resource.Recording
+    if request.headers.get('Upgrade') == 'websocket':
+      HandlerClass = webstream.StreamDataSocket
 
-  elif (accept.get('application/rdf+xml', 0) > 0.9
-   or accept.get('text/turtle', 0) == 1):
-    HandlerClass = metadata.MetaData
+    elif len(accept) == 1 and list(accept.keys())[0].startswith(BSMLRecording.MIMETYPE):
+      HandlerClass = resource.Recording
 
-  elif (accept.get('text/html', 0) == 1
-   or accept.get('application/xhtml+xml', 0) == 1
-   or accept.get('application/x-www-form-urlencoded', 0) == 1
-   or len(accept) == 1 and accept.get('*/*', 0) == 1):
-    HandlerClass = frontend.htmlview.Repository
+    elif (accept.get('application/rdf+xml', 0) > 0.9
+     or accept.get('text/turtle', 0) == 1):
+      HandlerClass = metadata.MetaData
 
-  else:
-    HandlerClass = metadata.MetaData  ## Maybe this case should be to an error page ???
+    elif (accept.get('text/html', 0) == 1
+     or accept.get('application/xhtml+xml', 0) == 1
+     or accept.get('application/x-www-form-urlencoded', 0) == 1
+     or len(accept) == 1 and accept.get('*/*', 0) == 1):
+      HandlerClass = frontend.htmlview.Repository
 
-  handler = HandlerClass(*args, **kwds)
-  if request.path in ['', '/']: handler.full_uri = ''
-  else: handler.full_uri = '%s://%s%s' % (request.protocol, request.host, urllib.unquote(request.path))
-  ##logging.debug("Negotiate: %s --> %s (%s)", accept, handler, handler.full_uri)
-  if len(accept) > 1: handler.set_header('Vary', 'Accept') # Let caches know we've used Accept header
-  return handler
+    else:
+      HandlerClass = metadata.MetaData  ## Maybe this case should be to an error page ???
+
+    handler = HandlerClass(*args, **kwds)
+  
+    if request.path in ['', '/']: handler.full_uri = ''
+    else: handler.full_uri = '%s://%s%s' % (request.protocol, request.host, urllib.parse.unquote(request.path))
+    ##logging.debug("Negotiate: %s --> %s (%s)", accept, handler, handler.full_uri)
+    if len(accept) > 1: handler.set_header('Vary', 'Accept') # Let caches know we've used Accept header
+
+    return handler
 
 
 application = tornado.web.Application([
