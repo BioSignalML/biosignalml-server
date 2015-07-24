@@ -9,6 +9,7 @@
 ######################################################
 
 import apsw
+import logging
 
 
 class Database(object):
@@ -21,6 +22,7 @@ class Database(object):
 
   def execute(self, sql, bindings=None):
   #-------------------------------------
+    logging.debug("SQL: %s (%s)", sql, bindings)
     return self._cursor.execute(sql, bindings)
 
   def findrow(self, table, cond):
