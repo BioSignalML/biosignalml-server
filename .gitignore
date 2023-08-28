@@ -1,3 +1,5 @@
 BioSignalML.db
 biosignalml.ini
 sessions/
+.DS_Store
+*.pyc
