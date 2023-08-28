@@ -29,6 +29,7 @@ import frontend.webdb as webdb
 VERSION = '0.5.0'
 
 LOGFORMAT = '%(asctime)s %(levelname)8s %(threadName)s: %(message)s'
+LOGFORMAT = '[%(asctime)s] p%(process)s {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s'
 
 DEFAULTS  = { 'uri': 'http://devel.biosignalml.org',
               'host': 'localhost',
