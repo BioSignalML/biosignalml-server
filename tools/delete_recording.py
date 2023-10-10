@@ -18,7 +18,7 @@ if __name__ == '__main__':
   p = urlparse.urlparse(recording)
   repo = p.scheme + '://' + p.netloc
 
-  store = Virtuoso('http://localhost:8890')
+  store = Virtuoso('http://virtuoso:8890')
 
   for g in [ r['g']['value'] for r in json.loads(
                store.query("""select distinct ?g where {
