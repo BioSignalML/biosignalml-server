@@ -16,7 +16,7 @@ import dateutil.parser
 import tornado.web
 from tornado.options import options
 
-from forms import Button, Field
+from .forms import Button, Field
 import frontend
 
 # Levels of user

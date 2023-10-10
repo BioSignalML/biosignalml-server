@@ -19,17 +19,15 @@ from biosignalml import BSML, Annotation, Event
 from biosignalml.utils import trimdecimal, chop, xmlescape
 from biosignalml.utils import maketime, datetime_to_isoformat
 
-from forms import Button, Field
+from .forms import Button, Field
 import frontend
-import mktree
-import menu
-import user
+import frontend.mktree as mktree
 
 
 def abbreviate(u):
 #-----------------
   s = str(u) if u else ''
-  for p, n in frontend.NAMESPACES.iteritems():
+  for p, n in frontend.NAMESPACES.items():
     if s.startswith(n): return ''.join([p, ':', s[len(n):]])
   return s
 
@@ -59,9 +57,9 @@ class Properties(object):
         if meta: v = meta.get(prop)
       args = p[3] if (len(p) > 3) else []
       r.append('' if v is None
-          else (p[2](v, **{ k: v for k, v in kwds.iteritems() if k in args })) if (len(p) > 2)
+          else (p[2](v, **{ k: v for k, v in kwds.items() if k in args })) if (len(p) > 2)
           else [ str(s) for s in v ] if hasattr(v, '__iter__')
-          else unicode(v)
+          else v
           )
     return r
 
@@ -176,7 +174,7 @@ def event_info(evt):
   h.append('<div>')
   for n, d in enumerate(props.details(evt)):
     if d:
-      t = '<br/>'.join(list(d)) if hasattr(d, '__iter__') else unicode(d)
+      t = '<br/>'.join(list(d)) if hasattr(d, '__iter__') else d
       p = '<span class="prompt">%s </span>%s' % (prompts[n], xmlescape(t).replace('\n', '<br/>'))
       if n == 0: h.append('<div class="rside">%s</div>' % p)
       else: h.append('<div>%s</div>' % p)
@@ -195,7 +193,7 @@ def annotation_info(ann):
   prompts = props.header()
   for n, d in enumerate(props.details(ann)):
     if d is None: d = ''
-    t = '<br/>'.join(list(d)) if hasattr(d, '__iter__') else unicode(d)
+    t = '<br/>'.join(list(d)) if hasattr(d, '__iter__') else d
     p = '<span class="prompt">%s: </span><pre>%s</pre>' % (prompts[n], xmlescape(t))
     if   n == 0: h.append('<p>%s</p>' % p)
     elif n == 1 and d: h.append('<div><div class="half">%s</div>' % p)

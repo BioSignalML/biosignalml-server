@@ -17,14 +17,14 @@ import biosignalml.rdf as rdf
 from biosignalml.utils import xmlescape
 from biosignalml import BSML
 
-from forms import Button, Field
+from .forms import Button, Field
 import frontend
 
 
 def prologue():
 #==============
   p = [ 'BASE <%s>' % options.repository_uri ]
-  for prefix, uri in frontend.NAMESPACES.iteritems():
+  for prefix, uri in frontend.NAMESPACES.items():
     p.append('PREFIX %s: <%s>' % (prefix, uri))
   return '\n'.join(p)
 

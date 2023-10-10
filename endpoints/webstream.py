@@ -60,10 +60,7 @@ class StreamServer(WebSocketHandler):
   def on_message(self, msg):
   #-------------------------
     self._capabilities = user.capabilities(self, None)
-    try:
-      bytes = bytearray(msg)
-    except TypeError:
-      bytes = bytearray(str(msg))
+    bytes = bytearray(msg)
     #logging.debug('RAW: %s', bytes)
     self._parser.process(bytes)
 
@@ -170,7 +167,7 @@ class SignalReadThread(threading.Thread):
               sources[n] = None
               self._active -= 1
 
-    except Exception, msg:
+    except Exception as msg:
       if str(msg) != "Stream is closed":
         logging.error("Stream exception - %s" % msg)
         self._send_block(stream.ErrorBlock(self._reqblock, str(msg)))
@@ -277,7 +274,7 @@ class StreamDataSocket(StreamServer):
         sender = SignalReadThread(self, block, self._sigs, rates, unit_map)
         sender.start()
 
-      except Exception, msg:
+      except Exception as msg:
         if str(msg) != "Stream is closed":
           self._send_error(msg)
           ##if options.debug: raise
@@ -364,7 +361,7 @@ class StreamDataSocket(StreamServer):
           self._repo.save_subject_property(rec_graph, rec, 'duration')
         rec.close()
 
-      except Exception, msg:
+      except Exception as msg:
         self.send_block(stream.ErrorBlock(block, str(msg)))
         if options.debug: raise
 
@@ -381,7 +378,7 @@ if __name__ == '__main__':
     attrs = [ '', repr(obj) ]
     for k in sorted(obj.__dict__):
       attrs.append('  %s: %s' % (k, obj.__dict__[k]))
-    print '\n'.join(attrs)
+    print('\n'.join(attrs))
 
 
   def test(uri):
@@ -389,8 +386,7 @@ if __name__ == '__main__':
     repo = repository.BSMLRepository('http://devel.biosignalml.org', 'http://localhost:8083')
 
   if len(sys.argv) < 2:
-    print "Usage: %s uri..." % sys.argv[0]
-    sys.exit(1)
+    sys.exit("Usage: %s uri..." % sys.argv[0])
 
   uri = sys.argv[1:]
   if len(uri) == 1: uri = uri[0]

@@ -12,8 +12,6 @@
 
 import logging
 
-import frontend
-import user
 
 ADMINMENU  = ("System Administration", None,
                [ ("Manage Users",                     "/frontend/users"),

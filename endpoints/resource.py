@@ -16,14 +16,14 @@ transport is HTTP/1.1).
 
 """
 
-import logging
-import uuid
-import os
-import urllib
-import urlparse
-import httplib
 import hashlib
-from datetime import datetime
+import logging
+import os
+from urllib.request import urlopen
+import urllib.parse as urlparse
+import uuid
+#from datetime import datetime
+#import httplib
 
 import tornado.web as web
 from tornado.options import options
@@ -88,8 +88,8 @@ class FileWriter(object):
     self._sha.update(data)
     try:
       self._output.write(data)
-    except IOError, msg:
-      raise_error(400, msg="%s: %s -> %s" % (msg, self.uri, self.fname))
+    except IOError as msg:
+      return(400, "%s: %s -> %s" % (msg, self.uri, self.fname))
 
   def close(self):
   #---------------
@@ -106,7 +106,7 @@ class Recording(web.RequestHandler):
   SUPPORTED_METHODS = ("GET", "HEAD", "POST", "DELETE", "PUT")
 
   _extns = { }
-  for mtype, cls in RECORDING_CLASSES.iteritems():
+  for mtype, cls in RECORDING_CLASSES.items():
     for extn in cls.EXTENSIONS:
       if extn in _extns:
         raise ValueError("Duplicate extension: %s", extn)
@@ -150,7 +150,7 @@ class Recording(web.RequestHandler):
   def get(self, **kwds):
   #---------------------
     name = self.full_uri
-    uri, fragment = self._get_names(name)
+    uri, _ = self._get_names(name)
     graph_uri, rec_uri = options.repository.get_graph_and_recording_uri(uri)
     if graph_uri is None:
       if name == '':
@@ -175,7 +175,7 @@ class Recording(web.RequestHandler):
         filename = str(recording.dataset)  ### ' '.join([str(f) for f in recording.dataset])   #### Why????
         # Tornado's defaults to sending with ChunkedTransferEncoding
         try:
-          rfile = urllib.urlopen(filename).fp
+          rfile = urlopen(filename).fp
           self.set_header('Vary', 'Accept')      # Let caches know we've used Accept header
           self.set_header('Content-Type', ctype)
           self.set_header('Content-Disposition', 'attachment; filename=%s' % filename)
@@ -186,7 +186,7 @@ class Recording(web.RequestHandler):
             self.flush()             ## This will chunk output
           rfile.close()
           self.finish()
-        except Exception, msg:
+        except Exception as msg:
           self._write_error(500, msg="Error serving recording: %s" % msg)
       else:
         self._write_error(415, msg="Format doesn't match that requested")
@@ -258,7 +258,9 @@ class Recording(web.RequestHandler):
     fname = os.path.join(options.recordings_path, str(uuid.uuid1()) + '.' + RecordingClass.EXTENSIONS[0])
     self._file = FileWriter(fname, rec_uri, RecordingClass)
     if not self._chunked_read():
-      self._file.write(self.request.body)
+      error = self._file.write(self.request.body)
+      if error is not None:
+        self._write_error(*error)
       self._finished_read()
 
   def _finished_read(self):
@@ -271,7 +273,7 @@ class Recording(web.RequestHandler):
       options.repository.store_recording(recording)
       recording.close()
       logging.debug("Imported %s -> %s", self._file.uri, self._file.fname)
-    except Exception, msg:
+    except Exception as msg:
       self._write_error(415, msg=str(msg))
       return
 

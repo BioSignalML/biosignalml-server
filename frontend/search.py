@@ -17,8 +17,9 @@ import tornado.escape
 from tornado.options import options
 
 import biosignalml.rdf as rdf
+from biosignalml.utils import xmlescape
 
-import sparql
+import frontend.sparql as sparql
 import frontend
 
 
@@ -40,7 +41,7 @@ def _get_values(predicate, rtype):
         if uri == str(v): uri = '<%s>' % uri
         values.append(tornado.escape.xhtml_escape(uri))
       elif isinstance(v, str):
-        values.append(tornado.escape.xhtml_escape(unicode(v)))
+        values.append(tornado.escape.xhtml_escape(v))
       else:
         try:               values.append(str(v))
         except ValueError: values.append('')

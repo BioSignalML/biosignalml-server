@@ -11,7 +11,7 @@
 """A web.py application powered by Tornado"""
 
 import os
-import urllib
+import urllib.parse as urlparse
 import logging
 
 import tornado.httpserver
@@ -73,7 +73,7 @@ class ContentNegotiate(tornado.web.RequestHandler):
     handler = HandlerClass(*args, **kwds)
   
     if request.path in ['', '/']: handler.full_uri = ''
-    else: handler.full_uri = '%s://%s%s' % (request.protocol, request.host, urllib.unquote(request.path))
+    else: handler.full_uri = '%s://%s%s' % (request.protocol, request.host, urlparse.unquote(request.path))
     ##logging.debug("Negotiate: %s --> %s (%s)", accept, handler, handler.full_uri)
     if len(accept) > 1: handler.set_header('Vary', 'Accept') # Let caches know we've used Accept header
 

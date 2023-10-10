@@ -1,7 +1,6 @@
 import logging
-import urllib
-import urlparse
-import httplib2
+from urllib.parse import urlencode
+#import urllib.parse as urlparse
 
 import tornado.web
 import tornado.ioloop as ioloop
@@ -100,7 +99,7 @@ class SparqlUpdate(SparqlProxy):
     if self._sparqlstore.UPDATE_PARAMETER != 'update':
       params[self._sparqlstore.UPDATE_PARAMETER] = params.pop('update', None)
     self.request.headers['Content-type'] = 'application/x-www-form-urlencoded'
-    self.do_request(uri=self._sparqlstore.ENDPOINTS[0], body=urllib.urlencode(params))
+    self.do_request(uri=self._sparqlstore.ENDPOINTS[0], body=urlencode(params))
 
 
 class SparqlGraph(SparqlUpdate):
@@ -118,7 +117,7 @@ class SparqlGraph(SparqlUpdate):
       logging.debug("GR: %s", params)
       self.request.headers = { 'Content-Type': params.pop('mime-type', None) }
       params[self._sparqlstore.GRAPH_PARAMETER] = params.pop('graph', None)
-      self.do_request(uri='?'.join([self._sparqlstore.ENDPOINTS[1], urllib.urlencode(params)]),
+      self.do_request(uri='?'.join([self._sparqlstore.ENDPOINTS[1], urlencode(params)]),
                       body=statements)
 
   def _put_delete(self):
@@ -128,7 +127,7 @@ class SparqlGraph(SparqlUpdate):
     else:                                              # Virtuoso
       params = self._get_params()
       params[self._sparqlstore.GRAPH_PARAMETER] = params.pop('graph', None)
-      query = urllib.urlencode(params)
+      query = urlencode(params)
     self.do_request(uri='?'.join([self._sparqlstore.ENDPOINTS[1], query]),
                     body=self.request.body)
 

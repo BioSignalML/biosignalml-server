@@ -11,18 +11,17 @@ if __name__ == '__main__':
 #=========================
 
   if len(sys.argv) < 2:
-    print "Usage: %s repository" % sys.argv[0]
-    exit(1)
+    sys.exit("Usage: %s repository" % sys.argv[0])
 
   repo = sys.argv[1]
 
-  print "***"
-  print "*** This utility will remove all BioSignalML content from the repository at %s ***" % repo
-  print "***"
-  print "*** Are your sure? [NO/yes]"
+  print("***")
+  print("*** This utility will remove all BioSignalML content from the repository at %s ***" % repo)
+  print("***")
+  print("*** Are your sure? [NO/yes]")
   if sys.stdin.readline() != "yes\n": sys.exit(1)
-  print "***"
-  print "*** Are your *really* sure? [NO/yes]"
+  print("***")
+  print("*** Are your *really* sure? [NO/yes]")
   if sys.stdin.readline() != "yes\n": sys.exit(1)
 
   store = Virtuoso('http://localhost:8890')

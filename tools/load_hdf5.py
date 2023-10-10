@@ -35,8 +35,7 @@ if __name__ == '__main__':
   logging.getLogger().setLevel('DEBUG')
 
   if len(sys.argv) < 3:
-    print "Usage: %s REPOSITORY_URI BIOSIGNALML_HDF5_FILE" % sys.argv[0]
-    sys.exit(1)
+    sys.exit("Usage: %s REPOSITORY_URI BIOSIGNALML_HDF5_FILE" % sys.argv[0])
 
   store = BSMLUpdateStore(sys.argv[1],
 #                     FourStore('http://localhost:8083'))

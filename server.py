@@ -12,7 +12,7 @@
 import sys, os
 import fcntl
 import argparse
-import ConfigParser
+import configparser
 import signal
 import logging
 
@@ -54,7 +54,7 @@ class Options(object):
 
   def __init__(self, file, defaults = { } ):
   #-----------------------------------------
-    cfg = ConfigParser.SafeConfigParser(defaults, dict)
+    cfg = configparser.ConfigParser(defaults, dict)
     cfg.optionxform = str   # Preserve case (default method translates to lowercase)
     cfg.read(file)
     for s in cfg.sections(): setattr(self, s, dict(cfg.items(s, True)))

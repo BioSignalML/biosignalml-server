@@ -17,7 +17,7 @@ def maketree(uris):
   tree = {}
   for u in uris:
     uri = str(u)
-    components = uri.rsplit('/', uri.count('/') - 2)
+    components: list = uri.rsplit('/', uri.count('/') - 2)
 ##    if components[0] == '':  components[0] = '/'
     components.pop(0)   #######
     if components[-1] == '': del components[-1]
@@ -42,8 +42,8 @@ def _text(k):
 def sort(t):
 #===========
   if t == { }: return [ ]
-  return sorted([ (k, sort(v)) for k, v in t.iteritems() ],
-                cmp=lambda x,y: cmp(_text(x).lower(), _text(y).lower()))
+  return sorted([ (k, sort(v)) for k, v in t.items() ],
+                key=lambda x: _text(x).lower())
 
 
 

@@ -9,12 +9,14 @@
 ######################################################
 
 import logging
-import urllib
+import urllib.parse as urlparse
 
 import tornado.web
 
 from biosignalml import BSML
 import biosignalml.rdf as rdf
+
+import frontend.menu as menu
 
 
 RDF_ENDPOINT    = '/frontend/rdf/'
@@ -41,15 +43,15 @@ def rdf_link(uri):
 def snorql_link(uri, graph=None):
 #================================
   if uri in ['', None]: return ''
-  if graph is not None: g = '&graph=' + urllib.quote_plus(str(graph))
+  if graph is not None: g = '&graph=' + urlparse.quote_plus(str(graph))
   else:                 g = ''
   return ('<a href="%s?describe=%s%s" target="_blank">SNORQL</a>'
-         % (SNORQL_ENDPOINT, urllib.quote_plus(str(uri)), g) )
+         % (SNORQL_ENDPOINT, urlparse.quote_plus(str(uri)), g) )
 
 def make_link(uri, graph=None):
 #==============================
   if uri in ['', None]: return ''
-  if graph is not None: g = '&graph=' + urllib.quote_plus(str(graph))
+  if graph is not None: g = '&graph=' + urlparse.quote_plus(str(graph))
   else:                 g = ''
   return rdf_link(uri) + ' ' + snorql_link(uri, graph)
 
@@ -143,7 +145,7 @@ class BasePage(tornado.web.RequestHandler):
 
   def userlevel(self):
   #-------------------
-    import user
+    import frontend.user as user
     if not hasattr(self, "_user_level"):
       self._user_level = user.level(self.current_user)
     return self._user_level

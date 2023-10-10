@@ -1,6 +1,6 @@
 import sys
 import json
-import urlparse
+import urllib.parse as urlparse
 
 from biosignalml import BSML
 from biosignalml.rdf import Format, DCT, PRV
@@ -12,8 +12,7 @@ if __name__ == '__main__':
 #=========================
 
   if len(sys.argv) < 2:
-    print "Usage: %s recording_uri" % sys.argv[0]
-    exit(1)
+    sys.exit("Usage: %s recording_uri" % sys.argv[0])
 
   recording = sys.argv[1]
   p = urlparse.urlparse(recording)

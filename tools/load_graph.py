@@ -7,8 +7,8 @@ if __name__ == "__main__":
 #=========================
 
   if len(sys.argv) < 4:
-    print "Usage: %s store graph_uri graph_source [format]" % sys.argv[0]
-    exit(1)
+    sys.exit("Usage: %s store graph_uri graph_source [format]" % sys.argv[0])
+
   if len(sys.argv) == 5: format = rdf.Format.format(sys.argv[4])
   else:                  format = rdf.Format.RDFXML
 

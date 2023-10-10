@@ -30,16 +30,15 @@ if __name__ == '__main__':
   logging.getLogger().setLevel('DEBUG')
 
   if len(sys.argv) < 4:
-    print "Usage: %s REPOSITORY_URI USERNAME PASSWORD" % sys.argv[0]
-    sys.exit(1)
+    sys.exit("Usage: %s REPOSITORY_URI USERNAME PASSWORD" % sys.argv[0])
 
   try:
     repo = bsmlrepo.RemoteRepository(sys.argv[1], sys.argv[2], sys.argv[3])
     repo.close()
-  except Exception, msg:
+  except Exception as msg:
     sys.exit(str(msg))
 
   if repo.access_token is None:
     sys.exit('Cannot authenticate with %s' % sys.argv[1])
 
-  print "%s %s %s" % (sys.argv[1], repo.access_token, repo.access_expiry)
+  print("%s %s %s" % (sys.argv[1], repo.access_token, repo.access_expiry))

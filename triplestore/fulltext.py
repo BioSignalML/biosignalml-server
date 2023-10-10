@@ -1,4 +1,4 @@
-import apsw
+import sqlite3
 import logging
 
 from biosignalml     import BSML
@@ -9,16 +9,17 @@ _db = None
 
 def _execute(sql, *args):
 #========================
-  cursor = _db.cursor()
-  return cursor.execute(sql, *args)
+  if _db:
+    return _db.execute(sql, *args)
 
 
 RDF_TYPE_URI = 0
 
 def _uricode(uri):
 #=================
-  for r in _execute('select id from uris where uri = ? limit 1', (uri,)):
-    return int(r[0])
+  if _db:
+    for r in _db.execute('select id from uris where uri = ? limit 1', (uri,)):
+      return int(r[0])
   return 0
 
 
@@ -27,7 +28,7 @@ def initialise(options):
   global _db, RDF_TYPE_URI
   if options['store'] != 'sqlite':
     raise Exception('Full text search only implemented for SQLite') 
-  _db = apsw.Connection(options['database'])
+  _db = sqlite3.connect(options['database'])
 
   RDF_TYPE_URI = _uricode(str(RDF.type))
 

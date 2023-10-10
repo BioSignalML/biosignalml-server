@@ -8,22 +8,21 @@
 #
 ######################################################
 
-import apsw
+import sqlite3
 import logging
-
+import types
 
 class Database(object):
 #======================
 
   def __init__(self, name):
   #------------------------
-    self._db = apsw.Connection(name)
-    self._cursor = self._db.cursor()
+    self._db = sqlite3.connect(name)
 
-  def execute(self, sql, bindings=None):
-  #-------------------------------------
+  def execute(self, sql, bindings:tuple=()):
+  #-----------------------------------------
     logging.debug("SQL: %s (%s)", sql, bindings)
-    return self._cursor.execute(sql, bindings)
+    return self._db.execute(sql, bindings)
 
   def findrow(self, table, cond):
   #------------------------------
@@ -35,8 +34,13 @@ class Database(object):
 
   def readrow(self, table, cols, where, order=None, bindings=None):
   #----------------------------------------------------------------
-    try:                   cols.__iter__
-    except AttributeError: cols = [ str(cols) ]
+    if isinstance(cols, str):
+      cols = [ cols ]
+    else:
+      try:
+        cols.__iter__
+      except AttributeError:
+        cols = [ str(cols) ]
     sql = [ 'select %s from %s' % (', '.join(list(cols)), table) ]
     if where: sql.append(' where %s' % where)
     if order: sql.append(' order %s' % order)

@@ -7,7 +7,7 @@ from biosignalml import BSML
 import biosignalml.rdf as rdf
 import biosignalml.formats as formats
 
-import resource
+from .resource import parse_accept
 from frontend import user
 
 
@@ -35,7 +35,7 @@ class MetaData(tornado.web.RequestHandler):
       elif repo.has_provenance(uri):
         graph_uri = uri
         uri = ''
-    accept = resource.parse_accept(self.request.headers)
+    accept = parse_accept(self.request.headers)
     if   'text/turtle' in accept or 'application/x-turtle' in accept: format = rdf.Format.TURTLE
     elif 'application/json' in accept:                                format = rdf.Format.JSON
     else:                                                             format = rdf.Format.RDFXML
@@ -55,7 +55,7 @@ class MetaData(tornado.web.RequestHandler):
     try:
       g = rdf.Graph.create_from_string(rec_uri, self.request.body,
        self.request.headers.get('Content-Type', rdf.Format.RDFXML))
-    except Exception, msg:
+    except Exception as msg:
       logging.error('Cannot create RDF graph -- syntax errors? %s', msg)
       self.set_status(400)
       return
@@ -101,7 +101,7 @@ class MetaData(tornado.web.RequestHandler):
       options.repository.extend_graph(rec_graph,
         self.request.body,
         self.request.headers.get('Content-Type', rdf.Format.RDFXML))
-    except Exception, msg:
+    except Exception as msg:
       logging.error('Cannot extend RDF graph -- syntax errors? %s', msg)
       self.set_status(400)
       return
