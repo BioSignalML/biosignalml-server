@@ -231,7 +231,7 @@ class StreamDataSocket(StreamServer):
       self._send_error("User <%s> not allowed to %s" % (self.user, user.ACTIONS[action]))
       return False
 
-  @tornado.web.asynchronous
+  @tornado.gen.coroutine
   def got_block(self, block):
   #--------------------------
     ##logging.debug('GOT: %s', block)
