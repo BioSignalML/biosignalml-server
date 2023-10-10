@@ -26,7 +26,7 @@ SESSION_TIMEOUT = 86400 ### 1800 # seconds  ## num(config.config['idletime'])
 
 
 NAMESPACES = {
-  'bsml':  str(BSML.URI),
+  'bsml':  str(BSML.BASE),
   'unit':  "http://www.biosignalml.org/ontologies/examples/unit#",
   'sleep': "http://www.biosignalml.org/ontologies/examples/sleep#",
   'pbank': "http://www.biosignalml.org/ontologies/examples/physiobank#",
