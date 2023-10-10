@@ -320,6 +320,7 @@ class Recording(web.RequestHandler):
     ## Need to consider what happens to RDF graphs...
     return
 
+"""
     try:
       file_name = urllib.urlopen(str(recording.dataset)).fp.name
       if file_name != '<socket>': os.unlink(file_name)
@@ -337,3 +338,4 @@ class Recording(web.RequestHandler):
     self.set_header('Content-Type', 'text/plain')
     self.set_status(200)
     self.write('200: Deleted %s\n' % rec_uri)
+"""
