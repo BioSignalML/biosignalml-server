@@ -10,31 +10,23 @@ easy_install/pip
 * biosignalml >= 0.3.8
 * tornado >= 2.4.1
 * numpy >= 2.1.1
-* aspw (for user database)
 * h5py
 
 
 Virtuoso
 ========
 
-* Use develop/6 HEAD:::
+* Use develop/7 HEAD:::
 
-    $ git clone -b develop/6 git://github.com/openlink/virtuoso-opensource.git
-
-* Better to use develop/7 HEAD:::
-
-    $ git clone -b develop/7 git://github.com/openlink/virtuoso-opensource.git
-
-  And then apply patch from https://github.com/openlink/virtuoso-opensource/issues/41
+    $ git clone -b develop/7 https://github.com/openlink/virtuoso-opensource.git
 
 * Configuring and building:::
 
     $ cd virtuoso-opensource
     $ ./autogen.sh
-    ##
-    ##            --with-malloc-debug prevents an occassional crashi seen in develop/6
-    $ ./configure --with-malloc-debug --with-readline
-    $ make
+    $ export CFLAGS="-O2 -m64"
+    $ ./configure --with-readline
+    $ make -j $(nproc)
     $ sudo make install
 
 * Ensure /usr/local/virtuoso-opensource/var/lib/virtuoso/db/ and contents are
@@ -49,6 +41,7 @@ Virtuoso
 
     [SPARQL]
     ResultSetMaxRows = 50000
+    MaxConstructTriples = 50000
 
 * Enable full text search (see
   http://docs.openlinksw.com/virtuoso/sparqlextensions.html#rdfsparqlrulefulltext):::
@@ -61,6 +54,11 @@ Virtuoso
 * Give SPARQL_UPDATE role to the SPARQL user, using Conductor at
   http://localhost:8890 (dba/dba) -- "System Admin"/"User Accounts"/
   "SPARQL Edit"
+
+* Starting::
+
+  $ cd /usr/local/virtuoso-opensource/var/lib/virtuoso/db
+  $ /usr/local/virtuoso-opensource/bin/virtuoso-t -f &
 
 
 Server Install
@@ -111,6 +109,13 @@ and the equivalent 'unload' command.
 
 ---
 
+SNORQL
+======
+
+* https://github.com/kurtjx/SNORQL and forks
+* https://github.com/calipho-sib/nextprot-snorql
+
+---
 
 4-store
 =======
