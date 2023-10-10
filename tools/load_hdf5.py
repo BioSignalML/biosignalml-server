@@ -54,5 +54,5 @@ if __name__ == '__main__':
   graph.set_subject_property(rec.uri, BSML.dataset, dataset)
 
   graph_uri = store.add_recording_graph(rec.uri, graph.serialise(), 'file://' + os.path.abspath(__file__))
-  print '<%s> stored in <%s>' % (rec.uri, graph_uri)
+  print(f'<{rec.uri}> stored in <graph_uri>')
 
