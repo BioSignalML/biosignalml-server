@@ -54,11 +54,12 @@ if __name__ == '__main__':
     def __init__(self, uri):
       self.uri = uri
 
-  print        maketree([Uri("http://www.example.org/pre/a/r1"),
-                         Uri("http://www.example.org/pre/a/b/r2"),
-                         Uri("http://www.example.org/pre/a/b/r3"),
-                         Uri("http://www.example.org/pre/d/r4"),
-                         Uri("http://www.example.org/pre/r0")], 'http://www.example.org/pre'),
+  print (maketree([Uri("http://www.example.org/pre/a/r1"),
+                   Uri("http://www.example.org/pre/a/b/r2"),
+                   Uri("http://www.example.org/pre/a/b/r3"),
+                   Uri("http://www.example.org/pre/d/r4"),
+                   Uri("http://www.example.org/pre/r0"),
+                   Uri('http://www.example.org/pre')]))
 
 """
   [ ('a',  [ ('b',  [ ('r2', [ ]),

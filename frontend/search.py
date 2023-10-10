@@ -253,10 +253,12 @@ class Search(frontend.BasePage):
           if group: group.store_tuple(groups)
           lastgroupno = groupno
           group = None
-        if   g[2:] == 'F0' and v: group = SearchGroup(v)
-        elif g[2:] == 'F1':   group.set_test(v)
-        elif g[2:] == 'F2':   group.set_value(v)
-        elif g[2:] == 'TERM': group.term_reln(v)
+        if   g[2:] == 'F0' and v:
+          group = SearchGroup(v)
+        elif group is not None:
+          if   g[2:] == 'F1':   group.set_test(v)
+          elif g[2:] == 'F2':   group.set_value(v)
+          elif g[2:] == 'TERM': group.term_reln(v)
     if group: group.store_tuple(groups)
     if groups: lines.append((line_reln, groups))
     #logging.debug('LINES: %s', lines)
