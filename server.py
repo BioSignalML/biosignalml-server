@@ -33,7 +33,7 @@ LOGFORMAT = '[%(asctime)s] p%(process)s {%(pathname)s:%(lineno)d} %(levelname)s 
 
 DEFAULTS  = { 'uri': 'http://devel.biosignalml.org',
               'host': 'localhost',
-              'port':  8088,
+              'port':  8080,
               'path': '.',
               'database': './database/repository.db',
               'recordings': './recordings/',
