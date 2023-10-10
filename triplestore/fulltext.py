@@ -5,6 +5,8 @@ from biosignalml     import BSML
 from biosignalml.rdf import RDF
 
 
+### This should all be in a class!!
+
 _db = None
 
 def _execute(sql, *args):
@@ -69,7 +71,7 @@ def search(text):
   #  logging.debug('ROW: %s', r)
   #return [ ]
 
-  """
+"""
 
   SPARQL fulltext search proposals -- see http://www.w3.org/2009/sparql/wiki/Feature:FullText
 
@@ -131,4 +133,4 @@ def search(text):
     * Boolean logic (and, or, not)
 
 
-  """
+"""
