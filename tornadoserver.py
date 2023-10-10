@@ -115,8 +115,8 @@ application = tornado.web.Application([
   debug = options.options.debug,
   )
 
-application.listen(options.port, options.host, xheaders=True)
 logging.info('Starting http://%s:%d/', options.host, options.port)
+application.listen(options.port, options.host, xheaders=True)
 
 try:
   tornado.ioloop.IOLoop.instance().start()
