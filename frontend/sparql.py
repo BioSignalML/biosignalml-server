@@ -34,6 +34,8 @@ def search(sparql):
   if not sparql: return ''
   body = ['<div id="sparqlresult"><table class="results">']
   results = options.repository.query(sparql, header=True)
+  cols = []
+  odd = True
   for n, r in enumerate(results):
     if n == 0:                      # Header
       if isinstance(r, list):
